@@ -31,6 +31,28 @@ components:
         clean:
           - src/bindings.rs
 
+      bedrock-debug:
+        build:
+          - command: cargo component build --no-default-features --features bedrock
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/llm_bedrock.wasm ../../target/wasm32-wasip1/debug/test_llm.wasm -o ../../target/wasm32-wasip1/debug/test_bedrock_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+              - ../../../target/wasm32-wasip1/debug/llm_bedrock.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_bedrock_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_bedrock_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_bedrock_debug.wasm
+        clean:
+          - src/bindings.rs
+
       anthropic-debug:
         build:
           - command: cargo component build --no-default-features --features anthropic
