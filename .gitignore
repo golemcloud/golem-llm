@@ -4,3 +4,4 @@ openapi
 target
 tmp
 components
+.env

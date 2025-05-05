@@ -4,18 +4,20 @@ WebAssembly Components providing a unified API for various LLM providers.
 
 ## Versions
 
-There are 8 published WASM files for each release:
+There are 10 published WASM files for each release:
 
 | Name                                 | Description                                                                          |
-|--------------------------------------|--------------------------------------------------------------------------------------|
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
 | `golem-llm-anthropic.wasm`           | LLM implementation for Anthropic AI, using custom Golem specific durability features |
 | `golem-llm-grok.wasm`                | LLM implementation for xAI (Grok), using custom Golem specific durability features   |
 | `golem-llm-openai.wasm`              | LLM implementation for OpenAI, using custom Golem specific durability features       |
 | `golem-llm-openrouter.wasm`          | LLM implementation for OpenRouter, using custom Golem specific durability features   |
+| `llm-bedrock.wasm`                   | LLM implementation for AWS Bedrock, using custom Golem specific durability features  |
 | `golem-llm-anthropic-portable.wasm`  | LLM implementation for Anthropic AI, with no Golem specific dependencies.            |
 | `golem-llm-grok-portable.wasm`       | LLM implementation for xAI (Grok), with no Golem specific dependencies.              |
 | `golem-llm-openai-portable.wasm`     | LLM implementation for OpenAI, with no Golem specific dependencies.                  |
 | `golem-llm-openrouter-portable.wasm` | LLM implementation for OpenRouter, with no Golem specific dependencies.              |
+| `llm-bedrock-portable.wasm`          | LLM implementation for AWS Bedrock, with no Golem specific dependencies.             |
 
 Every component **exports** the same `golem:llm` interface, [defined here](wit/golem-llm.wit).
 
@@ -28,12 +30,13 @@ advanced durability related features.
 
 Each provider has to be configured with an API key passed as an environment variable:
 
-| Provider   | Environment Variable |
-|------------|----------------------|
-| Anthropic  | `ANTHROPIC_API_KEY`  |
-| Grok       | `XAI_API_KEY`        |
-| OpenAI     | `OPENAI_API_KEY`     |
-| OpenRouter | `OPENROUTER_API_KEY` |
+| Provider    | Environment Variable                                       |
+| ----------- | ---------------------------------------------------------- |
+| Anthropic   | `ANTHROPIC_API_KEY`                                        |
+| Grok        | `XAI_API_KEY`                                              |
+| OpenAI      | `OPENAI_API_KEY`                                           |
+| OpenRouter  | `OPENROUTER_API_KEY`                                       |
+| AWS Bedrock | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` |
 
 Additionally, setting the `GOLEM_LLM_LOG=trace` environment variable enables trace logging for all the communication
 with the underlying LLM provider.
@@ -111,8 +114,8 @@ Take the [test application](test/components-rust/test-llm/src/lib.rs) as an exam
 implemented test functions are demonstrating the following:
 
 | Function Name | Description                                                                                |
-|---------------|--------------------------------------------------------------------------------------------|
-| `test1`       | Simple text question and answer, no streaming                                              | 
+| ------------- | ------------------------------------------------------------------------------------------ |
+| `test1`       | Simple text question and answer, no streaming                                              |
 | `test2`       | Demonstrates using **tools** without streaming                                             |
 | `test3`       | Simple text question and answer with streaming                                             |
 | `test4`       | Tool usage with streaming                                                                  |
@@ -125,7 +128,7 @@ This repository uses [cargo-make](https://github.com/sagiegurari/cargo-make) to 
 Some of the important tasks are:
 
 | Command                             | Description                                                                                            |
-|-------------------------------------|--------------------------------------------------------------------------------------------------------|
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `cargo make build`                  | Build all components with Golem bindings in Debug                                                      |
 | `cargo make release-build`          | Build all components with Golem bindings in Release                                                    |
 | `cargo make build-portable`         | Build all components with no Golem bindings in Debug                                                   |
@@ -139,3 +142,9 @@ The `test` directory contains a **Golem application** for testing various featur
 Check [the Golem documentation](https://learn.golem.cloud/quickstart) to learn how to install Golem and `golem-cli` to
 run these tests.
 
+## Test Folder Structure
+
+This project contains two test-related folders:
+
+- `test/`: Contains custom test harnesses, utilities, and project-specific integration tests. This folder is required by the project and may include multi-language or component-based tests.
+- `tests/`: Contains standard Rust integration tests. Rust's `cargo test` command will automatically pick up tests in this folder. This is used for crate-level integration and provider-specific tests.

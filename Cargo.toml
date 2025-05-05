@@ -1,12 +1,18 @@
 [workspace]
+members = [
+    "llm",
+    "llm-anthropic",
+    "llm-grok",
+    "llm-openai",
+    "llm-openrouter",
+    "llm-bedrock",
+    "test",
+    "tests/bedrock-test"
+]
 resolver = "2"
 
-members = ["llm", "llm-anthropic", "llm-grok", "llm-openai", "llm-openrouter"]
-
 [profile.release]
-debug = false
-lto = true
-opt-level = 's'
+opt-level = 3
 
 [workspace.dependencies]
 golem-rust = "1.5.3"
@@ -15,3 +21,6 @@ reqwest = { git = "https://github.com/golemcloud/reqwest", branch = "update-apri
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 wit-bindgen-rt = { version = "0.40.0", features = ["bitflags"] }
+tokio = { version = "1.36.0", features = ["full"] }
+golem-llm = { path = "llm" }
+llm-bedrock = { path = "llm-bedrock" }

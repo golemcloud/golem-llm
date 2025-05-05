@@ -1,0 +1,12 @@
+[package]
+name = "bedrock-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+aws-config = "1.0"
+aws-sdk-bedrockruntime = "1.0"
+dotenv = "0.15" 

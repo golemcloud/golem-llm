@@ -1,0 +1,50 @@
+[package]
+name = "llm-bedrock"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://golem.cloud"
+repository = "https://github.com/golemcloud/golem-llm"
+description = "WebAssembly components for working with AWS Bedrock LLM APIs, with special support for Golem Cloud"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+aws-config = { version = "1.1.7", features = ["behavior-version-latest"], default-features = false }
+aws-sdk-bedrockruntime = { version = "1.16.0", default-features = false }
+futures = "0.3"
+golem-llm = { path = "../llm" }
+golem-rust = { workspace = true }
+http = "1.1.0"
+log = "0.4"
+reqwest = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+tokio = { version = "1.36", features = ["sync", "macros", "io-util", "rt", "time"], default-features = false }
+wit-bindgen = { version = "0.40.0" }
+uuid = { version = "1.7", features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+
+[features]
+default = ["durability"]
+durability = ["golem-llm/durability"]
+
+[package.metadata.component]
+package = "golem:llm-bedrock"
+
+[package.metadata.component.bindings]
+generate_unused_types = true
+
+[package.metadata.component.bindings.with]
+"golem:llm/llm@1.0.0" = "golem_llm::golem::llm::llm"
+"wasi:io/poll@0.2.0" = "golem_rust::wasm_rpc::wasi::io::poll"
+
+[package.metadata.component.target]
+path = "wit"
+
+[package.metadata.component.target.dependencies]
+"golem:llm" = { path = "wit/deps/golem-llm" }
+"wasi:io" = { path = "wit/deps/wasi:io"} 
