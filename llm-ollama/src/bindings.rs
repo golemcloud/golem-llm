@@ -7,10 +7,10 @@
 use golem_rust::wasm_rpc::wasi::io::poll as __with_name0;
 use golem_llm::golem::llm::llm as __with_name1;
 #[cfg(target_arch = "wasm32")]
-#[link_section = "component-type:wit-bindgen:0.36.0:golem:llm-grok@1.0.0:llm-library:encoded world"]
+#[link_section = "component-type:wit-bindgen:0.36.0:golem:llm-ollama@1.0.0:llm-library:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1889] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xdf\x0d\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1891] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xe1\x0d\x01A\x02\x01\
 A\x05\x01B\x0a\x04\0\x08pollable\x03\x01\x01h\0\x01@\x01\x04self\x01\0\x7f\x04\0\
 \x16[method]pollable.ready\x01\x02\x01@\x01\x04self\x01\x01\0\x04\0\x16[method]p\
 ollable.block\x01\x03\x01p\x01\x01py\x01@\x01\x02in\x04\0\x05\x04\0\x04poll\x01\x06\
@@ -47,7 +47,7 @@ chat-stream.subscribe\x01A\x01p\x12\x01@\x02\x08messages\xc2\0\x06config&\03\x04
 \0\x04send\x01C\x01o\x02\x16\x1d\x01p\xc4\0\x01@\x03\x08messages\xc2\0\x0ctool-r\
 esults\xc5\0\x06config&\03\x04\0\x08continue\x01F\x01i:\x01@\x02\x08messages\xc2\
 \0\x06config&\0\xc7\0\x04\0\x06stream\x01H\x04\0\x13golem:llm/llm@1.0.0\x05\x02\x04\
-\0\x20golem:llm-grok/llm-library@1.0.0\x04\0\x0b\x11\x01\0\x0bllm-library\x03\0\0\
+\0\"golem:llm-ollama/llm-library@1.0.0\x04\0\x0b\x11\x01\0\x0bllm-library\x03\0\0\
 \0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.220.1\x10wit-bind\
 gen-rust\x060.36.0";
 #[inline(never)]
