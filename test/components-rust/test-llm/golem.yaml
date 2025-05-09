@@ -97,6 +97,28 @@ components:
         clean:
           - src/bindings.rs
 
+      bedrock-debug:
+        build:
+          - command: cargo component build --no-default-features --features bedrock # Assuming a 'bedrock' feature will be added to test_llm Cargo.toml
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_llm_bedrock.wasm ../../target/wasm32-wasip1/debug/test_llm.wasm -o ../../target/wasm32-wasip1/debug/test_llm_plugged_bedrock.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_llm_bedrock.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_llm_plugged_bedrock.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_llm_plugged_bedrock.wasm
+        linkedWasm: ../../golem-temp/components/test_llm_bedrock_debug.wasm # Ensure unique name
+        clean:
+          - src/bindings.rs
+
       # RELEASE PROFILES
       openai-release:
         build:

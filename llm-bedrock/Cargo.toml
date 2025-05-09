@@ -1,0 +1,55 @@
+[package]
+name = "golem-llm-bedrock"
+version = "0.0.0" # This will be updated by the build system
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://golem.cloud"
+repository = "https://github.com/golemcloud/golem-llm"
+description = "WebAssembly component for working with AWS Bedrock APIs, with special support for Golem Cloud"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[features]
+default = ["durability"]
+durability = ["golem-rust/durability", "golem-llm/durability"]
+
+[dependencies]
+golem-llm = { path = "../llm", version = "0.0.0", default-features = false }
+golem-rust = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wit-bindgen-rt = { workspace = true }
+
+# AWS SDK
+aws-config = { version = "1.1.7", default-features = false, features = ["behavior-version-latest"] }
+aws-sdk-bedrockruntime = { version = "1.16.0", default-features = false, features = ["rt-tokio"] }
+aws-smithy-http = { version = "0.60.0" }
+aws-smithy-runtime = { version = "1.1.7", features = ["client"] }
+aws-types = { version = "1.1.1", default-features = false } # For Region
+
+# Async utilities
+futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
+async-trait = "0.1" # If needed for traits with async methods
+
+# For Bedrock JSON structures and byte manipulation
+bytes = "1.5"
+
+[package.metadata.component]
+package = "golem:llm-bedrock" # WIT package name
+
+[package.metadata.component.bindings]
+generate_unused_types = true
+
+[package.metadata.component.bindings.with]
+"golem:llm/llm@1.0.0" = "golem_llm::golem::llm::llm"
+"wasi:io/poll@0.2.0" = "golem_rust::wasm_rpc::wasi::io::poll"
+
+[package.metadata.component.target]
+path = "wit" # Directory containing bedrock.wit (or llm-library.wit)
+
+[package.metadata.component.target.dependencies]
+"golem:llm" = { path = "wit/deps/golem-llm" }
+"wasi:io" = { path = "wit/deps/wasi:io"} 

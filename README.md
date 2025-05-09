@@ -12,10 +12,12 @@ There are 8 published WASM files for each release:
 | `golem-llm-grok.wasm`                | LLM implementation for xAI (Grok), using custom Golem specific durability features   |
 | `golem-llm-openai.wasm`              | LLM implementation for OpenAI, using custom Golem specific durability features       |
 | `golem-llm-openrouter.wasm`          | LLM implementation for OpenRouter, using custom Golem specific durability features   |
+| `golem-llm-bedrock.wasm`             | LLM implementation for AWS Bedrock, using custom Golem specific durability features    |
 | `golem-llm-anthropic-portable.wasm`  | LLM implementation for Anthropic AI, with no Golem specific dependencies.            |
 | `golem-llm-grok-portable.wasm`       | LLM implementation for xAI (Grok), with no Golem specific dependencies.              |
 | `golem-llm-openai-portable.wasm`     | LLM implementation for OpenAI, with no Golem specific dependencies.                  |
 | `golem-llm-openrouter-portable.wasm` | LLM implementation for OpenRouter, with no Golem specific dependencies.              |
+| `golem-llm-bedrock-portable.wasm`    | LLM implementation for AWS Bedrock, with no Golem specific dependencies.               |
 
 Every component **exports** the same `golem:llm` interface, [defined here](wit/golem-llm.wit).
 
@@ -34,6 +36,7 @@ Each provider has to be configured with an API key passed as an environment vari
 | Grok       | `XAI_API_KEY`        |
 | OpenAI     | `OPENAI_API_KEY`     |
 | OpenRouter | `OPENROUTER_API_KEY` |
+| Bedrock    | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN (optional), AWS_REGION (or AWS_DEFAULT_REGION). Relies on standard AWS SDK credential chain. The region can also be set via provider-options in the Config with key AWS_REGION. |
 
 Additionally, setting the `GOLEM_LLM_LOG=trace` environment variable enables trace logging for all the communication
 with the underlying LLM provider.
