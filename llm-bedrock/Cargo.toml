@@ -1,6 +1,6 @@
 [package]
 name = "golem-llm-bedrock"
-version = "0.0.0" # This will be updated by the build system
+version = "0.0.0"
 edition = "2021"
 license = "Apache-2.0"
 homepage = "https://golem.cloud"
@@ -38,7 +38,7 @@ async-trait = "0.1" # If needed for traits with async methods
 bytes = "1.5"
 
 [package.metadata.component]
-package = "golem:llm-bedrock" # WIT package name
+package = "golem:llm-bedrock"
 
 [package.metadata.component.bindings]
 generate_unused_types = true
@@ -48,7 +48,7 @@ generate_unused_types = true
 "wasi:io/poll@0.2.0" = "golem_rust::wasm_rpc::wasi::io::poll"
 
 [package.metadata.component.target]
-path = "wit" # Directory containing bedrock.wit (or llm-library.wit)
+path = "wit"
 
 [package.metadata.component.target.dependencies]
 "golem:llm" = { path = "wit/deps/golem-llm" }
