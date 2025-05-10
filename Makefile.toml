@@ -10,6 +10,18 @@ args = ["clean"]
 command = "cargo"
 args = ["test"]
 
+[tasks.build-ollama]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama"]
+
+
+[tasks.build-ollama-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama", "--no-default-features"]
+
+
 [tasks.build-anthropic]
 install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
@@ -56,6 +68,7 @@ dependencies = [
     "build-grok",
     "build-openai",
     "build-openrouter",
+    "build-ollama",
 ]
 
 [tasks.build-portable]
@@ -64,6 +77,7 @@ dependencies = [
     "build-grok-portable",
     "build-openai-portable",
     "build-openrouter-portable",
+    "build-ollama-portable",
 ]
 
 [tasks.build-all]
@@ -78,6 +92,7 @@ cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/debug/golem_ll
 cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_grok.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter.wasm
+cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/debug/golem_llm_ollama.wasm
 
 cm_run_task clean
 cm_run_task build-portable
@@ -86,7 +101,19 @@ cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/debug/golem_ll
 cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_grok-portable.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai-portable.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter-portable.wasm
+cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/debug/golem_llm_ollama-portable.wasm
 '''
+
+[tasks.release-build-ollama]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama", "--release"]
+
+[tasks.release-build-ollama-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama", "--release", "--no-default-features"]
+
 
 [tasks.release-build-anthropic]
 install_crate = { crate_name = "cargo-component", version = "0.20.0" }
@@ -146,6 +173,7 @@ dependencies = [
     "release-build-grok",
     "release-build-openai",
     "release-build-openrouter",
+    "release-build-ollama",
 ]
 
 [tasks.release-build-portable]
@@ -154,6 +182,7 @@ dependencies = [
     "release-build-grok-portable",
     "release-build-openai-portable",
     "release-build-openrouter-portable",
+    "release-build-ollama-portable",
 ]
 
 [tasks.release-build-all]
@@ -170,6 +199,7 @@ cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/release/gole
 cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm_grok.wasm
 cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai.wasm
 cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter.wasm
+cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/release/golem_llm_ollama.wasm
 
 cm_run_task clean
 cm_run_task release-build-portable
@@ -178,6 +208,7 @@ cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/release/gole
 cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm_grok-portable.wasm
 cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai-portable.wasm
 cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter-portable.wasm
+cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/release/golem_llm_ollama-portable.wasm
 '''
 
 [tasks.wit-update]
@@ -221,6 +252,11 @@ rm -r llm-openrouter/wit/deps
 mkdir llm-openrouter/wit/deps/golem-llm
 cp wit/golem-llm.wit llm-openrouter/wit/deps/golem-llm/golem-llm.wit
 cp wit/deps/wasi:io llm-openrouter/wit/deps
+rm -r llm-ollama/wit/deps
+mkdir llm-ollama/wit/deps/golem-llm
+cp wit/golem-llm.wit llm-ollama/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io llm-ollama/wit/deps
+
 
 rm -r test/wit
 mkdir test/wit/deps/golem-llm
@@ -289,6 +325,8 @@ golem-cli app clean
 golem-cli app build -b openai-debug
 golem-cli app clean
 golem-cli app build -b openrouter-debug
+golem-cli app clean
+golem-cli app build -b ollama-debug
 '''
 
 [tasks.set-version]
