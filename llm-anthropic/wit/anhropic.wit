@@ -1,0 +1,7 @@
+package golem:llm-anthropic@1.0.0;
+
+world llm-library {
+  include golem:llm/llm-library@1.0.0;
+
+
+}

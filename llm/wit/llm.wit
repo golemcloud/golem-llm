@@ -1,0 +1,5 @@
+package golem:llm-library@1.0.0;
+
+world llm-library {
+    export golem:llm/llm@1.0.0;
+}

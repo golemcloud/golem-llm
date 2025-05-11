@@ -1,0 +1,194 @@
+# Schema for IDEA:
+# $schema: https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+# Schema for vscode-yaml
+# yaml-language-server: $schema=https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+
+# See https://learn.golem.cloud/docs/app-manifest#field-reference for field reference
+
+components:
+  test:llm:
+    profiles:
+      # DEBUG PROFILES
+      openai-debug:
+        build:
+          - command: cargo component build --no-default-features --features openai
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_llm_openai.wasm ../../target/wasm32-wasip1/debug/test_llm.wasm -o ../../target/wasm32-wasip1/debug/test_openai_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_llm_openai.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_openai_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_openai_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_openai_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      anthropic-debug:
+        build:
+          - command: cargo component build --no-default-features --features anthropic
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_llm_anthropic.wasm ../../target/wasm32-wasip1/debug/test_llm.wasm -o ../../target/wasm32-wasip1/debug/test_anthropic_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_llm_anthropic.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_anthropic_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_anthropic_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_anthropic_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      grok-debug:
+        build:
+          - command: cargo component build --no-default-features --features grok
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_llm_grok.wasm ../../target/wasm32-wasip1/debug/test_llm.wasm -o ../../target/wasm32-wasip1/debug/test_grok_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_llm_grok.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_grok_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_grok_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_grok_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      openrouter-debug:
+        build:
+          - command: cargo component build --no-default-features --features openrouter
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_llm_openrouter.wasm ../../target/wasm32-wasip1/debug/test_llm.wasm -o ../../target/wasm32-wasip1/debug/test_openrouter_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_llm_openrouter.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_openrouter_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_openrouter_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_openrouter_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      # RELEASE PROFILES
+      openai-release:
+        build:
+          - command: cargo component build --release --no-default-features --features openai
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_llm_openai.wasm ../../target/wasm32-wasip1/release/test_llm.wasm -o ../../target/wasm32-wasip1/release/test_openai_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_llm.wasm
+              - ../../../target/wasm32-wasip1/release/golem_llm_openai.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_openai_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_openai_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_openai_release.wasm
+        clean:
+          - src/bindings.rs
+
+      anthropic-release:
+        build:
+          - command: cargo component build --release --no-default-features --features anthropic
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_llm_anthropic.wasm ../../target/wasm32-wasip1/release/test_llm.wasm -o ../../target/wasm32-wasip1/release/test_anthropic_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_llm.wasm
+              - ../../../target/wasm32-wasip1/release/golem_llm_anthropic.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_anthropic_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_anthropic_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_anthropic_release.wasm
+        clean:
+          - src/bindings.rs
+
+      grok-release:
+        build:
+          - command: cargo component build --release --no-default-features --features grok
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_llm_grok.wasm ../../target/wasm32-wasip1/release/test_llm.wasm -o ../../target/wasm32-wasip1/release/test_grok_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_llm.wasm
+              - ../../../target/wasm32-wasip1/release/golem_llm_grok.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_grok_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_grok_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_grok_release.wasm
+        clean:
+          - src/bindings.rs
+
+      openrouter-release:
+        build:
+          - command: cargo component build --release --no-default-features --features openrouter
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_llm_openrouter.wasm ../../target/wasm32-wasip1/release/test_llm.wasm -o ../../target/wasm32-wasip1/release/test_openrouter_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_llm.wasm
+              - ../../../target/wasm32-wasip1/release/golem_llm_openrouter.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_openrouter_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_openrouter_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_openrouter_release.wasm
+        clean:
+          - src/bindings.rs
+
+    defaultProfile: openai-debug
+
+dependencies:
+  test:llm:
+    - target: test:helper
+      type: wasm-rpc
