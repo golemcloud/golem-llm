@@ -50,12 +50,23 @@ install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
 args = ["build", "-p", "golem-llm-openrouter", "--no-default-features"]
 
+[tasks.build-bedrock]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "llm-bedrock"]
+
+[tasks.build-bedrock-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "llm-bedrock", "--no-default-features"]
+
 [tasks.build]
 dependencies = [
     "build-anthropic",
     "build-grok",
     "build-openai",
     "build-openrouter",
+    "build-bedrock",
 ]
 
 [tasks.build-portable]
@@ -64,6 +75,7 @@ dependencies = [
     "build-grok-portable",
     "build-openai-portable",
     "build-openrouter-portable",
+    "build-bedrock-portable",
 ]
 
 [tasks.build-all]
@@ -78,6 +90,7 @@ cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/debug/golem_ll
 cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_grok.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter.wasm
+cp target/wasm32-wasip1/debug/golem_llm_bedrock.wasm components/debug/golem_llm_bedrock.wasm
 
 cm_run_task clean
 cm_run_task build-portable
@@ -86,6 +99,7 @@ cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/debug/golem_ll
 cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_grok-portable.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai-portable.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter-portable.wasm
+cp target/wasm32-wasip1/debug/golem_llm_bedrock.wasm components/debug/golem_llm_bedrock-portable.wasm
 '''
 
 [tasks.release-build-anthropic]
@@ -140,12 +154,23 @@ args = [
     "--no-default-features",
 ]
 
+[tasks.release-build-bedrock]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "llm-bedrock", "--release"]
+
+[tasks.release-build-bedrock-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "llm-bedrock", "--release", "--no-default-features"]
+
 [tasks.release-build]
 dependencies = [
     "release-build-anthropic",
     "release-build-grok",
     "release-build-openai",
     "release-build-openrouter",
+    "release-build-bedrock",
 ]
 
 [tasks.release-build-portable]
@@ -154,6 +179,7 @@ dependencies = [
     "release-build-grok-portable",
     "release-build-openai-portable",
     "release-build-openrouter-portable",
+    "release-build-bedrock-portable",
 ]
 
 [tasks.release-build-all]
@@ -170,6 +196,7 @@ cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/release/gole
 cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm_grok.wasm
 cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai.wasm
 cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter.wasm
+cp target/wasm32-wasip1/release/golem_llm_bedrock.wasm components/release/golem_llm_bedrock.wasm
 
 cm_run_task clean
 cm_run_task release-build-portable
@@ -178,6 +205,7 @@ cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/release/gole
 cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm_grok-portable.wasm
 cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai-portable.wasm
 cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter-portable.wasm
+cp target/wasm32-wasip1/release/golem_llm_bedrock.wasm components/release/golem_llm_bedrock-portable.wasm
 '''
 
 [tasks.wit-update]

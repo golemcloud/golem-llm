@@ -1,0 +1,35 @@
+[package]
+name = "llm-bedrock"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1"
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+tokio = { version = "1", features = ["rt", "macros"] } # Stripped down tokio, only for types/macros if needed by AWS SDK interfaces, not full runtime.
+chrono = { version = "0.4", features = ["serde"] } # For timestamps
+
+aws-config = { version = "1.1.7", features = ["behavior-version-latest", "rustls"] } # For loading AWS credentials and config. Added rustls for https.
+aws-sdk-bedrockruntime = { version = "1.87.0" } # AWS SDK for Bedrock Runtime
+
+# For WASI-compatible HTTP connector for AWS SDK
+aws-smithy-wasm = { version = "0.1.2", features = ["wasi"] } 
+aws-smithy-runtime-api = { version = "1.8.0" } # To get HttpConnector trait and SdkHttpConnector
+
+# Local Golem LLM interface dependency
+golem-llm = { path = "../llm" } # Assuming the common llm crate is one level up
+# Alternatively, if it's a direct WIT dependency for the interface:
+# wit-bindgen-rt = { version = "0.24.0" } # Check version used by other providers
+
+bytes = "1.4.0" # Often a dependency for event streams or body types in AWS SDK
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# No specific wasm32 dependencies here if aws-smithy-wasm handles it
+
+[lib]
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html 
