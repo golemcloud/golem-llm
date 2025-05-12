@@ -30,6 +30,16 @@ install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
 args = ["build", "-p", "golem-llm-grok", "--no-default-features"]
 
+[tasks.build-ollama]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama"]
+
+[tasks.build-ollama-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama", "--no-default-features"]
+
 [tasks.build-openai]
 install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
@@ -54,6 +64,7 @@ args = ["build", "-p", "golem-llm-openrouter", "--no-default-features"]
 dependencies = [
     "build-anthropic",
     "build-grok",
+    "build-ollama",
     "build-openai",
     "build-openrouter",
 ]
@@ -62,6 +73,7 @@ dependencies = [
 dependencies = [
     "build-anthropic-portable",
     "build-grok-portable",
+    "build-ollama-portable",
     "build-openai-portable",
     "build-openrouter-portable",
 ]
@@ -76,6 +88,7 @@ cm_run_task build
 
 cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/debug/golem_llm_anthropic.wasm
 cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_grok.wasm
+cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/debug/golem_llm_ollama.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter.wasm
 
@@ -84,6 +97,7 @@ cm_run_task build-portable
 
 cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/debug/golem_llm_anthropic-portable.wasm
 cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_grok-portable.wasm
+cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/debug/golem_llm_ollama-portable.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai-portable.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter-portable.wasm
 '''
@@ -113,6 +127,16 @@ args = ["build", "-p", "golem-llm-grok", "--release"]
 install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
 args = ["build", "-p", "golem-llm-grok", "--release", "--no-default-features"]
+
+[tasks.release-ollama]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama", "--release"]
+
+[tasks.release-ollama-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama",  "--release", "--no-default-features"]
 
 [tasks.release-build-openai]
 install_crate = { crate_name = "cargo-component", version = "0.20.0" }
@@ -144,6 +168,7 @@ args = [
 dependencies = [
     "release-build-anthropic",
     "release-build-grok",
+    "release-build-ollama",
     "release-build-openai",
     "release-build-openrouter",
 ]
@@ -152,6 +177,7 @@ dependencies = [
 dependencies = [
     "release-build-anthropic-portable",
     "release-build-grok-portable",
+    "release-build-ollama-portable",
     "release-build-openai-portable",
     "release-build-openrouter-portable",
 ]
@@ -168,6 +194,7 @@ cm_run_task release-build
 
 cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/release/golem_llm_anthropic.wasm
 cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm_grok.wasm
+cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/release/golem_llm_ollama.wasm
 cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai.wasm
 cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter.wasm
 
@@ -176,6 +203,7 @@ cm_run_task release-build-portable
 
 cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/release/golem_llm_anthropic-portable.wasm
 cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm_grok-portable.wasm
+cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/release/golem_llm_ollama-portable.wasm
 cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai-portable.wasm
 cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter-portable.wasm
 '''
@@ -195,6 +223,7 @@ dependencies = ["wit-update"]
 #    "llm/wit/deps/golem-llm/golem-llm.wit",
 #    "llm-anthropic/wit/deps/golem-llm/golem-llm.wit",
 #    "llm-grok/wit/deps/golem-llm/golem-llm.wit",
+#    "llm-ollama/wit/deps/golem-llm/golem-llm.wit",
 #    "llm-openai/wit/deps/golem-llm/golem-llm.wit",
 #    "llm-openrouter/wit/deps/golem-llm/golem-llm.wit",
 #] } }
@@ -213,6 +242,10 @@ rm -r llm-grok/wit/deps
 mkdir llm-grok/wit/deps/golem-llm
 cp wit/golem-llm.wit llm-grok/wit/deps/golem-llm/golem-llm.wit
 cp wit/deps/wasi:io llm-grok/wit/deps
+rm -r llm-ollama/wit/deps
+mkdir llm-ollama/wit/deps/golem-llm
+cp wit/golem-llm.wit llm-ollama/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io llm-ollama/wit/deps
 rm -r llm-openai/wit/deps
 mkdir llm-openai/wit/deps/golem-llm
 cp wit/golem-llm.wit llm-openai/wit/deps/golem-llm/golem-llm.wit
@@ -285,6 +318,8 @@ golem-cli app clean
 golem-cli app build -b anthropic-debug
 golem-cli app clean
 golem-cli app build -b grok-debug
+golem-cli app clean
+golem-cli app build -b ollama-debug
 golem-cli app clean
 golem-cli app build -b openai-debug
 golem-cli app clean

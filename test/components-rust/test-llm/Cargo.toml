@@ -12,6 +12,7 @@ required-features = []
 default = ["openai"]
 anthropic = []
 grok = []
+ollama = []
 openai = []
 openrouter = []
 
