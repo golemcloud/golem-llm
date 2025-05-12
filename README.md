@@ -4,7 +4,7 @@ WebAssembly Components providing a unified API for various LLM providers.
 
 ## Versions
 
-There are 8 published WASM files for each release:
+There are 10 published WASM files for each release:
 
 | Name                                 | Description                                                                          |
 |--------------------------------------|--------------------------------------------------------------------------------------|
@@ -12,10 +12,12 @@ There are 8 published WASM files for each release:
 | `golem-llm-grok.wasm`                | LLM implementation for xAI (Grok), using custom Golem specific durability features   |
 | `golem-llm-openai.wasm`              | LLM implementation for OpenAI, using custom Golem specific durability features       |
 | `golem-llm-openrouter.wasm`          | LLM implementation for OpenRouter, using custom Golem specific durability features   |
+| `golem-llm-ollama.wasm`              | LLM implementation for Ollama, using custom Golem specific durability features       |
 | `golem-llm-anthropic-portable.wasm`  | LLM implementation for Anthropic AI, with no Golem specific dependencies.            |
 | `golem-llm-grok-portable.wasm`       | LLM implementation for xAI (Grok), with no Golem specific dependencies.              |
 | `golem-llm-openai-portable.wasm`     | LLM implementation for OpenAI, with no Golem specific dependencies.                  |
 | `golem-llm-openrouter-portable.wasm` | LLM implementation for OpenRouter, with no Golem specific dependencies.              |
+| `golem-llm-ollama-portable.wasm`     | LLM implementation for Ollama, with no Golem specific dependencies.                  |
 
 Every component **exports** the same `golem:llm` interface, [defined here](wit/golem-llm.wit).
 
@@ -34,6 +36,7 @@ Each provider has to be configured with an API key passed as an environment vari
 | Grok       | `XAI_API_KEY`        |
 | OpenAI     | `OPENAI_API_KEY`     |
 | OpenRouter | `OPENROUTER_API_KEY` |
+| Ollama     | `OLLAMA_BASE_URL`    |
 
 Additionally, setting the `GOLEM_LLM_LOG=trace` environment variable enables trace logging for all the communication
 with the underlying LLM provider.
@@ -139,6 +142,8 @@ Then build and deploy the _test application_. Select one of the following profil
 | `openai-release` | Uses the OpenAI LLM implementation and compiles the code in release profile |
 | `openrouter-debug` | Uses the OpenRouter LLM implementation and compiles the code in debug profile |
 | `openrouter-release` | Uses the OpenRouter LLM implementation and compiles the code in release profile |
+| `ollama-debug` | Uses the Ollama LLM implementation and compiles the code in debug profile |
+| `ollama-release` | Uses the Ollama LLM implementation and compiles the code in release profile |
 
 ```bash
 cd test
@@ -149,7 +154,11 @@ golem app deploy -b openai-debug
 Depending on the provider selected, an environment variable has to be set for the worker to be started, containing the API key for the given provider:
 
 ```bash
+# For OpenAI, Anthropic, Grok, or OpenRouter:
 golem worker new test:llm/debug --env OPENAI_API_KEY=xxx --env GOLEM_LLM_LOG=trace
+
+# For Ollama (no API key required, with no base url, OLLAMA_BASE_URL default is http://localhost:11434/v1) :
+golem worker new test:llm/debug --env OLLAMA_BASE_URL=xxx --env GOLEM_LLM_LOG=trace
 ```
 
 Then you can invoke the test functions on this worker:

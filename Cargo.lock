@@ -367,6 +367,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "golem-llm-ollama"
+version = "0.0.0"
+dependencies = [
+ "base64",
+ "golem-llm",
+ "golem-rust",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "wit-bindgen-rt 0.40.0",
+]
+
+[[package]]
 name = "golem-llm-openai"
 version = "0.0.0"
 dependencies = [
