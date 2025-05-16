@@ -14,6 +14,7 @@ anthropic = []
 grok = []
 openai = []
 openrouter = []
+ollama = []
 
 [dependencies]
 # To use common shared libs, use the following:
