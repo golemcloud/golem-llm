@@ -24,6 +24,31 @@ The `-portable` versions only depend on `wasi:io`, `wasi:http` and `wasi:logging
 The default versions also depend on [Golem's host API](https://learn.golem.cloud/golem-host-functions) to implement
 advanced durability related features.
 
+## Features
+
+### Image Support
+
+`golem-llm` supports including images in prompts in two ways:
+
+1. **URL-based images**: Provide a URL to an image hosted online
+   ```rust
+   ContentPart::Image(ImageSource::Url(ImageUrl {
+       url: "https://example.com/image.png".to_string(),
+       detail: Some(ImageDetail::High),
+   }))
+   ```
+
+2. **Inline images**: Include image data directly in the request
+   ```rust
+   ContentPart::Image(ImageSource::Data(ImageData {
+       data: image_bytes, // Vec<u8> containing the raw image data
+       mime_type: "image/jpeg".to_string(),
+       detail: Some(ImageDetail::Low),
+   }))
+   ```
+
+The `detail` parameter is optional and can be set to `Low`, `High`, or `Auto` to control the image resolution used by the model.
+
 ## Usage
 
 Each provider has to be configured with an API key passed as an environment variable:
@@ -116,8 +141,9 @@ implemented test functions are demonstrating the following:
 | `test2`       | Demonstrates using **tools** without streaming                                             |
 | `test3`       | Simple text question and answer with streaming                                             |
 | `test4`       | Tool usage with streaming                                                                  |
-| `test5`       | Using an image in the prompt                                                               |
+| `test5`       | Using an image URL in the prompt                                                           |
 | `test6`       | Demonstrates that the streaming response is continued in case of a crash (with Golem only) |
+| `test7`       | Using an inline image (binary data) in the prompt                                          |
 
 ### Running the examples
 

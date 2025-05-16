@@ -1,7 +1,8 @@
 use crate::client::{CompletionsRequest, CompletionsResponse, Detail, Effort};
+use base64::{engine::general_purpose, Engine as _};
 use golem_llm::golem::llm::llm::{
     ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason, ImageDetail,
-    Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
+    ImageSource, Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
 };
 use std::collections::HashMap;
 
@@ -168,12 +169,28 @@ fn convert_content_parts(contents: Vec<ContentPart>) -> crate::client::Content {
     for content in contents {
         match content {
             ContentPart::Text(text) => result.push(crate::client::ContentPart::TextInput { text }),
-            ContentPart::Image(image_url) => result.push(crate::client::ContentPart::ImageInput {
-                image_url: crate::client::ImageUrl {
-                    url: image_url.url,
-                    detail: image_url.detail.map(|d| d.into()),
-                },
-            }),
+            ContentPart::Image(image_source) => match image_source {
+                ImageSource::Url(image_url) => {
+                    result.push(crate::client::ContentPart::ImageInput {
+                        image_url: crate::client::ImageUrl {
+                            url: image_url.url,
+                            detail: image_url.detail.map(|d| d.into()),
+                        },
+                    })
+                }
+                ImageSource::Data(image_data) => {
+                    // Convert binary data to base64 and format as data URL
+                    let base64_data = general_purpose::STANDARD.encode(&image_data.data);
+                    let data_url = format!("data:{};base64,{}", image_data.mime_type, base64_data);
+
+                    result.push(crate::client::ContentPart::ImageInput {
+                        image_url: crate::client::ImageUrl {
+                            url: data_url,
+                            detail: image_data.detail.map(|d| d.into()),
+                        },
+                    });
+                }
+            },
         }
     }
     crate::client::Content::List(result)

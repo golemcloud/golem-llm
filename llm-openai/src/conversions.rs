@@ -2,10 +2,11 @@ use crate::client::{
     CreateModelResponseRequest, CreateModelResponseResponse, Detail, InnerInput, InnerInputItem,
     Input, InputItem, OutputItem, OutputMessageContent, Tool,
 };
+use base64::{engine::general_purpose, Engine as _};
 use golem_llm::error::error_code_from_status;
 use golem_llm::golem::llm::llm::{
-    ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, ImageDetail, Message,
-    ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
+    ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, ImageDetail, ImageSource,
+    Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
 };
 use reqwest::StatusCode;
 use std::collections::HashMap;
@@ -124,14 +125,31 @@ pub fn to_openai_role_name(role: Role) -> &'static str {
 pub fn content_part_to_inner_input_item(content_part: ContentPart) -> InnerInputItem {
     match content_part {
         ContentPart::Text(msg) => InnerInputItem::TextInput { text: msg },
-        ContentPart::Image(image_url) => InnerInputItem::ImageInput {
-            image_url: image_url.url,
-            detail: match image_url.detail {
-                Some(ImageDetail::Auto) => Detail::Auto,
-                Some(ImageDetail::Low) => Detail::Low,
-                Some(ImageDetail::High) => Detail::High,
-                None => Detail::default(),
+        ContentPart::Image(image_source) => match image_source {
+            ImageSource::Url(image_url) => InnerInputItem::ImageInput {
+                image_url: image_url.url,
+                detail: match image_url.detail {
+                    Some(ImageDetail::Auto) => Detail::Auto,
+                    Some(ImageDetail::Low) => Detail::Low,
+                    Some(ImageDetail::High) => Detail::High,
+                    None => Detail::default(),
+                },
             },
+            ImageSource::Data(image_data) => {
+                // Convert binary data to base64 and format as data URL
+                let base64_data = general_purpose::STANDARD.encode(&image_data.data);
+                let data_url = format!("data:{};base64,{}", image_data.mime_type, base64_data);
+
+                InnerInputItem::ImageInput {
+                    image_url: data_url,
+                    detail: match image_data.detail {
+                        Some(ImageDetail::Auto) => Detail::Auto,
+                        Some(ImageDetail::Low) => Detail::Low,
+                        Some(ImageDetail::High) => Detail::High,
+                        None => Detail::default(),
+                    },
+                }
+            }
         },
     }
 }

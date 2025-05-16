@@ -9,6 +9,7 @@ interface test-llm-api {
   test4: func() -> string;
   test5: func();
   test6: func() -> string;
+  test7: func() -> string;
 }
 
 world test-llm {
