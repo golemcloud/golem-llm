@@ -1,10 +1,12 @@
 use crate::client::{
-    Content, ImageSource, MessagesRequest, MessagesRequestMetadata, MessagesResponse, StopReason,
-    Tool, ToolChoice,
+    Content, ImageSource, MediaType, MessagesRequest, MessagesRequestMetadata, MessagesResponse,
+    StopReason, Tool, ToolChoice,
 };
+use base64::{engine::general_purpose, Engine as _};
 use golem_llm::golem::llm::llm::{
-    ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason, ImageUrl,
-    Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
+    ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason,
+    ImageSource as GolemImageSource, ImageUrl, Message, ResponseMetadata, Role, ToolCall,
+    ToolDefinition, ToolResult, Usage,
 };
 use std::collections::HashMap;
 
@@ -103,7 +105,10 @@ pub fn process_response(response: MessagesResponse) -> ChatEvent {
             Content::Text { text, .. } => contents.push(ContentPart::Text(text)),
             Content::Image { source, .. } => match source {
                 ImageSource::Url { url } => {
-                    contents.push(ContentPart::Image(ImageUrl { url, detail: None }))
+                    contents.push(ContentPart::Image(GolemImageSource::Url(ImageUrl {
+                        url,
+                        detail: None,
+                    })))
                 }
                 ImageSource::Base64 { .. } => {
                     return ChatEvent::Error(Error {
@@ -214,12 +219,36 @@ fn message_to_content(message: &Message) -> Vec<Content> {
                 text: text.clone(),
                 cache_control: None,
             }),
-            ContentPart::Image(image_url) => result.push(Content::Image {
-                source: ImageSource::Url {
-                    url: image_url.url.clone(),
-                },
-                cache_control: None,
-            }),
+            ContentPart::Image(image_source) => match image_source {
+                GolemImageSource::Url(image_url) => result.push(Content::Image {
+                    source: ImageSource::Url {
+                        url: image_url.url.clone(),
+                    },
+                    cache_control: None,
+                }),
+                GolemImageSource::Data(image_data) => {
+                    // Convert binary data to base64
+                    let base64_data = general_purpose::STANDARD.encode(&image_data.data);
+
+                    // Determine the media type
+                    let media_type = match image_data.mime_type.as_str() {
+                        "image/jpeg" => MediaType::Jpeg,
+                        "image/png" => MediaType::Png,
+                        "image/svg+xml" => MediaType::Gif,
+                        "image/webp" => MediaType::Webp,
+                        // Default to JPEG for other types
+                        _ => MediaType::Jpeg,
+                    };
+
+                    result.push(Content::Image {
+                        source: ImageSource::Base64 {
+                            data: base64_data,
+                            media_type,
+                        },
+                        cache_control: None,
+                    });
+                }
+            },
         }
     }
 

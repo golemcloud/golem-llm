@@ -62,7 +62,7 @@ impl Guest for Component {
                         .into_iter()
                         .map(|content| match content {
                             llm::ContentPart::Text(txt) => txt,
-                            llm::ContentPart::Image(img) => format!("[IMAGE: {}]", img.url),
+                            llm::ContentPart::Image(url) => format!("[IMAGE URL: {}]", url.url),
                         })
                         .collect::<Vec<_>>()
                         .join(", ")
@@ -417,8 +417,8 @@ impl Guest for Component {
                                 llm::ContentPart::Text(txt) => {
                                     result.push_str(&txt);
                                 }
-                                llm::ContentPart::Image(img) => {
-                                    result.push_str(&format!("IMAGE: {} ({:?})\n", img.url, img.detail));
+                                llm::ContentPart::Image(url) => {
+                                    result.push_str(&format!("IMAGE URL: {} ({:?})\n", url.url, url.detail));
                                 }
                             }
                         }
@@ -451,6 +451,82 @@ impl Guest for Component {
         }
 
         result
+    }
+
+    /// test7 demonstrates how to send inline images to the LLM
+    fn test7() -> String {
+        // Create a simple test image (a small 3x3 black and white checkerboard pattern)
+        let _image_bytes: Vec<u8> = vec![
+            0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01,
+            0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43,
+            0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0x03, 0x00,
+            0x03, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xC4, 0x00, 0x14, 0x00, 0x01, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0xFF, 0xC4, 0x00, 0x14, 0x10, 0x01, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3F, 0x00, 0x54,
+            0x55, 0x54, 0xFF, 0xD9
+        ];
+
+        let config = llm::Config {
+            model: IMAGE_MODEL.to_string(),
+            temperature: None,
+            max_tokens: None,
+            stop_sequences: None,
+            tools: vec![],
+            tool_choice: None,
+            provider_options: vec![],
+        };
+
+        println!("Sending request with inline image to LLM...");
+        let response = llm::send(
+            &[
+                llm::Message {
+                    role: llm::Role::User,
+                    name: None,
+                    content: vec![
+                        llm::ContentPart::Text("What pattern do you see in this image?".to_string()),
+                        llm::ContentPart::Image(llm::ImageUrl {
+                            url: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAADAAMDAREAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwBUVVU=".to_string(),
+                            detail: Some(llm::ImageDetail::High),
+                        }),
+                    ],
+                },
+            ],
+            &config,
+        );
+        
+        match response {
+            llm::ChatEvent::Message(msg) => {
+                format!(
+                    "{}",
+                    msg.content
+                        .into_iter()
+                        .map(|content| match content {
+                            llm::ContentPart::Text(txt) => txt,
+                            llm::ContentPart::Image(url) => format!("[IMAGE URL: {}]", url.url),
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            }
+            llm::ChatEvent::ToolRequest(request) => {
+                format!("Tool request: {:?}", request)
+            }
+            llm::ChatEvent::Error(error) => {
+                format!(
+                    "ERROR: {:?} {} ({})",
+                    error.code,
+                    error.message,
+                    error.provider_error_json.unwrap_or_default()
+                )
+            }
+        }
     }
 }
 

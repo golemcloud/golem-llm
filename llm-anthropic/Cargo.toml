@@ -24,9 +24,10 @@ reqwest =  { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 wit-bindgen-rt = { workspace = true }
+base64 = "0.22.1"
 
 [package.metadata.component]
-package = "golem:llm-anhropic"
+package = "golem:llm-anthropic"
 
 [package.metadata.component.bindings]
 generate_unused_types = true
