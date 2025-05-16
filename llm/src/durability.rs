@@ -1470,8 +1470,8 @@ mod durable_impl {
 
     #[cfg(test)]
     mod tests {
-        use crate::golem::llm::llm::{ContentPart, ImageDetail, ImageUrl};
         use crate::durability::durable_impl::{ImageData, ImageSource};
+        use crate::golem::llm::llm::{ContentPart, ImageDetail, ImageUrl};
 
         // Simple test to verify that the types can be constructed
         #[test]
@@ -1513,7 +1513,7 @@ mod durable_impl {
         #[test]
         fn content_part_test() {
             let _text = ContentPart::Text("Hello".to_string());
-            
+
             let _img = ContentPart::Image(ImageSource::Url(ImageUrl {
                 url: "https://example.com/image.jpg".to_string(),
                 detail: Some(ImageDetail::Low),
