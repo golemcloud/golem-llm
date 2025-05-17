@@ -63,6 +63,7 @@ impl Guest for Component {
                         .map(|content| match content {
                             llm::ContentPart::Text(txt) => txt,
                             llm::ContentPart::Image(img) => format!("[IMAGE: {}]", img.url),
+                            llm::ContentPart::InlineImage(src) => format!("[INLINE IMAGE: {} bytes]", src.data.len()),
                         })
                         .collect::<Vec<_>>()
                         .join(", ")
@@ -331,7 +332,7 @@ impl Guest for Component {
     }
 
     /// test5 demonstrates how to send image urls to the LLM
-    fn test5() {
+    fn test5() -> String {
         let config = llm::Config {
             model: IMAGE_MODEL.to_string(),
             temperature: None,
@@ -368,6 +369,34 @@ impl Guest for Component {
             &config,
         );
         println!("Response: {:?}", response);
+
+        match response {
+            llm::ChatEvent::Message(msg) => {
+                format!(
+                    "{}",
+                    msg.content
+                        .into_iter()
+                        .map(|content| match content {
+                            llm::ContentPart::Text(txt) => txt,
+                            llm::ContentPart::Image(img) => format!("[IMAGE: {}]", img.url),
+                            llm::ContentPart::InlineImage(src) => format!("[INLINE IMAGE: {} bytes]", src.data.len()),
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            }
+            llm::ChatEvent::ToolRequest(request) => {
+                format!("Tool request: {:?}", request)
+            }
+            llm::ChatEvent::Error(error) => {
+                format!(
+                    "ERROR: {:?} {} ({})",
+                    error.code,
+                    error.message,
+                    error.provider_error_json.unwrap_or_default()
+                )
+            }
+        }
     }
 
     /// test6 simulates a crash during a streaming LLM response, but only first time. 
@@ -420,6 +449,9 @@ impl Guest for Component {
                                 llm::ContentPart::Image(img) => {
                                     result.push_str(&format!("IMAGE: {} ({:?})\n", img.url, img.detail));
                                 }
+                                llm::ContentPart::InlineImage(src) => {
+                                    result.push_str(&format!("INLINE IMAGE: {} bytes\n", src.data.len()));
+                                }
                             }
                         }
                     }
@@ -451,6 +483,79 @@ impl Guest for Component {
         }
 
         result
+    }
+
+    /// test7 demonstrates how to use an image from the Initial File System (IFS) as an inline image
+    fn test7() -> String {
+        use std::fs::File;
+        use std::io::Read;
+
+        let config = llm::Config {
+            model: IMAGE_MODEL.to_string(),
+            temperature: None,
+            max_tokens: None,
+            stop_sequences: None,
+            tools: vec![],
+            tool_choice: None,
+            provider_options: vec![],
+        };
+
+        println!("Reading image from Initial File System...");
+        let mut file = match File::open("/data/cat.png") {
+            Ok(file) => file,
+            Err(err) => return format!("ERROR: Failed to open cat.png: {}", err),
+        };
+
+        let mut buffer = Vec::new();
+        match file.read_to_end(&mut buffer) {
+            Ok(_) => println!("Successfully read {} bytes from cat.png", buffer.len()),
+            Err(err) => return format!("ERROR: Failed to read cat.png: {}", err),
+        }
+
+        println!("Sending request to LLM with inline image...");
+        let response = llm::send(
+            &[llm::Message {
+                role: llm::Role::User,
+                name: None,
+                content: vec![
+                    llm::ContentPart::Text("Please describe this cat image in detail. What breed might it be?".to_string()),
+                    llm::ContentPart::InlineImage(llm::ImageSource {
+                        data: buffer,
+                        mime_type: Some("image/png".to_string()),
+                    }),
+                ],
+            }],
+            &config,
+        );
+        println!("Response: {:?}", response);
+
+        match response {
+            llm::ChatEvent::Message(msg) => {
+                format!(
+                    "{}",
+                    msg.content
+                        .into_iter()
+                        .map(|content| match content {
+                            llm::ContentPart::Text(txt) => txt,
+                            llm::ContentPart::Image(img) => format!("[IMAGE: {}]", img.url),
+                            llm::ContentPart::InlineImage(src) => format!("[INLINE IMAGE: {} bytes]", src.data.len()),
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            }
+            llm::ChatEvent::ToolRequest(request) => {
+                format!("Tool request: {:?}", request)
+            }
+            llm::ChatEvent::Error(error) => {
+                format!(
+                    "ERROR: {:?} {} ({})",
+                    error.code,
+                    error.message,
+                    error.provider_error_json.unwrap_or_default()
+                )
+            }
+        }
     }
 }
 

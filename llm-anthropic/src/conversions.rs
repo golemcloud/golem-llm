@@ -1,7 +1,8 @@
 use crate::client::{
-    Content, ImageSource, MessagesRequest, MessagesRequestMetadata, MessagesResponse, StopReason,
-    Tool, ToolChoice,
+    Content, ImageSource, MediaType, MessagesRequest, MessagesRequestMetadata, MessagesResponse,
+    StopReason, Tool, ToolChoice,
 };
+use base64::{engine::general_purpose, Engine as _};
 use golem_llm::golem::llm::llm::{
     ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason, ImageUrl,
     Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
@@ -220,6 +221,24 @@ fn message_to_content(message: &Message) -> Vec<Content> {
                 },
                 cache_control: None,
             }),
+            ContentPart::InlineImage(image_source) => {
+                let base64_data = general_purpose::STANDARD.encode(&image_source.data);
+                let media_type = match image_source.mime_type.as_deref() {
+                    Some("image/jpeg") => MediaType::Jpeg,
+                    Some("image/png") => MediaType::Png,
+                    Some("image/gif") => MediaType::Gif,
+                    Some("image/webp") => MediaType::Webp,
+                    _ => MediaType::Jpeg, // Default to JPEG for unknown types
+                };
+
+                result.push(Content::Image {
+                    source: ImageSource::Base64 {
+                        data: base64_data,
+                        media_type,
+                    },
+                    cache_control: None,
+                });
+            }
         }
     }
 

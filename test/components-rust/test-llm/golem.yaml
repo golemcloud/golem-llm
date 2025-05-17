@@ -10,6 +10,10 @@ components:
     profiles:
       # DEBUG PROFILES
       openai-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --no-default-features --features openai
             sources:
@@ -32,6 +36,10 @@ components:
           - src/bindings.rs
 
       anthropic-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --no-default-features --features anthropic
             sources:
@@ -54,6 +62,10 @@ components:
           - src/bindings.rs
 
       grok-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --no-default-features --features grok
             sources:
@@ -76,6 +88,10 @@ components:
           - src/bindings.rs
 
       openrouter-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --no-default-features --features openrouter
             sources:
@@ -99,6 +115,10 @@ components:
 
       # RELEASE PROFILES
       openai-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --release --no-default-features --features openai
             sources:
@@ -121,6 +141,10 @@ components:
           - src/bindings.rs
 
       anthropic-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --release --no-default-features --features anthropic
             sources:
@@ -143,6 +167,10 @@ components:
           - src/bindings.rs
 
       grok-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --release --no-default-features --features grok
             sources:
@@ -165,6 +193,10 @@ components:
           - src/bindings.rs
 
       openrouter-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --release --no-default-features --features openrouter
             sources:

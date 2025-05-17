@@ -103,9 +103,9 @@ mod durable_impl {
     use crate::durability::{DurableLLM, ExtendedGuest};
     use crate::golem::llm::llm::{
         ChatEvent, ChatStream, CompleteResponse, Config, ContentPart, Error, ErrorCode,
-        FinishReason, Guest, GuestChatStream, ImageDetail, ImageUrl, Kv, Message, ResponseMetadata,
-        Role, StreamDelta, StreamEvent, ToolCall, ToolDefinition, ToolFailure, ToolResult,
-        ToolSuccess, Usage,
+        FinishReason, Guest, GuestChatStream, ImageDetail, ImageSource, ImageUrl, Kv, Message,
+        ResponseMetadata, Role, StreamDelta, StreamEvent, ToolCall, ToolDefinition, ToolFailure,
+        ToolResult, ToolSuccess, Usage,
     };
     use golem_rust::bindings::golem::durability::durability::{
         DurableFunctionType, LazyInitializedPollable,
@@ -1013,6 +1013,7 @@ mod durable_impl {
     // variant content-part {
     //     text(string),
     //     image(image-url),
+    //     inline-image(image-source),
     //   }
     impl IntoValue for ContentPart {
         fn add_to_builder<T: NodeBuilder>(self, builder: T) -> T::Result {
@@ -1021,6 +1022,9 @@ mod durable_impl {
                 ContentPart::Image(image_url) => {
                     image_url.add_to_builder(builder.variant(1)).finish()
                 }
+                ContentPart::InlineImage(image_source) => {
+                    image_source.add_to_builder(builder.variant(2)).finish()
+                }
             }
         }
 
@@ -1028,6 +1032,7 @@ mod durable_impl {
             let mut builder = builder.variant();
             builder = builder.case("text").string();
             builder = ImageUrl::add_to_type_builder(builder.case("image"));
+            builder = ImageSource::add_to_type_builder(builder.case("inline-image"));
             builder.finish()
         }
     }
@@ -1049,6 +1054,9 @@ mod durable_impl {
                 )),
                 1 => Ok(ContentPart::Image(ImageUrl::from_extractor(
                     &inner.ok_or_else(|| "Missing image url".to_string())?,
+                )?)),
+                2 => Ok(ContentPart::InlineImage(ImageSource::from_extractor(
+                    &inner.ok_or_else(|| "Missing inline image".to_string())?,
                 )?)),
                 _ => Err(format!("Invalid ContentPart variant: {idx}")),
             }
@@ -1123,6 +1131,45 @@ mod durable_impl {
                 Some(2) => Ok(ImageDetail::Auto),
                 _ => Err("Invalid image detail".to_string()),
             }
+        }
+    }
+
+    // record image-source {
+    //   data: list<u8>,
+    //   mime-type: option<string>,
+    // }
+    impl IntoValue for ImageSource {
+        fn add_to_builder<T: NodeBuilder>(self, builder: T) -> T::Result {
+            let mut builder = builder.record();
+            builder = self.data.add_to_builder(builder.item());
+            builder = self.mime_type.add_to_builder(builder.item());
+            builder.finish()
+        }
+
+        fn add_to_type_builder<T: TypeNodeBuilder>(builder: T) -> T::Result {
+            let mut builder = builder.record();
+            builder = Vec::<u8>::add_to_type_builder(builder.field("data"));
+            builder = Option::<String>::add_to_type_builder(builder.field("mime-type"));
+            builder.finish()
+        }
+    }
+
+    impl FromValueAndType for ImageSource {
+        fn from_extractor<'a, 'b>(
+            extractor: &'a impl WitValueExtractor<'a, 'b>,
+        ) -> Result<Self, String> {
+            Ok(Self {
+                data: Vec::<u8>::from_extractor(
+                    &extractor
+                        .field(0)
+                        .ok_or_else(|| "Missing data field".to_string())?,
+                )?,
+                mime_type: Option::<String>::from_extractor(
+                    &extractor
+                        .field(1)
+                        .ok_or_else(|| "Missing mime-type field".to_string())?,
+                )?,
+            })
         }
     }
 
@@ -1387,7 +1434,7 @@ mod durable_impl {
         use crate::durability::durable_impl::SendInput;
         use crate::golem::llm::llm::{
             ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason,
-            ImageDetail, ImageUrl, Message, ResponseMetadata, Role, ToolCall, Usage,
+            ImageDetail, ImageSource, ImageUrl, Message, ResponseMetadata, Role, ToolCall, Usage,
         };
         use golem_rust::value_and_type::{FromValueAndType, IntoValueAndType};
         use golem_rust::wasm_rpc::WitTypeNode;
@@ -1435,11 +1482,27 @@ mod durable_impl {
         }
 
         #[test]
+        fn image_source_roundtrip() {
+            roundtrip_test(ImageSource {
+                data: vec![0, 1, 2, 3, 4, 5],
+                mime_type: Some("image/jpeg".to_string()),
+            });
+            roundtrip_test(ImageSource {
+                data: vec![255, 254, 253, 252],
+                mime_type: None,
+            });
+        }
+
+        #[test]
         fn content_part_roundtrip() {
             roundtrip_test(ContentPart::Text("Hello".to_string()));
             roundtrip_test(ContentPart::Image(ImageUrl {
                 url: "https://example.com/image.png".to_string(),
                 detail: Some(ImageDetail::Low),
+            }));
+            roundtrip_test(ContentPart::InlineImage(ImageSource {
+                data: vec![0, 1, 2, 3, 4, 5],
+                mime_type: Some("image/jpeg".to_string()),
             }));
         }
 
@@ -1557,6 +1620,17 @@ mod durable_impl {
                             url: "https://example.com/image.png".to_string(),
                             detail: Some(ImageDetail::High),
                         })],
+                    },
+                    Message {
+                        role: Role::User,
+                        name: None,
+                        content: vec![
+                            ContentPart::Text("Analyze this image:".to_string()),
+                            ContentPart::InlineImage(ImageSource {
+                                data: vec![0, 1, 2, 3, 4, 5],
+                                mime_type: Some("image/jpeg".to_string()),
+                            }),
+                        ],
                     },
                 ],
                 config: Config {

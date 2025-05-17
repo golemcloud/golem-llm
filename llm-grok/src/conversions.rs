@@ -1,4 +1,5 @@
 use crate::client::{CompletionsRequest, CompletionsResponse, Detail, Effort};
+use base64::{engine::general_purpose, Engine as _};
 use golem_llm::golem::llm::llm::{
     ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason, ImageDetail,
     Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
@@ -174,6 +175,18 @@ fn convert_content_parts(contents: Vec<ContentPart>) -> crate::client::Content {
                     detail: image_url.detail.map(|d| d.into()),
                 },
             }),
+            ContentPart::InlineImage(image_source) => {
+                let base64_data = general_purpose::STANDARD.encode(&image_source.data);
+                let media_type = image_source
+                    .mime_type
+                    .unwrap_or_else(|| "image/jpeg".to_string());
+                result.push(crate::client::ContentPart::ImageInput {
+                    image_url: crate::client::ImageUrl {
+                        url: format!("data:{};base64,{}", media_type, base64_data),
+                        detail: None,
+                    },
+                });
+            }
         }
     }
     crate::client::Content::List(result)
