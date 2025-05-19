@@ -6,6 +6,10 @@ pub mod error;
 #[allow(dead_code)]
 pub mod event_source;
 
+pub mod image;
+use image::{ImageError, ImageProcessor};
+use std::sync::OnceLock;
+
 wit_bindgen::generate!({
     path: "../wit",
     world: "llm-library",
@@ -16,6 +20,7 @@ wit_bindgen::generate!({
 });
 
 pub use crate::exports::golem;
+use crate::golem::llm::llm::ImageDetail;
 pub use __export_llm_library_impl as export_llm;
 use std::cell::RefCell;
 use std::str::FromStr;
@@ -43,4 +48,38 @@ thread_local! {
     pub static LOGGING_STATE: RefCell<LoggingState> = const { RefCell::new(LoggingState {
         logging_initialized: false,
     }) };
+}
+
+static IMAGE_PROCESSOR: OnceLock<ImageProcessor> = OnceLock::new();
+
+fn get_image_processor() -> &'static ImageProcessor {
+    IMAGE_PROCESSOR.get_or_init(ImageProcessor::default)
+}
+
+pub fn process_image_data(data: &[u8], mime_type: &str) -> Result<Vec<u8>, ImageError> {
+    get_image_processor().validate_and_process(data, mime_type)
+}
+
+// Update the ImageData struct to use our processor
+pub struct ImageData {
+    pub data: Vec<u8>,
+    pub mime_type: String,
+    pub detail: Option<ImageDetail>,
+}
+
+impl ImageData {
+    pub fn new(
+        data: Vec<u8>,
+        mime_type: String,
+        detail: Option<ImageDetail>,
+    ) -> Result<Self, ImageError> {
+        // Process the image data
+        let processed_data = process_image_data(&data, &mime_type)?;
+
+        Ok(Self {
+            data: processed_data,
+            mime_type,
+            detail,
+        })
+    }
 }
