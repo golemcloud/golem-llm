@@ -10,10 +10,12 @@ There are 8 published WASM files for each release:
 |--------------------------------------|--------------------------------------------------------------------------------------|
 | `golem-llm-anthropic.wasm`           | LLM implementation for Anthropic AI, using custom Golem specific durability features |
 | `golem-llm-grok.wasm`                | LLM implementation for xAI (Grok), using custom Golem specific durability features   |
+| `golem-llm-ollama.wasm`                | LLM implementation for xAI (Grok), using custom Golem specific durability features   |
 | `golem-llm-openai.wasm`              | LLM implementation for OpenAI, using custom Golem specific durability features       |
 | `golem-llm-openrouter.wasm`          | LLM implementation for OpenRouter, using custom Golem specific durability features   |
 | `golem-llm-anthropic-portable.wasm`  | LLM implementation for Anthropic AI, with no Golem specific dependencies.            |
 | `golem-llm-grok-portable.wasm`       | LLM implementation for xAI (Grok), with no Golem specific dependencies.              |
+| `golem-llm-ollama-portable.wasm`       | LLM implementation for xAI (Grok), with no Golem specific dependencies.              |
 | `golem-llm-openai-portable.wasm`     | LLM implementation for OpenAI, with no Golem specific dependencies.                  |
 | `golem-llm-openrouter-portable.wasm` | LLM implementation for OpenRouter, with no Golem specific dependencies.              |
 
@@ -32,6 +34,7 @@ Each provider has to be configured with an API key passed as an environment vari
 |------------|----------------------|
 | Anthropic  | `ANTHROPIC_API_KEY`  |
 | Grok       | `XAI_API_KEY`        |
+| Ollama     | `OLLAMA_BASE_URL`    |
 | OpenAI     | `OPENAI_API_KEY`     |
 | OpenRouter | `OPENROUTER_API_KEY` |
 
