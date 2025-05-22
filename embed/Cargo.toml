@@ -13,7 +13,7 @@ crate-type = ["rlib"]
 
 [dependencies]
 golem-rust = { workspace = true }
-golem_llm = { path = ".." }
+golem_llm = { path = "../llm" }
 log = { workspace = true }
 mime = "0.3.17"
 nom = { version = "7.1", default-features = false }
