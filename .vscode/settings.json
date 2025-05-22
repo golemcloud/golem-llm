@@ -1,0 +1,24 @@
+{
+    "spellright.language": ["en"],
+    "spellright.documentTypes": ["markdown", "latex", "plaintext"],
+    "spellright.parserByClass": {
+        "cargo.toml": {
+            "parser": "code"
+        }
+    },
+    "spellright.ignoreFiles": [
+        "**/.gitignore",
+        "**/.git/**",
+        "**/target/**"
+    ],
+    "spellright.ignoreRegExpsByClass": {
+        "cargo.toml": [
+            "crate-type\\s*=\\s*\\[.*\\]",
+            "\\[.*dependencies\\]",
+            "version\\s*=\\s*\".*\"",
+            "path\\s*=\\s*\".*\"",
+            "features\\s*=\\s*\\[.*\\]",
+            "\\[package\\.metadata\\..*\\]"
+        ]
+    }
+}

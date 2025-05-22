@@ -1,4 +1,4 @@
-package golem:llm@1.0.0;
+package golem:embed@1.0.0;
 
 interface llm {
   // --- Roles, Error Codes, Finish Reasons ---
