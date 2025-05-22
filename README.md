@@ -1,6 +1,6 @@
 # golem-llm
 
-WebAssembly Components providing a unified API for various LLM providers.
+WebAssembly Components providing a unified API for various LLM providers and embedding services.
 
 ## Versions
 
@@ -104,6 +104,28 @@ To use the LLM provider components in a WebAssembly project independent of Golem
 1. Download one of the `-portable.wasm` versions
 2. Download the `golem-llm.wit` WIT package and import it
 3. Use [`wac`](https://github.com/bytecodealliance/wac) to compose your component with the selected LLM implementation.
+
+## Embedding Functionality
+
+This repository also provides embedding functionality for multiple providers:
+
+- OpenAI
+- Cohere
+- Voyage AI
+- Hugging Face
+
+For detailed documentation on using the embedding services, see [EMBEDDINGS.md](EMBEDDINGS.md).
+
+### Embedding API Keys
+
+Each embedding provider requires an API key passed as an environment variable:
+
+| Provider      | Environment Variable    |
+|---------------|-------------------------|
+| OpenAI        | `OPENAI_API_KEY`        |
+| Cohere        | `COHERE_API_KEY`        |
+| Voyage AI     | `VOYAGEAI_API_KEY`      |
+| Hugging Face  | `HUGGINGFACE_API_KEY`   |
 
 ## Examples
 
