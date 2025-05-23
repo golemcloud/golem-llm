@@ -29,7 +29,7 @@ const IMAGE_MODEL: &'static str = "grok-2-vision-latest";
 #[cfg(feature = "openrouter")]
 const IMAGE_MODEL: &'static str = "openrouter/auto";
 #[cfg(feature = "ollama")]
-const IMAGE_MODEL: &'static str = "moondream";
+const IMAGE_MODEL: &'static str = "gemma3:4b";
 
 impl Guest for Component {
     /// test1 demonstrates a simple, non-streaming text question-answer interaction with the LLM.
