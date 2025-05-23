@@ -66,4 +66,4 @@ impl From<NdjsonStreamError<StreamError>> for Error {
             },
         }
     }
-} 
+}

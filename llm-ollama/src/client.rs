@@ -1,3 +1,4 @@
+use base64::{engine::general_purpose, Engine as _};
 use golem_llm::error::{error_code_from_status, from_reqwest_error};
 use golem_llm::golem::llm::llm::{Error, ErrorCode};
 use log::trace;
@@ -5,7 +6,6 @@ use reqwest::{Client, Method, Response};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use base64::{engine::general_purpose, Engine as _};
 
 /// The Ollama API client for creating model responses.
 pub struct ChatApi {

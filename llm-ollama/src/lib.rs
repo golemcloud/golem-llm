@@ -2,16 +2,14 @@ mod client;
 mod conversions;
 
 use crate::client::{ChatApi, ChatRequest, ChatResponse};
-use crate::conversions::{
-    messages_to_request, process_response, tool_results_to_messages,
-};
+use crate::conversions::{messages_to_request, process_response, tool_results_to_messages};
 use golem_llm::chat_stream::{LlmNdjsonChatStream, LlmNdjsonStreamState};
 use golem_llm::durability::{DurableLLM, ExtendedGuest};
-use golem_llm::ndjson_source::NdjsonSource;
 use golem_llm::golem::llm::llm::{
-    ChatEvent, ChatStream, Config, ContentPart, Error, ErrorCode, FinishReason, Guest, Message, 
+    ChatEvent, ChatStream, Config, ContentPart, Error, ErrorCode, FinishReason, Guest, Message,
     ResponseMetadata, Role, StreamDelta, StreamEvent, ToolCall, ToolResult, Usage,
 };
+use golem_llm::ndjson_source::NdjsonSource;
 use golem_llm::LOGGING_STATE;
 use golem_rust::wasm_rpc::Pollable;
 use log::trace;
@@ -84,7 +82,7 @@ impl LlmNdjsonStreamState for OllamaNdjsonChatStream {
 
     fn decode_message(&self, raw: &str) -> Result<Option<StreamEvent>, String> {
         trace!("Received raw NDJSON event: {raw}");
-        
+
         if raw.trim().is_empty() {
             return Ok(None);
         }
@@ -101,7 +99,7 @@ impl LlmNdjsonStreamState for OllamaNdjsonChatStream {
                     tool_calls: None,
                 })));
             }
-            
+
             // Handle tool calls in streaming
             if let Some(tool_calls) = response.message.tool_calls {
                 let mut llm_tool_calls = Vec::new();
@@ -109,7 +107,8 @@ impl LlmNdjsonStreamState for OllamaNdjsonChatStream {
                     llm_tool_calls.push(ToolCall {
                         id: generate_tool_call_id(),
                         name: tool_call.function.name,
-                        arguments_json: serde_json::to_string(&tool_call.function.arguments).unwrap(),
+                        arguments_json: serde_json::to_string(&tool_call.function.arguments)
+                            .unwrap(),
                     });
                 }
                 return Ok(Some(StreamEvent::Delta(StreamDelta {
@@ -117,20 +116,26 @@ impl LlmNdjsonStreamState for OllamaNdjsonChatStream {
                     tool_calls: Some(llm_tool_calls),
                 })));
             }
-            
-            return Ok(None);
+
+            Ok(None)
         } else {
             // Final response - set metadata and finish
-            let finish_reason = response.done_reason.as_ref().map(|reason| match reason.as_str() {
-                "stop" => FinishReason::Stop,
-                "length" => FinishReason::Length,
-                _ => FinishReason::Other,
-            });
+            let finish_reason = response
+                .done_reason
+                .as_ref()
+                .map(|reason| match reason.as_str() {
+                    "stop" => FinishReason::Stop,
+                    "length" => FinishReason::Length,
+                    _ => FinishReason::Other,
+                });
 
             let usage = Usage {
                 input_tokens: response.prompt_eval_count,
                 output_tokens: response.eval_count,
-                total_tokens: response.prompt_eval_count.zip(response.eval_count).map(|(input, output)| input + output),
+                total_tokens: response
+                    .prompt_eval_count
+                    .zip(response.eval_count)
+                    .map(|(input, output)| input + output),
             };
 
             let metadata = ResponseMetadata {
@@ -142,7 +147,7 @@ impl LlmNdjsonStreamState for OllamaNdjsonChatStream {
             };
 
             self.response_metadata.replace(metadata.clone());
-            return Ok(Some(StreamEvent::Finish(metadata)));
+            Ok(Some(StreamEvent::Finish(metadata)))
         }
     }
 }
@@ -188,7 +193,7 @@ impl Guest for OllamaComponent {
 
     fn send(messages: Vec<Message>, config: Config) -> ChatEvent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
-        
+
         let base_url = Self::get_base_url();
         let client = ChatApi::new(base_url);
 
@@ -298,7 +303,7 @@ fn generate_tool_call_id() -> String {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
     use std::time::{SystemTime, UNIX_EPOCH};
-    
+
     let mut hasher = DefaultHasher::new();
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

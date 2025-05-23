@@ -1,11 +1,9 @@
-use crate::client::{
-    ChatApi, ChatRequest, ChatResponse, Function, ModelOptions, Tool, ToolCall,
-};
+use crate::client::{ChatApi, ChatRequest, ChatResponse, Function, ModelOptions, Tool, ToolCall};
 use base64::{engine::general_purpose, Engine as _};
 use golem_llm::golem::llm::llm::{
     ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason,
-    ImageReference, Message, ResponseMetadata, Role, ToolCall as LlmToolCall,
-    ToolDefinition, ToolResult, Usage,
+    ImageReference, Message, ResponseMetadata, Role, ToolCall as LlmToolCall, ToolDefinition,
+    ToolResult, Usage,
 };
 use std::collections::HashMap;
 
@@ -92,17 +90,23 @@ pub fn process_response(response: ChatResponse) -> ChatEvent {
         }
     }
 
-    let finish_reason = response.done_reason.as_ref().map(|reason| match reason.as_str() {
-        "stop" => FinishReason::Stop,
-        "length" => FinishReason::Length,
-        _ => FinishReason::Other,
-    });
+    let finish_reason = response
+        .done_reason
+        .as_ref()
+        .map(|reason| match reason.as_str() {
+            "stop" => FinishReason::Stop,
+            "length" => FinishReason::Length,
+            _ => FinishReason::Other,
+        });
 
     // Calculate usage from response metadata
     let usage = Usage {
         input_tokens: response.prompt_eval_count,
         output_tokens: response.eval_count,
-        total_tokens: response.prompt_eval_count.zip(response.eval_count).map(|(input, output)| input + output),
+        total_tokens: response
+            .prompt_eval_count
+            .zip(response.eval_count)
+            .map(|(input, output)| input + output),
     };
 
     let metadata = ResponseMetadata {
@@ -163,7 +167,10 @@ pub fn tool_results_to_messages(
     messages
 }
 
-fn message_to_content_and_images(message: &Message, client: &ChatApi) -> Result<(String, Option<Vec<String>>), Error> {
+fn message_to_content_and_images(
+    message: &Message,
+    client: &ChatApi,
+) -> Result<(String, Option<Vec<String>>), Error> {
     let mut text_parts = Vec::new();
     let mut images = Vec::new();
 
@@ -188,7 +195,11 @@ fn message_to_content_and_images(message: &Message, client: &ChatApi) -> Result<
     }
 
     let content = text_parts.join("\n");
-    let images = if images.is_empty() { None } else { Some(images) };
+    let images = if images.is_empty() {
+        None
+    } else {
+        Some(images)
+    };
 
     Ok((content, images))
 }
@@ -215,7 +226,7 @@ fn generate_tool_call_id() -> String {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
     use std::time::{SystemTime, UNIX_EPOCH};
-    
+
     let mut hasher = DefaultHasher::new();
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -229,7 +240,7 @@ fn generate_response_id() -> String {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
     use std::time::{SystemTime, UNIX_EPOCH};
-    
+
     let mut hasher = DefaultHasher::new();
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

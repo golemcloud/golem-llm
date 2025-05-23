@@ -123,4 +123,4 @@ fn check_response(response: Response) -> Result<Response, Error> {
         StatusCode::OK => Ok(response),
         status => Err(Error::InvalidStatusCode(status, response)),
     }
-} 
+}

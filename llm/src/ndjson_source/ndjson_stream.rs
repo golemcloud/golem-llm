@@ -42,9 +42,7 @@ impl NdjsonStream {
         self.stream.subscribe()
     }
 
-    pub fn poll_next(
-        &mut self,
-    ) -> Poll<Option<Result<JsonEvent, NdjsonStreamError<StreamError>>>> {
+    pub fn poll_next(&mut self) -> Poll<Option<Result<JsonEvent, NdjsonStreamError<StreamError>>>> {
         trace!("Polling for next NDJSON event");
 
         // Try to parse any complete JSON objects from the current buffer
@@ -74,14 +72,14 @@ impl NdjsonStream {
                 Poll::Ready(Some(Err(err))) => return Poll::Ready(Some(Err(err.into()))),
                 Poll::Ready(None) => {
                     self.state = NdjsonStreamState::Terminated;
-                    
+
                     // Process any remaining JSON in the buffer
                     if !self.buffer.trim().is_empty() {
                         if let Some(event) = self.try_parse_json_from_buffer()? {
                             return Poll::Ready(Some(Ok(event)));
                         }
                     }
-                    
+
                     return Poll::Ready(None);
                 }
                 Poll::Pending => return Poll::Pending,
@@ -91,28 +89,27 @@ impl NdjsonStream {
 
     /// Try to parse a complete JSON object from the buffer
     /// Returns the first complete JSON object found, or None if no complete object is available
-    fn try_parse_json_from_buffer(&mut self) -> Result<Option<JsonEvent>, NdjsonStreamError<StreamError>> {
+    fn try_parse_json_from_buffer(
+        &mut self,
+    ) -> Result<Option<JsonEvent>, NdjsonStreamError<StreamError>> {
         loop {
             if let Some(newline_pos) = self.buffer.find('\n') {
                 // Extract the line up to the newline
                 let line = self.buffer[..newline_pos].trim().to_string();
-                
+
                 // Remove the processed line from the buffer
                 self.buffer.drain(..=newline_pos);
-                
+
                 // Skip empty lines
                 if line.is_empty() {
                     continue;
                 }
-                
+
                 // Try to parse the line as JSON
                 match serde_json::from_str::<JsonValue>(&line) {
                     Ok(data) => {
                         trace!("Successfully parsed NDJSON object: {}", line);
-                        return Ok(Some(JsonEvent {
-                            raw: line,
-                            data,
-                        }));
+                        return Ok(Some(JsonEvent { raw: line, data }));
                     }
                     Err(err) => {
                         trace!("Failed to parse NDJSON line: {}, error: {}", line, err);
@@ -160,4 +157,4 @@ where
     }
 }
 
-impl<E> std::error::Error for NdjsonStreamError<E> where E: fmt::Display + fmt::Debug + Send + Sync {} 
+impl<E> std::error::Error for NdjsonStreamError<E> where E: fmt::Display + fmt::Debug + Send + Sync {}

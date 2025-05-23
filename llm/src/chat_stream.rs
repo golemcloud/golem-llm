@@ -1,6 +1,6 @@
 use crate::event_source::{Event, EventSource, MessageEvent};
-use crate::ndjson_source::{NdjsonSource, Event as NdjsonEvent, JsonEvent};
 use crate::golem::llm::llm::{Error, ErrorCode, GuestChatStream, StreamEvent};
+use crate::ndjson_source::{Event as NdjsonEvent, JsonEvent, NdjsonSource};
 use golem_rust::wasm_rpc::Pollable;
 use std::cell::{Ref, RefMut};
 use std::task::Poll;

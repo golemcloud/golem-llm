@@ -78,4 +78,4 @@ impl<E> From<FromUtf8Error> for Utf8StreamError<E> {
     fn from(err: FromUtf8Error) -> Self {
         Self::Utf8(err)
     }
-} 
+}
