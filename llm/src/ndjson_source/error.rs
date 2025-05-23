@@ -22,6 +22,8 @@ impl std::error::Error for CannotCloneRequestError {}
 
 /// Error raised by the NDJSON stream fetching and parsing
 #[derive(Debug, Error)]
+#[allow(clippy::large_enum_variant)]
+// Clippy error fix, Maybe use InvalidStatusCode(StatusCode, Box<Response>)
 pub enum Error {
     /// Source stream is not valid UTF8
     #[error(transparent)]

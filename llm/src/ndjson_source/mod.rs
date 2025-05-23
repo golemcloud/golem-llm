@@ -77,7 +77,7 @@ impl NdjsonSource {
         }
     }
 
-    /// Close the NdjsonSource stream
+    /// Close the NdjsonSource stream and stop trying to reconnect
     pub fn close(&mut self) {
         self.is_closed = true;
     }

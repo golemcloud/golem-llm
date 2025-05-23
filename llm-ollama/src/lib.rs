@@ -16,6 +16,7 @@ use log::trace;
 use std::cell::{Ref, RefCell, RefMut};
 
 // Environment variable to configure the Ollama API base URL
+// Maybe Add a way to validate the URL
 const BASE_URL_ENV: &str = "OLLAMA_BASE_URL";
 // Default URL for local Ollama instance
 const DEFAULT_BASE_URL: &str = "http://localhost:11434";

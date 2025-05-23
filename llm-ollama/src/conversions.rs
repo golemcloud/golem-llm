@@ -222,6 +222,7 @@ fn tool_definition_to_tool(tool: &ToolDefinition) -> Result<Tool, Error> {
     }
 }
 
+// Ollama doesn't provide tool call IDs, so we generate them
 fn generate_tool_call_id() -> String {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
@@ -236,6 +237,8 @@ fn generate_tool_call_id() -> String {
     format!("call_{:x}", hasher.finish())
 }
 
+// Ollama doesn't provide response IDs, so we generate them
+// Probably there is a better way to do this
 fn generate_response_id() -> String {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};

@@ -89,6 +89,7 @@ impl NdjsonStream {
 
     /// Try to parse a complete JSON object from the buffer
     /// Returns the first complete JSON object found, or None if no complete object is available
+    /// No Size Limit on the JSON object, Potential Memory Leak as Buffer grows indefinitely
     fn try_parse_json_from_buffer(
         &mut self,
     ) -> Result<Option<JsonEvent>, NdjsonStreamError<StreamError>> {
