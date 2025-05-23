@@ -6,6 +6,7 @@ on:
       - "v*.*.*"
     branches:
       - main
+      - llm-ollama
   pull_request:
 
 env:
@@ -84,6 +85,169 @@ jobs:
         run: cargo binstall --force --locked cargo-component@0.20.0
       - name: Build all test components
         run: cargo make build-test-components
+  integration-tests:
+    needs:
+      - tests
+      - build-all
+      - build-test-components
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-is
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - uses: davidB/rust-cargo-make@v1
+      - uses: cargo-bins/cargo-binstall@main
+      - name: Install cargo-component
+        run: cargo binstall --force --locked cargo-component@0.20.0
+      
+      # Install Golem CLI
+      - name: Download and install Golem CLI
+        run: |
+          curl -L -o golem-cli-x86_64-unknown-linux-gnu \
+            https://github.com/golemcloud/golem-cli/releases/download/v1.2.3/golem-cli-x86_64-unknown-linux-gnu
+          chmod +x golem-cli-x86_64-unknown-linux-gnu
+          sudo mv golem-cli-x86_64-unknown-linux-gnu /usr/local/bin/golem-cli
+      
+      # Install WAC CLI (if needed for deployment)
+      - name: Install WAC CLI
+        run: cargo binstall --force --locked wac-cli
+      
+      # Setup Docker and pull Ollama models
+      - name: Start Ollama container and pull models
+        run: |
+          # Start Ollama container with CPU support for CI
+          docker run -d --name ollama \
+            -v ollama:/root/.ollama \
+            -p 11434:11434 \
+            ollama/ollama
+          
+          # Wait for Ollama to be ready
+          timeout 60 bash -c 'until curl -s http://localhost:11434/api/version; do sleep 2; done'
+          
+          # Check Ollama is running
+          curl -s http://localhost:11434/api/version || exit 1
+          echo "Ollama is ready"
+          
+          # Pull the exact models requested
+          echo "Pulling gemma3:4b model for image tests..."
+          docker exec ollama ollama pull gemma3:4b
+          if [ $? -ne 0 ]; then
+            echo "Failed to pull gemma3:4b model"
+            exit 1
+          fi
+          echo "Gemma3:4b model pulled successfully"
+          
+          echo "Pulling qwen3:1.7b model for text tests..."
+          docker exec ollama ollama pull qwen3:1.7b
+          if [ $? -ne 0 ]; then
+            echo "Failed to pull qwen3:1.7b model"
+            exit 1
+          fi
+          echo "Qwen3:1.7b model pulled successfully"
+          
+          # Verify both models are available
+          echo "Available models:"
+          docker exec ollama ollama list
+          
+          # Verify specific models are present
+          if ! docker exec ollama ollama list | grep -q "gemma3:4b"; then
+            echo "Gemma3:4b model not found in available models"
+            exit 1
+          fi
+          
+          if ! docker exec ollama ollama list | grep -q "qwen3:1.7b"; then
+            echo "Gwen3:1.7b model not found in available models"
+            exit 1
+          fi
+          
+          echo "Both required models (gemma3:4b and qwen3:1.7b) are available"
+      
+      # Build the application
+      - name: Build application
+        run: cargo make build
+      
+      # Download and start Golem server binary
+      - name: Download and start Golem server
+        run: |
+          echo "Downloading Golem server binary..."
+          curl -L -o golem-x86_64-unknown-linux-gnu \
+            https://github.com/golemcloud/golem-cli/releases/download/v1.2.3/golem-x86_64-unknown-linux-gnu
+          chmod +x golem-x86_64-unknown-linux-gnu
+          sudo mv golem-x86_64-unknown-linux-gnu /usr/local/bin/golem
+          
+          echo "Starting Golem server on port 9881..."
+          golem server run &
+          GOLEM_PID=$!
+          echo "GOLEM_PID=$GOLEM_PID" >> $GITHUB_ENV
+          
+          echo "Waiting for Golem server to start..."
+          sleep 10
+          
+          echo "Checking if Golem server is running on port 9881..."
+          if netstat -tuln | grep -q ":9881 "; then
+            echo "Golem server is running on port 9881"
+          else
+            echo "Golem server failed to start"
+            ps aux | grep golem || true
+            exit 1
+          fi
+      
+      # Deploy application using Golem CLI
+      - name: Deploy application with Ollama profile
+        run: |
+          cd test
+          echo "Building and deploying with ollama-debug profile..."
+          golem-cli app deploy --build-profile ollama-debug
+          echo "Deployment completed successfully"
+        
+      # Create worker with appropriate environment variables for Ollama
+      - name: Create worker with Ollama configuration
+        run: |
+          cd test
+          golem-cli worker new test:llm/ollamatest
+          echo "Worker created successfully"
+        
+      # Run integration tests
+      - name: Run integration tests
+        run: |
+          cd test
+          echo "Starting integration tests..."
+          
+          # Test basic connectivity first
+          echo "Testing basic connectivity to Ollama..."
+          curl -s http://localhost:11434/api/version
+          
+          for i in {1..7}; do
+            echo "===================="
+            echo "Running test${i}..."
+            echo "===================="
+            
+            # Run the test with some timeout and error handling
+            if timeout 300 golem-cli worker invoke test:llm/ollamatest test${i}; then
+              echo "Test${i} passed!"
+            else
+              echo "Test${i} failed!"
+              echo "Getting worker logs for debugging..."
+              golem-cli worker get test:llm/ollamatest || true
+              exit 1
+            fi
+            
+            echo "Test${i} completed successfully"
+            echo ""
+          done
+          echo "All integration tests passed!"
   publish-all:
     needs:
       - tests
