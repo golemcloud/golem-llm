@@ -335,6 +335,7 @@ dependencies = [
  "mime",
  "nom",
  "reqwest",
+ "serde_json",
  "thiserror",
  "wasi-logger",
  "wit-bindgen 0.40.0",

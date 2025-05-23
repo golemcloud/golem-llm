@@ -17,6 +17,7 @@ log = { workspace = true }
 mime = "0.3.17"
 nom = { version = "7.1", default-features = false }
 reqwest = { workspace = true }
+serde_json = { workspace = true }
 thiserror = "2.0.12"
 wasi-logger = "0.1.2"
 wit-bindgen = { version = "0.40.0" }

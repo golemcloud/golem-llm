@@ -5,9 +5,9 @@ use crate::client::{ChatApi, ChatRequest, ChatResponse};
 use crate::conversions::{
     messages_to_request, process_response, tool_results_to_messages,
 };
-use golem_llm::chat_stream::{LlmChatStream, LlmChatStreamState};
+use golem_llm::chat_stream::{LlmNdjsonChatStream, LlmNdjsonStreamState};
 use golem_llm::durability::{DurableLLM, ExtendedGuest};
-use golem_llm::event_source::EventSource;
+use golem_llm::ndjson_source::NdjsonSource;
 use golem_llm::golem::llm::llm::{
     ChatEvent, ChatStream, Config, ContentPart, Error, ErrorCode, FinishReason, Guest, Message, 
     ResponseMetadata, Role, StreamDelta, StreamEvent, ToolCall, ToolResult, Usage,
@@ -22,16 +22,16 @@ const BASE_URL_ENV: &str = "OLLAMA_BASE_URL";
 // Default URL for local Ollama instance
 const DEFAULT_BASE_URL: &str = "http://localhost:11434";
 
-struct OllamaChatStream {
-    stream: RefCell<Option<EventSource>>,
+struct OllamaNdjsonChatStream {
+    stream: RefCell<Option<NdjsonSource>>,
     failure: Option<Error>,
     finished: RefCell<bool>,
     response_metadata: RefCell<ResponseMetadata>,
 }
 
-impl OllamaChatStream {
-    pub fn new(stream: EventSource) -> LlmChatStream<Self> {
-        LlmChatStream::new(OllamaChatStream {
+impl OllamaNdjsonChatStream {
+    pub fn new(stream: NdjsonSource) -> LlmNdjsonChatStream<Self> {
+        LlmNdjsonChatStream::new(OllamaNdjsonChatStream {
             stream: RefCell::new(Some(stream)),
             failure: None,
             finished: RefCell::new(false),
@@ -45,8 +45,8 @@ impl OllamaChatStream {
         })
     }
 
-    pub fn failed(error: Error) -> LlmChatStream<Self> {
-        LlmChatStream::new(OllamaChatStream {
+    pub fn failed(error: Error) -> LlmNdjsonChatStream<Self> {
+        LlmNdjsonChatStream::new(OllamaNdjsonChatStream {
             stream: RefCell::new(None),
             failure: Some(error),
             finished: RefCell::new(false),
@@ -61,7 +61,7 @@ impl OllamaChatStream {
     }
 }
 
-impl LlmChatStreamState for OllamaChatStream {
+impl LlmNdjsonStreamState for OllamaNdjsonChatStream {
     fn failure(&self) -> &Option<Error> {
         &self.failure
     }
@@ -74,16 +74,16 @@ impl LlmChatStreamState for OllamaChatStream {
         *self.finished.borrow_mut() = true;
     }
 
-    fn stream(&self) -> Ref<Option<EventSource>> {
+    fn stream(&self) -> Ref<Option<NdjsonSource>> {
         self.stream.borrow()
     }
 
-    fn stream_mut(&self) -> RefMut<Option<EventSource>> {
+    fn stream_mut(&self) -> RefMut<Option<NdjsonSource>> {
         self.stream.borrow_mut()
     }
 
     fn decode_message(&self, raw: &str) -> Result<Option<StreamEvent>, String> {
-        trace!("Received raw stream event: {raw}");
+        trace!("Received raw NDJSON event: {raw}");
         
         if raw.trim().is_empty() {
             return Ok(None);
@@ -164,23 +164,27 @@ impl OllamaComponent {
     fn streaming_request(
         client: ChatApi,
         mut request: ChatRequest,
-    ) -> LlmChatStream<OllamaChatStream> {
+    ) -> LlmNdjsonChatStream<OllamaNdjsonChatStream> {
         request.stream = Some(true);
         match client.stream_send_messages(request) {
             Ok(response) => {
-                // Create a custom EventSource wrapper for NDJSON
-                match create_ndjson_event_source(response) {
-                    Ok(event_source) => OllamaChatStream::new(event_source),
-                    Err(err) => OllamaChatStream::failed(err),
+                // Create NDJSON source for Ollama streaming
+                match NdjsonSource::new(response) {
+                    Ok(ndjson_source) => OllamaNdjsonChatStream::new(ndjson_source),
+                    Err(err) => OllamaNdjsonChatStream::failed(Error {
+                        code: ErrorCode::InternalError,
+                        message: format!("Failed to create NDJSON source: {}", err),
+                        provider_error_json: None,
+                    }),
                 }
             }
-            Err(err) => OllamaChatStream::failed(err),
+            Err(err) => OllamaNdjsonChatStream::failed(err),
         }
     }
 }
 
 impl Guest for OllamaComponent {
-    type ChatStream = LlmChatStream<OllamaChatStream>;
+    type ChatStream = LlmNdjsonChatStream<OllamaNdjsonChatStream>;
 
     fn send(messages: Vec<Message>, config: Config) -> ChatEvent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
@@ -224,7 +228,7 @@ impl ExtendedGuest for OllamaComponent {
     fn unwrapped_stream(
         messages: Vec<Message>,
         config: Config,
-    ) -> LlmChatStream<OllamaChatStream> {
+    ) -> LlmNdjsonChatStream<OllamaNdjsonChatStream> {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         let base_url = Self::get_base_url();
@@ -232,7 +236,7 @@ impl ExtendedGuest for OllamaComponent {
 
         match messages_to_request(messages, config, &client) {
             Ok(request) => Self::streaming_request(client, request),
-            Err(err) => OllamaChatStream::failed(err),
+            Err(err) => OllamaNdjsonChatStream::failed(err),
         }
     }
 
@@ -288,18 +292,6 @@ impl ExtendedGuest for OllamaComponent {
     fn subscribe(stream: &Self::ChatStream) -> Pollable {
         stream.subscribe()
     }
-}
-
-// Create a mock EventSource that wraps the NDJSON response
-// This is a simplified implementation that processes the response immediately
-fn create_ndjson_event_source(_response: reqwest::Response) -> Result<EventSource, Error> {
-    // For now, we'll just return an error since we can't easily adapt NDJSON to EventSource
-    // In a real implementation, this would need to be properly implemented
-    Err(Error {
-        code: ErrorCode::Unsupported,
-        message: "NDJSON streaming is not yet fully supported. Please use non-streaming mode.".to_string(),
-        provider_error_json: None,
-    })
 }
 
 fn generate_tool_call_id() -> String {
