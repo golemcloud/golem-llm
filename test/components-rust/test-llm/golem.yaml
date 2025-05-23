@@ -36,6 +36,10 @@ components:
           - src/bindings.rs
 
       ollama-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --no-default-features --features ollama
             sources:
@@ -163,6 +167,10 @@ components:
           - src/bindings.rs
 
       ollama-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
         build:
           - command: cargo component build --release --no-default-features --features ollama
             sources:

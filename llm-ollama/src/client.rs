@@ -135,34 +135,13 @@ impl ChatApi {
         }
 
         // Convert to base64 using the recommended Engine API
+        // Return just the base64 string, not the data URL format
+        // Ollama expects raw base64, not "data:image/type;base64,base64string"
         let base64_image = general_purpose::STANDARD.encode(image_bytes);
 
-        // Determine MIME type - use the content_type we already extracted
-        let mime_type = if content_type.starts_with("image/") {
-            content_type
-        } else {
-            // If header wasn't image, try to infer from URL extension
-            if image_url.ends_with(".png") {
-                "image/png".to_string()
-            } else if image_url.ends_with(".jpg") || image_url.ends_with(".jpeg") {
-                "image/jpeg".to_string()
-            } else if image_url.ends_with(".gif") {
-                "image/gif".to_string()
-            } else if image_url.ends_with(".webp") {
-                "image/webp".to_string()
-            } else if image_url.ends_with(".svg") {
-                "image/svg+xml".to_string()
-            } else {
-                // Default to png if we can't determine
-                "image/png".to_string()
-            }
-        };
-
-        // Create the base64 data URL
-        let data_url = format!("data:{};base64,{}", mime_type, base64_image);
         trace!("Successfully converted image to base64");
 
-        Ok(data_url)
+        Ok(base64_image)
     }
 }
 

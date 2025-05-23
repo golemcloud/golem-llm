@@ -177,8 +177,9 @@ fn message_to_content_and_images(message: &Message, client: &ChatApi) -> Result<
                         client.download_image_as_base64(&image_url.url)?
                     }
                     ImageReference::Inline(image_source) => {
-                        let base64_data = general_purpose::STANDARD.encode(&image_source.data);
-                        format!("data:{};base64,{}", image_source.mime_type, base64_data)
+                        // Return just the base64 string, not the data URL format
+                        // Ollama expects raw base64, not "data:image/type;base64,base64string"
+                        general_purpose::STANDARD.encode(&image_source.data)
                     }
                 };
                 images.push(base64_image);
