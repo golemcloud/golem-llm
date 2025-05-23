@@ -1,10 +1,12 @@
 use crate::client::{
-    Content, ImageSource, MessagesRequest, MessagesRequestMetadata, MessagesResponse, StopReason,
-    Tool, ToolChoice,
+    Content, ImageSource as ClientImageSource, MediaType, MessagesRequest, MessagesRequestMetadata,
+    MessagesResponse, StopReason, Tool, ToolChoice,
 };
+use base64::{engine::general_purpose, Engine as _};
 use golem_llm::golem::llm::llm::{
-    ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason, ImageUrl,
-    Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
+    ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason,
+    ImageReference, ImageSource, ImageUrl, Message, ResponseMetadata, Role, ToolCall,
+    ToolDefinition, ToolResult, Usage,
 };
 use std::collections::HashMap;
 
@@ -102,15 +104,37 @@ pub fn process_response(response: MessagesResponse) -> ChatEvent {
         match content {
             Content::Text { text, .. } => contents.push(ContentPart::Text(text)),
             Content::Image { source, .. } => match source {
-                ImageSource::Url { url } => {
-                    contents.push(ContentPart::Image(ImageUrl { url, detail: None }))
+                ClientImageSource::Url { url } => {
+                    contents.push(ContentPart::Image(ImageReference::Url(ImageUrl {
+                        url,
+                        detail: None,
+                    })))
                 }
-                ImageSource::Base64 { .. } => {
-                    return ChatEvent::Error(Error {
-                        code: ErrorCode::Unsupported,
-                        message: "Base64 response images are not supported".to_string(),
-                        provider_error_json: None,
-                    })
+                ClientImageSource::Base64 { data, media_type } => {
+                    match general_purpose::STANDARD.decode(data) {
+                        Ok(decoded_data) => {
+                            let mime_type_str = match media_type {
+                                crate::client::MediaType::Jpeg => "image/jpeg".to_string(),
+                                crate::client::MediaType::Png => "image/png".to_string(),
+                                crate::client::MediaType::Gif => "image/gif".to_string(),
+                                crate::client::MediaType::Webp => "image/webp".to_string(),
+                            };
+                            contents.push(ContentPart::Image(ImageReference::Inline(
+                                ImageSource {
+                                    data: decoded_data,
+                                    mime_type: mime_type_str,
+                                    detail: None,
+                                },
+                            )));
+                        }
+                        Err(e) => {
+                            return ChatEvent::Error(Error {
+                                code: ErrorCode::InvalidRequest,
+                                message: format!("Failed to decode base64 image data: {}", e),
+                                provider_error_json: None,
+                            });
+                        }
+                    }
                 }
             },
             Content::ToolUse {
@@ -214,12 +238,32 @@ fn message_to_content(message: &Message) -> Vec<Content> {
                 text: text.clone(),
                 cache_control: None,
             }),
-            ContentPart::Image(image_url) => result.push(Content::Image {
-                source: ImageSource::Url {
-                    url: image_url.url.clone(),
-                },
-                cache_control: None,
-            }),
+            ContentPart::Image(image_reference) => match image_reference {
+                ImageReference::Url(image_url) => result.push(Content::Image {
+                    source: ClientImageSource::Url {
+                        url: image_url.url.clone(),
+                    },
+                    cache_control: None,
+                }),
+                ImageReference::Inline(image_source) => {
+                    let base64_data = general_purpose::STANDARD.encode(&image_source.data);
+                    let media_type = match image_source.mime_type.as_str() {
+                        "image/jpeg" => MediaType::Jpeg,
+                        "image/png" => MediaType::Png,
+                        "image/gif" => MediaType::Gif,
+                        "image/webp" => MediaType::Webp,
+                        _ => MediaType::Jpeg,
+                    };
+
+                    result.push(Content::Image {
+                        source: ClientImageSource::Base64 {
+                            data: base64_data,
+                            media_type,
+                        },
+                        cache_control: None,
+                    });
+                }
+            },
         }
     }
 
