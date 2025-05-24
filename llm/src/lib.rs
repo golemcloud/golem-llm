@@ -6,6 +6,9 @@ pub mod error;
 #[allow(dead_code)]
 pub mod event_source;
 
+#[allow(dead_code)]
+pub mod ndjson_source;
+
 wit_bindgen::generate!({
     path: "../wit",
     world: "llm-library",
