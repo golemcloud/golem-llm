@@ -4,16 +4,20 @@
 pub mod error;
 mod event_stream;
 mod message_event;
+mod ndjson_stream;
 mod parser;
+mod stream;
 mod utf8_stream;
 
 use crate::event_source::error::Error;
 use crate::event_source::event_stream::EventStream;
 use golem_rust::wasm_rpc::Pollable;
 pub use message_event::MessageEvent;
+use ndjson_stream::NdJsonStream;
 use reqwest::header::HeaderValue;
 use reqwest::{Response, StatusCode};
 use std::task::Poll;
+use stream::{Stream, StreamType};
 
 /// The ready state of an [`EventSource`]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
@@ -28,7 +32,8 @@ pub enum ReadyState {
 }
 
 pub struct EventSource {
-    stream: EventStream,
+    /// stream is the type which implements Stream trait
+    stream: StreamType,
     response: Response,
     is_closed: bool,
 }
@@ -44,7 +49,19 @@ impl EventSource {
                         golem_rust::bindings::wasi::io::streams::InputStream,
                     >(response.get_raw_input_stream())
                 };
-                let stream = EventStream::new(handle);
+
+                let stream = if response
+                    .headers()
+                    .get(&reqwest::header::CONTENT_TYPE)
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .contains("ndjson")
+                {
+                    StreamType::NdJsonStream(NdJsonStream::new(handle))
+                } else {
+                    StreamType::EventStream(EventStream::new(handle))
+                };
                 Ok(Self {
                     response,
                     stream,
@@ -70,7 +87,10 @@ impl EventSource {
     }
 
     pub fn subscribe(&self) -> Pollable {
-        self.stream.subscribe()
+        match &self.stream {
+            StreamType::EventStream(stream) => stream.subscribe(),
+            StreamType::NdJsonStream(stream) => stream.subscribe(),
+        }
     }
 
     pub fn poll_next(&mut self) -> Poll<Option<Result<Event, Error>>> {
@@ -78,19 +98,19 @@ impl EventSource {
             return Poll::Ready(None);
         }
 
-        match self.stream.poll_next() {
-            Poll::Ready(Some(Err(err))) => {
-                let err = err.into();
-                self.is_closed = true;
-                Poll::Ready(Some(Err(err)))
-            }
-            Poll::Ready(Some(Ok(event))) => Poll::Ready(Some(Ok(event.into()))),
-            Poll::Ready(None) => {
-                let err = Error::StreamEnded;
-                self.is_closed = true;
-                Poll::Ready(Some(Err(err)))
-            }
-            Poll::Pending => Poll::Pending,
+        match &mut self.stream {
+            StreamType::EventStream(stream) => match stream.poll_next() {
+                Poll::Ready(Some(Ok(event))) => Poll::Ready(Some(Ok(Event::Message(event)))),
+                Poll::Ready(Some(Err(err))) => Poll::Ready(Some(Err(err.into()))),
+                Poll::Ready(None) => Poll::Ready(None),
+                Poll::Pending => Poll::Pending,
+            },
+            StreamType::NdJsonStream(stream) => match stream.poll_next() {
+                Poll::Ready(Some(Ok(event))) => Poll::Ready(Some(Ok(Event::Message(event)))),
+                Poll::Ready(Some(Err(err))) => Poll::Ready(Some(Err(err.into()))),
+                Poll::Ready(None) => Poll::Ready(None),
+                Poll::Pending => Poll::Pending,
+            },
         }
     }
 }
@@ -120,7 +140,7 @@ fn check_response(response: Response) -> Result<Response, Error> {
             matches!(
                 (mime_type.type_(), mime_type.subtype()),
                 (mime::TEXT, mime::EVENT_STREAM)
-            )
+            ) || mime_type.subtype().as_str().contains("ndjson")
         })
         .unwrap_or(false)
     {

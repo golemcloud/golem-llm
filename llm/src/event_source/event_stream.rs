@@ -1,14 +1,13 @@
 use crate::event_source::parser::{is_bom, is_lf, line, RawEventLine};
-use crate::event_source::utf8_stream::{Utf8Stream, Utf8StreamError};
+use crate::event_source::utf8_stream::Utf8Stream;
 use crate::event_source::MessageEvent;
-use core::fmt;
 use core::time::Duration;
 use golem_rust::bindings::wasi::io::streams::{InputStream, StreamError};
 use golem_rust::wasm_rpc::Pollable;
 use log::trace;
-use nom::error::Error as NomError;
-use std::string::FromUtf8Error;
 use std::task::Poll;
+
+use super::stream::{Stream, StreamError as EventStreamError};
 
 #[derive(Default, Debug)]
 struct EventBuilder {
@@ -133,9 +132,9 @@ pub struct EventStream {
     last_event_id: String,
 }
 
-impl EventStream {
+impl Stream for EventStream {
     /// Initialize the EventStream with a Stream
-    pub fn new(stream: InputStream) -> Self {
+    fn new(stream: InputStream) -> Self {
         Self {
             stream: Utf8Stream::new(stream),
             buffer: String::new(),
@@ -147,22 +146,20 @@ impl EventStream {
 
     /// Set the last event ID of the stream. Useful for initializing the stream with a previous
     /// last event ID
-    pub fn set_last_event_id(&mut self, id: impl Into<String>) {
+    fn set_last_event_id(&mut self, id: impl Into<String>) {
         self.last_event_id = id.into();
     }
 
     /// Get the last event ID of the stream
-    pub fn last_event_id(&self) -> &str {
+    fn last_event_id(&self) -> &str {
         &self.last_event_id
     }
 
-    pub fn subscribe(&self) -> Pollable {
+    fn subscribe(&self) -> Pollable {
         self.stream.subscribe()
     }
 
-    pub fn poll_next(
-        &mut self,
-    ) -> Poll<Option<Result<MessageEvent, EventStreamError<StreamError>>>> {
+    fn poll_next(&mut self) -> Poll<Option<Result<MessageEvent, EventStreamError<StreamError>>>> {
         trace!("Polling for next event");
 
         match parse_event(&mut self.buffer, &mut self.builder) {
@@ -216,47 +213,6 @@ impl EventStream {
         }
     }
 }
-
-/// Error thrown while parsing an event line
-#[derive(Debug, PartialEq)]
-pub enum EventStreamError<E> {
-    /// Source stream is not valid UTF8
-    Utf8(FromUtf8Error),
-    /// Source stream is not a valid EventStream
-    Parser(NomError<String>),
-    /// Underlying source stream error
-    Transport(E),
-}
-
-impl<E> From<Utf8StreamError<E>> for EventStreamError<E> {
-    fn from(err: Utf8StreamError<E>) -> Self {
-        match err {
-            Utf8StreamError::Utf8(err) => Self::Utf8(err),
-            Utf8StreamError::Transport(err) => Self::Transport(err),
-        }
-    }
-}
-
-impl<E> From<NomError<&str>> for EventStreamError<E> {
-    fn from(err: NomError<&str>) -> Self {
-        EventStreamError::Parser(NomError::new(err.input.to_string(), err.code))
-    }
-}
-
-impl<E> fmt::Display for EventStreamError<E>
-where
-    E: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Utf8(err) => f.write_fmt(format_args!("UTF8 error: {}", err)),
-            Self::Parser(err) => f.write_fmt(format_args!("Parse error: {}", err)),
-            Self::Transport(err) => f.write_fmt(format_args!("Transport error: {}", err)),
-        }
-    }
-}
-
-impl<E> std::error::Error for EventStreamError<E> where E: fmt::Display + fmt::Debug + Send + Sync {}
 
 fn parse_event<E>(
     buffer: &mut String,

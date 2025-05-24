@@ -49,6 +49,12 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "base64"
+version = "0.21.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
+
+[[package]]
+name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
@@ -344,7 +350,7 @@ dependencies = [
 name = "golem-llm-anthropic"
 version = "0.0.0"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "golem-llm",
  "golem-rust",
  "log",
@@ -358,7 +364,7 @@ dependencies = [
 name = "golem-llm-grok"
 version = "0.0.0"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "golem-llm",
  "golem-rust",
  "log",
@@ -369,10 +375,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "golem-llm-ollama"
+version = "0.0.0"
+dependencies = [
+ "base64 0.21.7",
+ "golem-llm",
+ "golem-rust",
+ "log",
+ "mime_guess",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "url",
+ "wit-bindgen-rt 0.40.0",
+]
+
+[[package]]
 name = "golem-llm-openai"
 version = "0.0.0"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "golem-llm",
  "golem-rust",
  "log",
@@ -386,7 +408,7 @@ dependencies = [
 name = "golem-llm-openrouter"
 version = "0.0.0"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "golem-llm",
  "golem-rust",
  "log",
@@ -709,6 +731,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
+name = "mime_guess"
+version = "2.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7c44f8e672c00fe5308fa235f821cb4198414e1c77935c1ab6948d3fd78550e"
+dependencies = [
+ "mime",
+ "unicase",
+]
+
+[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -805,7 +837,7 @@ name = "reqwest"
 version = "0.12.15"
 source = "git+https://github.com/golemcloud/reqwest?branch=update-april-2025#0c40171e4c3f2c5f63183ca70a7b28ade23ed00f"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -1001,6 +1033,12 @@ name = "tower-service"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8df9b6e13f2d32c91b9bd719c00d1958837bc7dec474d94952798cc8e69eeec3"
+
+[[package]]
+name = "unicase"
+version = "2.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75b844d17643ee918803943289730bec8aac480150456169e647ed0b576ba539"
 
 [[package]]
 name = "unicode-ident"

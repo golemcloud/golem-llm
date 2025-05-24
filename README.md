@@ -9,10 +9,12 @@ There are 8 published WASM files for each release:
 | Name                                 | Description                                                                          |
 |--------------------------------------|--------------------------------------------------------------------------------------|
 | `golem-llm-anthropic.wasm`           | LLM implementation for Anthropic AI, using custom Golem specific durability features |
+| `golem-llm-ollama.wasm`           | LLM implementation for Ollama, using custom Golem specific durability features |
 | `golem-llm-grok.wasm`                | LLM implementation for xAI (Grok), using custom Golem specific durability features   |
 | `golem-llm-openai.wasm`              | LLM implementation for OpenAI, using custom Golem specific durability features       |
 | `golem-llm-openrouter.wasm`          | LLM implementation for OpenRouter, using custom Golem specific durability features   |
 | `golem-llm-anthropic-portable.wasm`  | LLM implementation for Anthropic AI, with no Golem specific dependencies.            |
+| `golem-llm-ollama-portable.wasm`  | LLM implementation for Ollama, with no Golem specific dependencies.            |
 | `golem-llm-grok-portable.wasm`       | LLM implementation for xAI (Grok), with no Golem specific dependencies.              |
 | `golem-llm-openai-portable.wasm`     | LLM implementation for OpenAI, with no Golem specific dependencies.                  |
 | `golem-llm-openrouter-portable.wasm` | LLM implementation for OpenRouter, with no Golem specific dependencies.              |
@@ -34,6 +36,7 @@ Each provider has to be configured with an API key passed as an environment vari
 | Grok       | `XAI_API_KEY`        |
 | OpenAI     | `OPENAI_API_KEY`     |
 | OpenRouter | `OPENROUTER_API_KEY` |
+| Ollama | `GOLEM_OLLAMA_BASE_URL` |
 
 Additionally, setting the `GOLEM_LLM_LOG=trace` environment variable enables trace logging for all the communication
 with the underlying LLM provider.
@@ -134,6 +137,8 @@ Then build and deploy the _test application_. Select one of the following profil
 |--------------|-----------------------------------------------------------------------------------------------|
 | `anthropic-debug` | Uses the Anthropic LLM implementation and compiles the code in debug profile |
 | `anthropic-release` | Uses the Anthropic LLM implementation and compiles the code in release profile |
+| `ollama-debug` | Uses the Ollama LLM implementation and compiles the code in debug profile |
+| `ollama-release` | Uses the Ollama LLM implementation and compiles the code in release profile |
 | `grok-debug` | Uses the Grok LLM implementation and compiles the code in debug profile |
 | `grok-release` | Uses the Grok LLM implementation and compiles the code in release profile |
 | `openai-debug` | Uses the OpenAI LLM implementation and compiles the code in debug profile |
