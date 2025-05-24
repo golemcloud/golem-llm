@@ -6,7 +6,6 @@ on:
       - "v*.*.*"
     branches:
       - main
-      - llm-ollama
   pull_request:
 
 env:
@@ -112,14 +111,6 @@ jobs:
       - name: Install cargo-component
         run: cargo binstall --force --locked cargo-component@0.20.0
       
-      # Install Golem CLI
-      - name: Download and install Golem CLI
-        run: |
-          curl -L -o golem-cli-x86_64-unknown-linux-gnu \
-            https://github.com/golemcloud/golem-cli/releases/download/v1.2.3/golem-cli-x86_64-unknown-linux-gnu
-          chmod +x golem-cli-x86_64-unknown-linux-gnu
-          sudo mv golem-cli-x86_64-unknown-linux-gnu /usr/local/bin/golem-cli
-      
       # Install WAC CLI (if needed for deployment)
       - name: Install WAC CLI
         run: cargo binstall --force --locked wac-cli
@@ -209,14 +200,14 @@ jobs:
         run: |
           cd test
           echo "Building and deploying with ollama-debug profile..."
-          golem-cli app deploy --build-profile ollama-debug
+          golem app deploy --build-profile ollama-debug
           echo "Deployment completed successfully"
         
       # Create worker with appropriate environment variables for Ollama
       - name: Create worker with Ollama configuration
         run: |
           cd test
-          golem-cli worker new test:llm/ollamatest
+          golem worker new test:llm/ollamatest
           echo "Worker created successfully"
         
       # Run integration tests
@@ -235,12 +226,12 @@ jobs:
             echo "===================="
             
             # Run the test with some timeout and error handling
-            if timeout 300 golem-cli worker invoke test:llm/ollamatest test${i}; then
+            if timeout 300 golem worker invoke test:llm/ollamatest test${i}; then
               echo "Test${i} passed!"
             else
               echo "Test${i} failed!"
               echo "Getting worker logs for debugging..."
-              golem-cli worker get test:llm/ollamatest || true
+              golem worker get test:llm/ollamatest || true
               exit 1
             fi
             

@@ -158,7 +158,7 @@ Depending on the provider selected, an environment variable has to be set for th
 # For OpenAI, Anthropic, Grok, or OpenRouter:
 golem worker new test:llm/debug --env OPENAI_API_KEY=xxx --env GOLEM_LLM_LOG=trace
 
-# For Ollama (no API key required, with no base url, OLLAMA_BASE_URL default is http://localhost:11434/v1) :
+# For Ollama (no API key required, with no base url, OLLAMA_BASE_URL default is http://localhost:11434) :
 golem worker new test:llm/debug --env OLLAMA_BASE_URL=xxx --env GOLEM_LLM_LOG=trace
 ```
 
