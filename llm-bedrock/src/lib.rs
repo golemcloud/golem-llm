@@ -1,54 +1,56 @@
 mod client;
 mod conversions;
-
-use std::cell::{Ref, RefCell, RefMut};
+mod stream_bridge;
 
 use golem_llm::chat_stream::{LlmChatStream, LlmChatStreamState};
 use golem_llm::durability::{DurableLLM, ExtendedGuest};
 use golem_llm::event_source::EventSource;
 use golem_llm::golem::llm::llm::{
-    ChatEvent, ChatStream, Config, Error as LlmError, ErrorCode, Guest, Message, ResponseMetadata, StreamEvent, ToolCall, ToolResult,
+    ChatEvent, ChatStream, Config, Error as LlmError, ErrorCode, Guest, Message, StreamEvent,
+    ToolCall, ToolResult,
 };
 use golem_llm::LOGGING_STATE;
-use log::{debug, info, error};
+use log::{debug, error, info, trace, warn};
+use std::cell::{Ref, RefCell, RefMut};
 
-use client::BedrockClient;
+use client::{AwsCredentials, BedrockClient, BedrockRequest};
 use conversions::{
-    bedrock_response_to_chat_event,
-    messages_to_bedrock_body,
+    bedrock_converse_to_chat_event, extract_model_config, messages_to_bedrock_converse,
+    tool_results_to_bedrock_messages,
 };
-use wit_bindgen_rt::async_support::block_on;
+use stream_bridge::BedrockSdkStreamWrapper;
 
-const BEDROCK_DEFAULT_ACCEPT: &str = "application/json";
-const BEDROCK_DEFAULT_CONTENT_TYPE: &str = "application/json";
-
-
-// Custom stream implementation for Bedrock
-pub struct BedrockChatStream {
-    stream: RefCell<Option<EventSource>>,
+// Bedrock stream implementation
+pub struct BedrockChatStreamState {
+    // keep a dummy EventSource for framework compatibility
+    dummy_stream: RefCell<Option<EventSource>>,
     failure: Option<LlmError>,
     finished: RefCell<bool>,
+    // Background task handle
+    _stream_wrapper: RefCell<Option<BedrockSdkStreamWrapper>>,
 }
 
-impl BedrockChatStream {
-    pub fn new(stream: EventSource) -> LlmChatStream<Self> {
-        LlmChatStream::new(BedrockChatStream {
-            stream: RefCell::new(Some(stream)),
+impl BedrockChatStreamState {
+    pub fn new(stream_wrapper: BedrockSdkStreamWrapper) -> LlmChatStream<Self> {
+        LlmChatStream::new(BedrockChatStreamState {
+            dummy_stream: RefCell::new(None),
             failure: None,
             finished: RefCell::new(false),
+            _stream_wrapper: RefCell::new(Some(stream_wrapper)),
         })
     }
 
     pub fn failed(error: LlmError) -> LlmChatStream<Self> {
-        LlmChatStream::new(BedrockChatStream {
-            stream: RefCell::new(None),
+        LlmChatStream::new(BedrockChatStreamState {
+            dummy_stream: RefCell::new(None),
             failure: Some(error),
-            finished: RefCell::new(false),
+            finished: RefCell::new(true),
+            _stream_wrapper: RefCell::new(None),
         })
     }
 }
 
-impl LlmChatStreamState for BedrockChatStream {
+impl LlmChatStreamState for BedrockChatStreamState {
     fn failure(&self) -> &Option<LlmError> {
         &self.failure
     }
@@ -62,79 +64,265 @@ impl LlmChatStreamState for BedrockChatStream {
     }
 
     fn stream(&self) -> Ref<Option<EventSource>> {
-        self.stream.borrow()
+        // Return the dummy stream - for now this won't be used
+        self.dummy_stream.borrow()
     }
 
     fn stream_mut(&self) -> RefMut<Option<EventSource>> {
-        self.stream.borrow_mut()
+        // Return the dummy stream - for now this won't be used
+        self.dummy_stream.borrow_mut()
     }
 
-    fn decode_message(&self, _raw: &str) -> Result<Option<StreamEvent>, String> {
-        // TODO: Implement Bedrock-specific message decoding
-        Ok(None)
+    fn decode_message(&self, raw: &str) -> Result<Option<StreamEvent>, String> {
+        // this method is used for JSON parsing of events generate ourselves
+        trace!("Bedrock decode_message: {raw}");
+
+        if raw.trim().is_empty() {
+            return Ok(None);
+        }
+
+        // Try to parse as JSON and convert back to StreamEvent
+        match serde_json::from_str::<serde_json::Value>(raw) {
+            Ok(json) => {
+                if let Some(event_type) = json.get("type").and_then(|t| t.as_str()) {
+                    match event_type {
+                        "delta" => {
+                            let mut content = None;
+                            let mut tool_calls = None;
+
+                            if let Some(text) = json.get("content").and_then(|c| c.as_str()) {
+                                content =
+                                    Some(vec![golem_llm::golem::llm::llm::ContentPart::Text(
+                                        text.to_string(),
+                                    )]);
+                            }
+
+                            if let Some(tc_array) =
+                                json.get("tool_calls").and_then(|tc| tc.as_array())
+                            {
+                                let parsed_tool_calls: Vec<ToolCall> = tc_array
+                                    .iter()
+                                    .filter_map(|tc| {
+                                        if let (Some(id), Some(name), Some(args)) = (
+                                            tc.get("id").and_then(|i| i.as_str()),
+                                            tc.get("name").and_then(|n| n.as_str()),
+                                            tc.get("arguments").and_then(|a| a.as_str()),
+                                        ) {
+                                            Some(ToolCall {
+                                                id: id.to_string(),
+                                                name: name.to_string(),
+                                                arguments_json: args.to_string(),
+                                            })
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                    .collect();
+                                if !parsed_tool_calls.is_empty() {
+                                    tool_calls = Some(parsed_tool_calls);
+                                }
+                            }
+
+                            Ok(Some(StreamEvent::Delta(
+                                golem_llm::golem::llm::llm::StreamDelta {
+                                    content,
+                                    tool_calls,
+                                },
+                            )))
+                        }
+                        "finish" => {
+                            let finish_reason = json
+                                .get("finish_reason")
+                                .and_then(|fr| fr.as_str())
+                                .map(|fr_str| match fr_str {
+                                    "stop" => golem_llm::golem::llm::llm::FinishReason::Stop,
+                                    "length" => golem_llm::golem::llm::llm::FinishReason::Length,
+                                    "tool_calls" => {
+                                        golem_llm::golem::llm::llm::FinishReason::ToolCalls
+                                    }
+                                    "content_filter" => {
+                                        golem_llm::golem::llm::llm::FinishReason::ContentFilter
+                                    }
+                                    "error" => golem_llm::golem::llm::llm::FinishReason::Error,
+                                    _ => golem_llm::golem::llm::llm::FinishReason::Other,
+                                });
+
+                            let usage =
+                                json.get("usage")
+                                    .map(|u| golem_llm::golem::llm::llm::Usage {
+                                        input_tokens: u
+                                            .get("input_tokens")
+                                            .and_then(|it| it.as_u64())
+                                            .map(|v| v as u32),
+                                        output_tokens: u
+                                            .get("output_tokens")
+                                            .and_then(|ot| ot.as_u64())
+                                            .map(|v| v as u32),
+                                        total_tokens: u
+                                            .get("total_tokens")
+                                            .and_then(|tt| tt.as_u64())
+                                            .map(|v| v as u32),
+                                    });
+
+                            let provider_id = json
+                                .get("provider_id")
+                                .and_then(|pid| pid.as_str())
+                                .map(|s| s.to_string());
+
+                            Ok(Some(StreamEvent::Finish(
+                                golem_llm::golem::llm::llm::ResponseMetadata {
+                                    finish_reason,
+                                    usage,
+                                    provider_id,
+                                    timestamp: None,
+                                    provider_metadata_json: None,
+                                },
+                            )))
+                        }
+                        "error" => {
+                            let message = json
+                                .get("message")
+                                .and_then(|m| m.as_str())
+                                .unwrap_or("Unknown error")
+                                .to_string();
+
+                            Ok(Some(StreamEvent::Error(LlmError {
+                                code: ErrorCode::InternalError,
+                                message,
+                                provider_error_json: None,
+                            })))
+                        }
+                        _ => {
+                            warn!("Unknown event type in decode_message: {event_type}");
+                            Ok(None)
+                        }
+                    }
+                } else {
+                    warn!("No event type in JSON: {raw}");
+                    Ok(None)
+                }
+            }
+            Err(e) => {
+                warn!("Failed to parse JSON in decode_message: {raw} - Error: {e}");
+                Ok(None)
+            }
+        }
     }
 }
 
-impl Drop for BedrockChatStream {
+impl Drop for BedrockChatStreamState {
     fn drop(&mut self) {
-        debug!("BedrockChatStream dropped");
+        debug!("BedrockChatStreamState dropped");
     }
 }
-
 
 struct BedrockComponent;
 
 impl BedrockComponent {
-    // Helper to get region from provider_options or default AWS SDK behavior
     fn get_aws_region(config: &Config) -> Option<String> {
-        config.provider_options.iter()
-            .find(|kv| kv.key.eq_ignore_ascii_case("AWS_REGION") || kv.key.eq_ignore_ascii_case("REGION"))
+        config
+            .provider_options
+            .iter()
+            .find(|kv| {
+                kv.key.eq_ignore_ascii_case("AWS_REGION") || kv.key.eq_ignore_ascii_case("REGION")
+            })
             .map(|kv| kv.value.clone())
+    }
+
+    fn get_aws_credentials(config: &Config) -> Option<AwsCredentials> {
+        let access_key_id = config
+            .provider_options
+            .iter()
+            .find(|kv| kv.key.eq_ignore_ascii_case("AWS_ACCESS_KEY_ID"))
+            .map(|kv| kv.value.clone())?;
+
+        let secret_access_key = config
+            .provider_options
+            .iter()
+            .find(|kv| kv.key.eq_ignore_ascii_case("AWS_SECRET_ACCESS_KEY"))
+            .map(|kv| kv.value.clone())?;
+
+        let session_token = config
+            .provider_options
+            .iter()
+            .find(|kv| kv.key.eq_ignore_ascii_case("AWS_SESSION_TOKEN"))
+            .map(|kv| kv.value.clone());
+
+        Some(AwsCredentials {
+            access_key_id,
+            secret_access_key,
+            session_token,
+        })
+    }
+
+    fn create_client(config: &Config) -> Result<BedrockClient, LlmError> {
+        let region = Self::get_aws_region(config);
+        let credentials = Self::get_aws_credentials(config);
+        BedrockClient::new(region, credentials)
+    }
+
+    fn create_bedrock_request(
+        messages: &[Message],
+        config: &Config,
+    ) -> Result<BedrockRequest, LlmError> {
+        let bedrock_messages = messages_to_bedrock_converse(messages)?;
+        let (max_tokens, temperature, system_prompt) = extract_model_config(config);
+
+        Ok(BedrockRequest {
+            model_id: config.model.clone(),
+            messages: bedrock_messages,
+            system_prompt,
+            max_tokens,
+            temperature,
+        })
+    }
+
+    fn request(client: BedrockClient, request: BedrockRequest) -> ChatEvent {
+        let model_id = request.model_id.clone();
+        match client.converse(request) {
+            Ok(response) => {
+                bedrock_converse_to_chat_event(response, &model_id).unwrap_or_else(ChatEvent::Error)
+            }
+            Err(err) => ChatEvent::Error(err),
+        }
+    }
+
+    fn streaming_request(
+        client: BedrockClient,
+        request: BedrockRequest,
+    ) -> LlmChatStream<BedrockChatStreamState> {
+        match client.converse_stream(request) {
+            Ok(aws_stream_output) => {
+                debug!("Successfully created AWS Bedrock stream");
+                let stream_wrapper = stream_bridge::BedrockSdkStreamWrapper::new(aws_stream_output);
+                BedrockChatStreamState::new(stream_wrapper)
+            }
+            Err(err) => {
+                error!("Failed to create Bedrock stream: {err:?}");
+                BedrockChatStreamState::failed(err)
+            }
+        }
     }
 }
 
 impl Guest for BedrockComponent {
-    type ChatStream = LlmChatStream<BedrockChatStream>;
+    type ChatStream = LlmChatStream<BedrockChatStreamState>;
 
     fn send(messages: Vec<Message>, config: Config) -> ChatEvent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
         info!("Bedrock: send called. Model: {}", config.model);
 
-        block_on(async move {
-            let aws_region = Self::get_aws_region(&config);
-            match BedrockClient::new(aws_region).await {
-                Ok(client) => {
-                    match messages_to_bedrock_body(&messages, None, &config) {
-                        Ok(body) => {
-                            match client
-                                .invoke_model(
-                                    config.model.clone(),
-                                    body,
-                                    BEDROCK_DEFAULT_ACCEPT.to_string(),
-                                    BEDROCK_DEFAULT_CONTENT_TYPE.to_string(),
-                                )
-                                .await
-                            {
-                                Ok(response_json) => bedrock_response_to_chat_event(
-                                    response_json,
-                                    &config.model,
-                                    ResponseMetadata {
-                                        finish_reason: None,
-                                        usage: None,
-                                        provider_id: None,
-                                        timestamp: None,
-                                        provider_metadata_json: None,
-                                    },
-                                ),
-                                Err(e) => ChatEvent::Error(e),
-                            }
-                        }
-                        Err(e) => ChatEvent::Error(e),
-                    }
-                }
-                Err(e) => ChatEvent::Error(e),
-            }
-        })
+        let client = match Self::create_client(&config) {
+            Ok(client) => client,
+            Err(err) => return ChatEvent::Error(err),
+        };
+
+        let request = match Self::create_bedrock_request(&messages, &config) {
+            Ok(request) => request,
+            Err(err) => return ChatEvent::Error(err),
+        };
+
+        Self::request(client, request)
     }
 
     fn continue_(
@@ -144,41 +332,33 @@ impl Guest for BedrockComponent {
     ) -> ChatEvent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
         info!("Bedrock: continue_ called. Model: {}", config.model);
-        block_on(async move {
-            let aws_region = Self::get_aws_region(&config);
-            match BedrockClient::new(aws_region).await {
-                Ok(client) => {
-                     match messages_to_bedrock_body(&messages, Some(&tool_results), &config) {
-                        Ok(body) => {
-                            match client
-                                .invoke_model(
-                                    config.model.clone(),
-                                    body,
-                                    BEDROCK_DEFAULT_ACCEPT.to_string(),
-                                    BEDROCK_DEFAULT_CONTENT_TYPE.to_string(),
-                                )
-                                .await
-                            {
-                                Ok(response_json) => bedrock_response_to_chat_event(
-                                    response_json,
-                                    &config.model,
-                                    ResponseMetadata {
-                                        finish_reason: None,
-                                        usage: None,
-                                        provider_id: None,
-                                        timestamp: None,
-                                        provider_metadata_json: None,
-                                    },
-                                ),
-                                Err(e) => ChatEvent::Error(e),
-                            }
-                        }
-                        Err(e) => ChatEvent::Error(e),
-                    }
-                }
-                Err(e) => ChatEvent::Error(e),
-            }
-        })
+
+        let client = match Self::create_client(&config) {
+            Ok(client) => client,
+            Err(err) => return ChatEvent::Error(err),
+        };
+
+        // Convert original messages to Bedrock format
+        let mut bedrock_messages = match messages_to_bedrock_converse(&messages) {
+            Ok(msgs) => msgs,
+            Err(err) => return ChatEvent::Error(err),
+        };
+
+        // Add tool results as additional messages
+        let tool_result_messages = tool_results_to_bedrock_messages(tool_results);
+        bedrock_messages.extend(tool_result_messages);
+
+        let (max_tokens, temperature, system_prompt) = extract_model_config(&config);
+
+        let request = BedrockRequest {
+            model_id: config.model.clone(),
+            messages: bedrock_messages,
+            system_prompt,
+            max_tokens,
+            temperature,
+        };
+
+        Self::request(client, request)
     }
 
     fn stream(messages: Vec<Message>, config: Config) -> ChatStream {
@@ -191,71 +371,20 @@ impl ExtendedGuest for BedrockComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
         info!("Bedrock: stream called. Model: {}", config.model);
 
-        // The async block will attempt to set up the stream and resolve
-        // to Result<EventSource, LlmError>.
-        // However, due to the mismatch between AWS SDK stream and EventSource requirements,
-        // it will currently return an Err.
-        let result_for_event_source: Result<EventSource, LlmError> = block_on(async move {
-            let aws_region = Self::get_aws_region(&config);
-            let client = BedrockClient::new(aws_region).await?; // Returns LlmError on failure
+        let client = match Self::create_client(&config) {
+            Ok(client) => client,
+            Err(err) => return BedrockChatStreamState::failed(err),
+        };
 
-            let body_json = messages_to_bedrock_body(&messages, None, &config)?; // Returns LlmError
+        let request = match Self::create_bedrock_request(&messages, &config) {
+            Ok(request) => request,
+            Err(err) => return BedrockChatStreamState::failed(err),
+        };
 
-            debug!("Requesting stream from Bedrock. Model: {}, Body: {}", config.model, body_json.to_string());
-
-            let sdk_stream_output = client
-                .invoke_model_with_response_stream(
-                    config.model.clone(),
-                    body_json,
-                    BEDROCK_DEFAULT_ACCEPT.to_string(), // "application/json"
-                    BEDROCK_DEFAULT_CONTENT_TYPE.to_string(), // "application/json"
-                )
-                .await?; // This is LlmError from client.rs with mapped SDK errors
-
-            // sdk_stream_output is InvokeModelWithResponseStreamOutput
-            // - sdk_stream_output.body is EventReceiver<PayloadChunk, _>
-            // - sdk_stream_output.content_type is Option<String> (expected to be "application/json")
-
-            // PROBLEM POINT:
-            // golem_llm::event_source::EventSource::new() expects a `reqwest::Response`
-            // and internally checks for `Content-Type: text/event-stream`.
-            // The AWS SDK's `sdk_stream_output` does not directly provide a `reqwest::Response`.
-            // Also, Bedrock's `InvokeModelWithResponseStream` sends a stream of JSON objects,
-            // (matching the `Accept: application/json` header) not a standard SSE text/event-stream.
-            // This means EventSource's SSE parser would not be suitable for these JSON objects directly.
-
-            // This step requires a significant adaptation layer or a change in how
-            // LlmChatStreamState consumes streams (i.e., not being tied to EventSource for SSE).
-            // For now, we return an error indicating this unimplemented/mismatched part.
-            Err(LlmError {
-                code: ErrorCode::InternalError, // Or perhaps ErrorCode::Unsupported if this adaptation is deemed out of scope
-                message: "Streaming from Bedrock SDK to golem-llm EventSource not yet fully implemented due to API/type mismatch.".to_string(),
-                provider_error_json: Some(format!(
-                    "Bedrock stream content_type: {:?}. EventSource expects 'text/event-stream' and a reqwest::Response.",
-                    sdk_stream_output.content_type
-                )),
-            })
-
-            // If adaptation was possible, it would look something like:
-            // let adapted_response_for_event_source = adapt_sdk_stream_to_reqwest_response(sdk_stream_output)?;
-            // EventSource::new(adapted_response_for_event_source)
-            //     .map_err(|e| LlmError { /* convert event_source::error::Error to LlmError */ })
-        });
-
-        match result_for_event_source {
-            Ok(event_source) => BedrockChatStream::new(event_source),
-            Err(llm_error) => {
-                error!("Failed to setup Bedrock stream: {}", llm_error.message);
-                BedrockChatStream::failed(llm_error)
-            }
-        }
+        Self::streaming_request(client, request)
     }
-
-    // Default retry_prompt from golem-llm/src/durability.rs is fine unless Bedrock needs a very specific format.
 }
 
-// Wrap with DurableLLM
 type DurableBedrockComponent = DurableLLM<BedrockComponent>;
 
-// Export the durable component
 golem_llm::export_llm!(DurableBedrockComponent with_types_in golem_llm);
