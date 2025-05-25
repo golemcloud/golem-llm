@@ -1,6 +1,7 @@
 use golem_llm::error::{error_code_from_status, from_event_source_error, from_reqwest_error};
 use golem_llm::event_source::EventSource;
 use golem_llm::golem::llm::llm::Error;
+use golem_llm::golem::llm::llm::ErrorCode;
 use log::trace;
 use reqwest::header::HeaderValue;
 use reqwest::{Client, Method, Response};
@@ -74,10 +75,7 @@ impl OllamaApi {
 
         let response: Response = self
             .client
-            .request(
-                Method::POST,
-                format!("{}/v1/chat/completions", self.base_url),
-            )
+            .request(Method::POST, format!("{}/api/chat", self.base_url))
             .json(&stream_request)
             .send()
             .map_err(|err| {
@@ -93,17 +91,30 @@ impl OllamaApi {
         let mut stream_request = request;
         stream_request.stream = true;
 
-        let response: Response = self
+        // let response: Response = self
+        //     .client
+        //     .request(Method::POST, format!("{}/api/chat", self.base_url))
+        //     .header(
+        //         reqwest::header::ACCEPT,
+        //         HeaderValue::from_static("text/event-stream"),
+        //     )
+        //     .json(&stream_request)
+        //     .send()
+        //     .map_err(|err| from_reqwest_error("Request failed", err))?;
+
+        let req = self
             .client
-            .request(
-                Method::POST,
-                format!("{}/v1/chat/completions", self.base_url),
-            )
+            .request(Method::POST, format!("{}/api/chat", self.base_url))
             .header(
                 reqwest::header::ACCEPT,
-                HeaderValue::from_static("text/event-stream"),
+                HeaderValue::from_static("application/x-ndjson"),
             )
-            .json(&stream_request)
+            .json(&stream_request);
+
+        let req_dbg = format!("{:?}", req);
+        trace!("FINAL REQUEST: {req_dbg}");
+
+        let response = req
             .send()
             .map_err(|err| from_reqwest_error("Request failed", err))?;
 
@@ -122,22 +133,10 @@ pub struct OllamaChatRequest {
     pub tools: Option<Vec<OllamaTool>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_choice: Option<ToolChoice>,
+    #[serde(rename = "format", skip_serializing_if = "Option::is_none")]
+    pub response_format: Option<serde_json::Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub response_format: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub temperature: Option<f32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub top_p: Option<f32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub stop: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub frequency_penalty: Option<f32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub presence_penalty: Option<f32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub seed: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_tokens: Option<u32>,
+    pub options: Option<serde_json::Map<String, Value>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keep_alive: Option<String>,
     pub stream: bool,
@@ -150,13 +149,6 @@ pub struct OllamaMessage {
     pub content: OllamaMessageContent,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_calls: Option<Vec<OllamaToolCall>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum MessageContentPayload {
-    Text { content: String },
-    Array { content: Vec<ContentPart> },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -190,13 +182,16 @@ pub struct OllamaFunction {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OllamaToolCall {
-    pub id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
     pub function: OllamaToolCallFunction,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OllamaToolCallFunction {
     pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
     pub arguments: Value,
 }
 
@@ -231,12 +226,23 @@ pub struct OllamaError {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OllamaChatResponse {
-    pub id: String,
-    pub object: String,
-    pub created: u64,
     pub model: String,
-    pub choices: Vec<OllamaChoice>,
-    pub usage: Option<OllamaUsage>,
+    #[serde(rename = "created_at")]
+    pub created_at: String,
+    pub message: OllamaMessageContent,
+    pub done: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_duration: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub load_duration: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_eval_count: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_eval_duration: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eval_count: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eval_duration: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -249,8 +255,9 @@ pub struct OllamaChoice {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OllamaMessageContent {
     pub role: String,
-    #[serde(flatten)]
-    pub content: Option<MessageContentPayload>,
+    pub content: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub images: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_calls: Option<Vec<OllamaToolCall>>,
 }
@@ -264,51 +271,55 @@ pub struct OllamaUsage {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OllamaChatDeltaResponse {
-    pub id: String,
-    pub object: String,
-    pub created: u64,
     pub model: String,
-    pub choices: Vec<OllamaDeltaChoice>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OllamaDeltaChoice {
-    pub index: u32,
-    pub delta: OllamaDeltaMessageContent,
-    pub finish_reason: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OllamaDeltaMessageContent {
+    #[serde(rename = "created_at")]
+    pub created_at: String,
+    pub message: OllamaMessageContent,
+    pub done: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub role: Option<String>,
+    pub total_duration: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub content: Option<String>,
+    pub load_duration: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tool_calls: Option<Vec<OllamaToolCall>>,
+    pub prompt_eval_count: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_eval_duration: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eval_count: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eval_duration: Option<u64>,
 }
 
 fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, Error> {
     let status = response.status();
+    let text = response
+        .text()
+        .map_err(|err| from_reqwest_error("Failed to read raw response body", err))?;
+
+    trace!("Raw response body: {}", text);
+
     if status.is_success() {
-        let body = response
-            .json::<T>()
-            .map_err(|err| from_reqwest_error("Failed to decode response body", err))?;
+        let body = serde_json::from_str::<T>(&text).map_err(|err| Error {
+            code: ErrorCode::InternalError,
+            message: format!("Failed to decode response body: {err}"),
+            provider_error_json: Some(text.clone()),
+        })?;
 
-        trace!("Received response from Ollama API: {body:?}");
-
+        trace!("Parsed response body: {:?}", body);
         Ok(body)
     } else {
-        let error_body = response
-            .json::<OllamaErrorResponse>()
-            .map_err(|err| from_reqwest_error("Failed to receive error response body", err))?;
+        let maybe_error = serde_json::from_str::<OllamaErrorResponse>(&text).ok();
 
-        trace!("Received {status} response from Ollama API: {error_body:?}");
+        let message = if let Some(error_obj) = &maybe_error {
+            format!("Request failed with {status}: {}", error_obj.error.message)
+        } else {
+            format!("Request failed with {status}: {text}")
+        };
 
         Err(Error {
             code: error_code_from_status(status),
-            message: format!("Request failed with {status}: {}", error_body.error.message),
-            provider_error_json: Some(serde_json::to_string(&error_body).unwrap()),
+            message,
+            provider_error_json: Some(text),
         })
     }
 }

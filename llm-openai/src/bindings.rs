@@ -41,7 +41,7 @@ o\x02\x14\x1b\x01p\xc0\0\x01@\x03\x08messages>\x0ctool-results\xc1\0\x06config$\
 1\x04\0\x08continue\x01B\x01i8\x01@\x02\x08messages>\x06config$\0\xc3\0\x04\0\x06\
 stream\x01D\x04\0\x13golem:llm/llm@1.0.0\x05\0\x04\0\"golem:llm-openai/llm-libra\
 ry@1.0.0\x04\0\x0b\x11\x01\0\x0bllm-library\x03\0\0\0G\x09producers\x01\x0cproce\
-ssed-by\x02\x0dwit-component\x070.220.0\x10wit-bindgen-rust\x060.36.0";
+ssed-by\x02\x0dwit-component\x070.220.1\x10wit-bindgen-rust\x060.36.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

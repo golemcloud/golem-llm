@@ -1,13 +1,11 @@
 use crate::client::{
-    ContentPart, MessageContentPayload, OllamaApi, OllamaChatRequest, OllamaChatResponse,
-    OllamaFunction, OllamaMessage, OllamaMessageContent, OllamaTool, OllamaToolCall,
-    OllamaToolCallFunction, ToolChoice,
+    OllamaApi, OllamaChatRequest, OllamaChatResponse, OllamaFunction, OllamaMessage,
+    OllamaMessageContent, OllamaTool, OllamaToolCall, OllamaToolCallFunction, ToolChoice,
 };
 use golem_llm::golem::llm::llm::{
     ChatEvent, CompleteResponse, Config, ContentPart as GolemContentPart, Error, ErrorCode,
-    FinishReason, Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
+    FinishReason, Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult,
 };
-use std::collections::HashMap;
 
 pub fn messages_to_request(
     messages: Vec<Message>,
@@ -17,8 +15,8 @@ pub fn messages_to_request(
     let options = config
         .provider_options
         .iter()
-        .map(|kv| (kv.key.clone(), kv.value.clone()))
-        .collect::<HashMap<_, _>>();
+        .map(|kv| (kv.key.clone(), serde_json::Value::String(kv.value.clone())))
+        .collect::<serde_json::Map<_, _>>();
 
     let mut ollama_messages = Vec::new();
     for message in messages {
@@ -54,16 +52,8 @@ pub fn messages_to_request(
         tools,
         tool_choice,
         response_format: options.get("response_format").cloned(),
-        temperature: config.temperature,
-        top_p: options.get("top_p").and_then(|v| v.parse().ok()),
-        stop: config.stop_sequences,
-        frequency_penalty: options
-            .get("frequency_penalty")
-            .and_then(|v| v.parse().ok()),
-        presence_penalty: options.get("presence_penalty").and_then(|v| v.parse().ok()),
-        seed: options.get("seed").and_then(|v| v.parse().ok()),
-        max_tokens: config.max_tokens,
-        keep_alive: options.get("keep_alive").cloned(),
+        options: Some(options),
+        keep_alive: None,
         stream: false,
     })
 }
@@ -76,54 +66,36 @@ fn message_to_ollama_message(message: Message, api: &OllamaApi) -> Result<Ollama
         Role::Tool => "tool".to_string(),
     };
 
-    let mut images = false;
-    let mut content = String::new();
-    let mut parts = Vec::new();
+    let mut text = String::new();
+    let mut images = Vec::new();
 
     for part in message.content {
         match part {
-            GolemContentPart::Text(text) => {
-                if !content.is_empty() {
-                    content.push('\n');
+            GolemContentPart::Text(t) => {
+                if !text.is_empty() {
+                    text.push('\n');
                 }
-                content.push_str(&text);
+                text.push_str(&t);
             }
             GolemContentPart::Image(image) => {
-                images = true;
-
-                if !content.is_empty() {
-                    parts.push(ContentPart::Text {
-                        text: std::mem::take(&mut content),
-                    });
-                }
-
                 let base64 = api.image_url_to_base64(&image.url)?;
-                parts.push(ContentPart::ImageUrl {
-                    image_url: crate::client::ImageUrl {
-                        url: base64,
-                        detail: None,
-                    },
-                });
+                images.push(base64);
             }
         }
     }
-    if images && !content.is_empty() {
-        parts.push(ContentPart::Text {
-            text: content.clone(),
-        });
-    }
 
-    let final_content = if images {
-        MessageContentPayload::Array { content: parts }
+    let image_field = if images.is_empty() {
+        None
     } else {
-        MessageContentPayload::Text { content }
+        Some(images)
     };
 
     Ok(OllamaMessage {
         role: role.clone(),
         content: OllamaMessageContent {
             role,
-            content: Some(final_content),
+            content: text,
+            images: image_field,
             tool_calls: None,
         },
         tool_calls: None,
@@ -153,81 +125,58 @@ fn tool_definition_to_tool(tool: &ToolDefinition) -> Result<OllamaTool, Error> {
 }
 
 pub fn process_response(response: OllamaChatResponse) -> ChatEvent {
-    let choice = match response.choices.first() {
-        Some(c) => c,
-        None => {
-            return ChatEvent::Error(Error {
-                code: ErrorCode::InternalError,
-                message: "No choices in Ollama response".to_string(),
-                provider_error_json: Some(serde_json::to_string(&response).unwrap_or_default()),
-            });
-        }
-    };
+    let message = &response.message;
 
-    if let Some(tool_calls) = &choice.message.tool_calls {
+    if let Some(tool_calls) = &message.tool_calls {
         if !tool_calls.is_empty() {
-            let tool_calls = tool_calls
+            let calls = tool_calls
                 .iter()
                 .map(|tc| ToolCall {
-                    id: tc.id.clone(),
+                    id: tc
+                        .id
+                        .clone()
+                        .unwrap_or_else(|| "unknown_tool_call".to_string()),
                     name: tc.function.name.clone(),
                     arguments_json: tc.function.arguments.to_string(),
                 })
                 .collect();
 
-            return ChatEvent::ToolRequest(tool_calls);
+            return ChatEvent::ToolRequest(calls);
         }
     }
 
-    let content = match &choice.message.content {
-        Some(MessageContentPayload::Text { content }) => {
-            vec![GolemContentPart::Text(content.clone())]
+    let mut content_parts = Vec::new();
+
+    if let Some(images) = &message.images {
+        for image_base64 in images {
+            content_parts.push(GolemContentPart::Text(format!(
+                "[Image(base64)]: {}",
+                image_base64
+            )));
         }
-        Some(MessageContentPayload::Array { content }) => {
-            let mut parts = Vec::new();
-            for part in content {
-                match part {
-                    ContentPart::Text { text } => {
-                        parts.push(GolemContentPart::Text(text.clone()));
-                    }
-                    ContentPart::ImageUrl { image_url } => {
-                        parts.push(GolemContentPart::Text(format!(
-                            "[Image: {}]",
-                            image_url.url
-                        )));
-                    }
-                }
-            }
-            parts
-        }
-        None => vec![],
+    }
+
+    if !message.content.trim().is_empty() {
+        content_parts.push(GolemContentPart::Text(message.content.clone()));
+    }
+
+    let finish_reason = if response.done {
+        Some(FinishReason::Stop)
+    } else {
+        None
     };
-
-    let finish_reason = choice.finish_reason.as_deref().map(|reason| match reason {
-        "stop" => FinishReason::Stop,
-        "length" => FinishReason::Length,
-        "tool_calls" => FinishReason::ToolCalls,
-        "content_filter" => FinishReason::ContentFilter,
-        _ => FinishReason::Other,
-    });
-
-    let usage = response.usage.as_ref().map(|u| Usage {
-        input_tokens: Some(u.prompt_tokens),
-        output_tokens: Some(u.completion_tokens),
-        total_tokens: Some(u.total_tokens),
-    });
 
     let metadata = ResponseMetadata {
         finish_reason,
-        usage,
-        provider_id: Some(response.id.clone()),
-        timestamp: Some(response.created.to_string()),
-        provider_metadata_json: Some(serde_json::to_string(&response.usage).unwrap_or_default()),
+        usage: None,
+        provider_id: None,
+        timestamp: Some(response.created_at.to_string()),
+        provider_metadata_json: Some(serde_json::to_string(&response).unwrap_or_default()),
     };
 
     ChatEvent::Message(CompleteResponse {
-        id: response.id.clone(),
-        content,
+        id: "ollama".to_string(),
+        content: content_parts,
         tool_calls: Vec::new(),
         metadata,
     })
@@ -238,9 +187,10 @@ pub fn tool_results_to_messages(tool_results: Vec<(ToolCall, ToolResult)>) -> Ve
 
     for (tool_call, tool_result) in tool_results {
         let tool_call_obj = OllamaToolCall {
-            id: tool_call.id.clone(),
+            id: Some(tool_call.id.clone()),
             function: OllamaToolCallFunction {
                 name: tool_call.name.clone(),
+                id: None,
                 arguments: serde_json::from_str(&tool_call.arguments_json)
                     .unwrap_or(serde_json::Value::Null),
             },
@@ -250,16 +200,14 @@ pub fn tool_results_to_messages(tool_results: Vec<(ToolCall, ToolResult)>) -> Ve
             role: "assistant".to_string(),
             content: OllamaMessageContent {
                 role: "assistant".to_string(),
-
-                content: Some(MessageContentPayload::Text {
-                    content: "".to_string(),
-                }),
+                content: "".to_string(),
+                images: None,
                 tool_calls: Some(vec![tool_call_obj]),
             },
             tool_calls: None,
         });
 
-        let result_content = match tool_result {
+        let result_text = match tool_result {
             ToolResult::Success(success) => success.result_json,
             ToolResult::Error(error) => format!("Error: {}", error.error_message),
         };
@@ -268,9 +216,8 @@ pub fn tool_results_to_messages(tool_results: Vec<(ToolCall, ToolResult)>) -> Ve
             role: "tool".to_string(),
             content: OllamaMessageContent {
                 role: "tool".to_string(),
-                content: Some(MessageContentPayload::Text {
-                    content: result_content,
-                }),
+                content: result_text,
+                images: None,
                 tool_calls: None,
             },
             tool_calls: None,

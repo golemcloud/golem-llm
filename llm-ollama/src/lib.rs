@@ -67,55 +67,48 @@ impl LlmChatStreamState for OllamaChatStream {
             format!("Failed to deserialize Ollama stream chunk : {err} - raw: {raw}")
         })?;
 
-        let choice = match chunk.choices.first() {
-            Some(c) => c,
-            None => return Ok(None),
-        };
+        let mut parts = Vec::new();
 
-        if let Some(content) = &choice.delta.content {
-            if !content.is_empty() {
-                return Ok(Some(StreamEvent::Delta(StreamDelta {
-                    content: Some(vec![ContentPart::Text(content.clone())]),
-                    tool_calls: None,
-                })));
+        if !chunk.message.content.is_empty() {
+            parts.push(ContentPart::Text(chunk.message.content.clone()));
+        }
+
+        if let Some(images) = &chunk.message.images {
+            for base64_img in images {
+                parts.push(ContentPart::Text(format!("[Image: {}]", base64_img)));
             }
         }
 
-        if let Some(tool_calls) = &choice.delta.tool_calls {
-            if !tool_calls.is_empty() {
-                let golem_tool_calls = tool_calls
-                    .iter()
-                    .map(|tc| ToolCall {
-                        id: tc.id.clone(),
-                        name: tc.function.name.clone(),
-                        arguments_json: tc.function.arguments.to_string(),
-                    })
-                    .collect();
-
-                return Ok(Some(StreamEvent::Delta(StreamDelta {
-                    content: None,
-                    tool_calls: Some(golem_tool_calls),
-                })));
-            }
+        if !parts.is_empty() {
+            return Ok(Some(StreamEvent::Delta(StreamDelta {
+                content: Some(parts),
+                tool_calls: None,
+            })));
         }
-        if let Some(finish_reason) = &choice.finish_reason {
-            let finish_reason_enum = match finish_reason.as_str() {
-                "stop" => FinishReason::Stop,
-                "length" => FinishReason::Length,
-                "tool_calls" => FinishReason::ToolCalls,
-                "content_filter" => FinishReason::ContentFilter,
-                _ => FinishReason::Other,
-            };
 
+        if let Some(tool_calls) = &chunk.message.tool_calls {
+            let calls = tool_calls
+                .iter()
+                .map(|tc| ToolCall {
+                    id: tc.id.clone().unwrap_or_default(),
+                    name: tc.function.name.clone(),
+                    arguments_json: tc.function.arguments.to_string(),
+                })
+                .collect();
+
+            return Ok(Some(StreamEvent::Delta(StreamDelta {
+                content: None,
+                tool_calls: Some(calls),
+            })));
+        }
+
+        if chunk.done {
             let metadata = ResponseMetadata {
-                finish_reason: Some(finish_reason_enum),
+                finish_reason: Some(FinishReason::Stop),
                 usage: None,
-                provider_id: Some(chunk.id.clone()),
-                timestamp: Some(chunk.created.to_string()),
-                provider_metadata_json: Some(format!(
-                    r#"{{"id":"{}","created":{}}}"#,
-                    chunk.id, chunk.created
-                )),
+                provider_id: Some(chunk.model.clone()),
+                timestamp: Some(chunk.created_at.clone()),
+                provider_metadata_json: None,
             };
 
             return Ok(Some(StreamEvent::Finish(metadata)));
