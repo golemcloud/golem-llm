@@ -1,5 +1,5 @@
-use crate::ndjson_source::utf8_stream::{Utf8Stream, Utf8StreamError};
 use crate::ndjson_source::JsonEvent;
+use crate::utf8_stream::{Utf8Stream, Utf8StreamError};
 use core::fmt;
 use golem_rust::bindings::wasi::io::streams::{InputStream, StreamError};
 use golem_rust::wasm_rpc::Pollable;

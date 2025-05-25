@@ -32,7 +32,7 @@ impl Utf8Stream {
         if !self.terminated && self.subscription.ready() {
             match self.stream.read(Self::CHUNK_SIZE) {
                 Ok(bytes) => {
-                    trace!("Read {} bytes from response stream", bytes.len());
+                    trace!("Read {} bytes from stream", bytes.len());
 
                     self.buffer.extend_from_slice(bytes.as_ref());
                     let bytes = core::mem::take(&mut self.buffer);
@@ -48,7 +48,7 @@ impl Utf8Stream {
                     }
                 }
                 Err(StreamError::Closed) => {
-                    trace!("Response stream closed");
+                    trace!("Stream closed");
 
                     self.terminated = true;
                     if self.buffer.is_empty() {

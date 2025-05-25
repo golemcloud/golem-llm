@@ -3,11 +3,9 @@
 
 pub mod error;
 mod ndjson_stream;
-mod utf8_stream;
-
 use crate::ndjson_source::error::Error;
 use crate::ndjson_source::ndjson_stream::NdjsonStream;
-pub use crate::ndjson_source::utf8_stream::Utf8Stream;
+pub use crate::utf8_stream::Utf8Stream;
 use golem_rust::wasm_rpc::Pollable;
 use reqwest::{Response, StatusCode};
 use serde_json::Value as JsonValue;

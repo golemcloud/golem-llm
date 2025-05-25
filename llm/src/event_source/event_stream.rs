@@ -1,6 +1,6 @@
 use crate::event_source::parser::{is_bom, is_lf, line, RawEventLine};
-use crate::event_source::utf8_stream::{Utf8Stream, Utf8StreamError};
 use crate::event_source::MessageEvent;
+use crate::utf8_stream::{Utf8Stream, Utf8StreamError};
 use core::fmt;
 use core::time::Duration;
 use golem_rust::bindings::wasi::io::streams::{InputStream, StreamError};

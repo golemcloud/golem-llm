@@ -5,7 +5,7 @@ pub mod error;
 mod event_stream;
 mod message_event;
 mod parser;
-mod utf8_stream;
+pub use crate::utf8_stream::Utf8Stream;
 
 use crate::event_source::error::Error;
 use crate::event_source::event_stream::EventStream;

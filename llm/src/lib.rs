@@ -2,6 +2,7 @@ pub mod chat_stream;
 pub mod config;
 pub mod durability;
 pub mod error;
+pub mod utf8_stream;
 
 #[allow(dead_code)]
 pub mod event_source;
