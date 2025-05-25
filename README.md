@@ -121,6 +121,7 @@ implemented test functions are demonstrating the following:
 | `test4`       | Tool usage with streaming                                                                  |
 | `test5`       | Using an image in the prompt                                                               |
 | `test6`       | Demonstrates that the streaming response is continued in case of a crash (with Golem only) |
+| `test7`       | Using a source image by passing byte array as base64 in the prompt                         |
 
 ### Running the examples
 
