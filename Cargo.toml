@@ -1,7 +1,18 @@
 [workspace]
 resolver = "2"
 
-members = ["llm", "llm-anthropic", "llm-grok", "llm-openai", "llm-openrouter"]
+members = [
+    "golem-llm/llm", 
+    "golem-llm/llm-anthropic", 
+    "golem-llm/llm-grok", 
+    "golem-llm/llm-openai", 
+    "golem-llm/llm-openrouter",
+    # "golem-embed/embed",
+    # "golem-embed/embed-openai",
+    # "golem-embed/embed-cohere",
+    # "golem-embed/embed-huggingface",
+    # "golem-embed/embed-voyageai"
+]
 
 [profile.release]
 debug = false

@@ -1,0 +1,25 @@
+[package]
+name = "golem-embed-openai"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+golem-embed = { path = "../embed" }
+golem-rust = { workspace = true }
+log = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wit-bindgen-rt = { workspace = true }
+base64 = { workspace = true }
+anyhow = "1.0"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "wasm"
+path = "src/main.rs"
+
+[package.metadata.component]
+package = "golem:embed" 
