@@ -41,20 +41,9 @@ interface llm {
     detail: option<image-detail>,
   }
 
-  record image-source {
-    data: list<u8>,
-    mime-type: string,
-    detail: option<image-detail>,
-  }
-
-  variant image-reference {
-    url(image-url),
-    inline(image-source),
-  }
-
   variant content-part {
     text(string),
-    image(image-reference),
+    image(image-url),
   }
 
   record message {

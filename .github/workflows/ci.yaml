@@ -84,10 +84,76 @@ jobs:
         run: cargo binstall --force --locked cargo-component@0.20.0
       - name: Build all test components
         run: cargo make build-test-components
+  ollama-integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-ollama-integration
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - uses: davidB/rust-cargo-make@v1
+      - uses: cargo-bins/cargo-binstall@main
+      - name: Install tools
+        run: |
+          set -e
+          cargo binstall --force --locked cargo-component@0.20.0
+          cargo binstall golem-cli@1.2.2-dev.11 --locked --force --no-confirm
+          cargo binstall wac-cli --locked --force --no-confirm
+      - name: Start Ollama in Docker
+        run: |
+          set -e
+          docker run -d --name ollama -p 11434:11434 ollama/ollama:latest
+          timeout 60 bash -c 'until curl -f http://localhost:11434/api/version; do sleep 2; done'
+          echo "Pulling Qwen2.5:1.5b"
+          docker exec ollama ollama pull qwen2.5:1.5b
+          echo "Pulling Gemma2:2b"
+          docker exec ollama ollama pull gemma2:2b
+          echo "Verifying models are available"
+          docker exec ollama ollama list | grep -q "qwen2.5:1.5b" || exit 1
+          docker exec ollama ollama list | grep -q "gemma2:2b" || exit 1
+          echo "Ollama setup completed."
+      - name: Install and Run latest Golem Server 
+        run: |
+          set -e
+          echo "Installing Golem server"
+          sudo curl -L https://github.com/golemcloud/golem-cli/releases/download/v1.2.3/golem-x86_64-unknown-linux-gnu -o ./golem
+          sudo chmod +x ./golem
+          sudo mv ./golem /usr/local/bin/golem
+          golem --version
+          golem profile switch local
+          nohup golem server run >golem-server.log 2>&1 &
+          echo "Golem server started." 
+      - name: Build and test Ollama integration
+        run: |
+          set -e
+          cargo make build-ollama
+          cd test
+          golem-cli app build -b ollama-debug
+          golem-cli app deploy -b ollama-debug
+          golem-cli worker new -e GOLEM_OLLAMA_BASE_URL=http://localhost:11434 test:llm/ollama-1
+          golem-cli worker invoke test:llm/ollama-1 test1
+          golem-cli worker invoke test:llm/ollama-1 test2
+          golem-cli worker invoke test:llm/ollama-1 test3
+          golem-cli worker invoke test:llm/ollama-1 test4
+          golem-cli worker invoke test:llm/ollama-1 test5
+          golem-cli worker invoke test:llm/ollama-1 test6
+          golem-cli worker invoke test:llm/ollama-1 test7
   publish-all:
     needs:
       - tests
       - build-test-components
+      - ollama-integration-tests
     runs-on: ubuntu-latest
     permissions:
       contents: write

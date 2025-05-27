@@ -15,6 +15,7 @@ use golem_llm::golem::llm::llm::{
     StreamEvent, ToolCall, ToolResult,
 };
 use golem_llm::LOGGING_STATE;
+use golem_rust::wasm_rpc::Pollable;
 use log::trace;
 use std::cell::{Ref, RefCell, RefMut};
 
@@ -241,6 +242,10 @@ impl ExtendedGuest for OpenAIComponent {
                 Self::streaming_request(client, items, config)
             },
         )
+    }
+
+    fn subscribe(stream: &Self::ChatStream) -> Pollable {
+        stream.subscribe()
     }
 }
 

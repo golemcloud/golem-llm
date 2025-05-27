@@ -1,6 +1,5 @@
-use crate::event_source::event_stream::EventStreamError;
 use core::fmt;
-use golem_rust::bindings::wasi::io::streams::StreamError;
+use golem_rust::bindings::wasi::io::streams::StreamError as WasiStreamError;
 use nom::error::Error as NomError;
 use reqwest::header::HeaderValue;
 use reqwest::Error as ReqwestError;
@@ -8,6 +7,8 @@ use reqwest::Response;
 use reqwest::StatusCode;
 use std::string::FromUtf8Error;
 use thiserror::Error;
+
+use super::stream::StreamError;
 
 /// Error raised when a [`RequestBuilder`] cannot be cloned. See [`RequestBuilder::try_clone`] for
 /// more information
@@ -51,24 +52,24 @@ pub enum Error {
     StreamEnded,
 }
 
-impl From<EventStreamError<ReqwestError>> for Error {
-    fn from(err: EventStreamError<ReqwestError>) -> Self {
+impl From<StreamError<ReqwestError>> for Error {
+    fn from(err: StreamError<ReqwestError>) -> Self {
         match err {
-            EventStreamError::Utf8(err) => Self::Utf8(err),
-            EventStreamError::Parser(err) => Self::Parser(err),
-            EventStreamError::Transport(err) => Self::Transport(err),
+            StreamError::Utf8(err) => Self::Utf8(err),
+            StreamError::Parser(err) => Self::Parser(err),
+            StreamError::Transport(err) => Self::Transport(err),
         }
     }
 }
 
-impl From<EventStreamError<StreamError>> for Error {
-    fn from(err: EventStreamError<StreamError>) -> Self {
+impl From<StreamError<WasiStreamError>> for Error {
+    fn from(err: StreamError<WasiStreamError>) -> Self {
         match err {
-            EventStreamError::Utf8(err) => Self::Utf8(err),
-            EventStreamError::Parser(err) => Self::Parser(err),
-            EventStreamError::Transport(err) => match err {
-                StreamError::Closed => Self::StreamEnded,
-                StreamError::LastOperationFailed(err) => {
+            StreamError::Utf8(err) => Self::Utf8(err),
+            StreamError::Parser(err) => Self::Parser(err),
+            StreamError::Transport(err) => match err {
+                WasiStreamError::Closed => Self::StreamEnded,
+                WasiStreamError::LastOperationFailed(err) => {
                     Self::TransportStream(err.to_debug_string())
                 }
             },

@@ -9,11 +9,13 @@ There are 8 published WASM files for each release:
 | Name                                 | Description                                                                          |
 |--------------------------------------|--------------------------------------------------------------------------------------|
 | `golem-llm-anthropic.wasm`           | LLM implementation for Anthropic AI, using custom Golem specific durability features |
+| `golem-llm-ollama.wasm`           | LLM implementation for Ollama, using custom Golem specific durability features |
 | `golem-llm-grok.wasm`                | LLM implementation for xAI (Grok), using custom Golem specific durability features   |
 | `golem-llm-openai.wasm`              | LLM implementation for OpenAI, using custom Golem specific durability features       |
 | `golem-llm-openrouter.wasm`          | LLM implementation for OpenRouter, using custom Golem specific durability features   |
 | `golem-llm-bedrock.wasm`             | LLM implementation for AWS Bedrock, using custom Golem specific durability features    |
 | `golem-llm-anthropic-portable.wasm`  | LLM implementation for Anthropic AI, with no Golem specific dependencies.            |
+| `golem-llm-ollama-portable.wasm`  | LLM implementation for Ollama, with no Golem specific dependencies.            |
 | `golem-llm-grok-portable.wasm`       | LLM implementation for xAI (Grok), with no Golem specific dependencies.              |
 | `golem-llm-openai-portable.wasm`     | LLM implementation for OpenAI, with no Golem specific dependencies.                  |
 | `golem-llm-openrouter-portable.wasm` | LLM implementation for OpenRouter, with no Golem specific dependencies.              |
@@ -37,6 +39,8 @@ Each provider has to be configured with an API key passed as an environment vari
 | OpenAI     | `OPENAI_API_KEY`     |
 | OpenRouter | `OPENROUTER_API_KEY` |
 | Bedrock    | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN (optional), AWS_REGION (or AWS_DEFAULT_REGION). Relies on standard AWS SDK credential chain. The region can also be set via provider-options in the Config with key AWS_REGION. |
+=======
+| Ollama | `GOLEM_OLLAMA_BASE_URL` |
 
 Additionally, setting the `GOLEM_LLM_LOG=trace` environment variable enables trace logging for all the communication
 with the underlying LLM provider.
@@ -121,6 +125,48 @@ implemented test functions are demonstrating the following:
 | `test4`       | Tool usage with streaming                                                                  |
 | `test5`       | Using an image in the prompt                                                               |
 | `test6`       | Demonstrates that the streaming response is continued in case of a crash (with Golem only) |
+| `test7`       | Using a source image by passing byte array as base64 in the prompt                         |
+
+### Running the examples
+
+To run the examples first you need a running Golem instance. This can be Golem Cloud or the single-executable `golem`
+binary
+started with `golem server run`.
+
+**NOTE**: `golem-llm` requires the latest (unstable) version of Golem currently. It's going to work with the next public
+stable release 1.2.2.
+
+Then build and deploy the _test application_. Select one of the following profiles to choose which provider to use:
+| Profile Name | Description |
+|--------------|-----------------------------------------------------------------------------------------------|
+| `anthropic-debug` | Uses the Anthropic LLM implementation and compiles the code in debug profile |
+| `anthropic-release` | Uses the Anthropic LLM implementation and compiles the code in release profile |
+| `ollama-debug` | Uses the Ollama LLM implementation and compiles the code in debug profile |
+| `ollama-release` | Uses the Ollama LLM implementation and compiles the code in release profile |
+| `grok-debug` | Uses the Grok LLM implementation and compiles the code in debug profile |
+| `grok-release` | Uses the Grok LLM implementation and compiles the code in release profile |
+| `openai-debug` | Uses the OpenAI LLM implementation and compiles the code in debug profile |
+| `openai-release` | Uses the OpenAI LLM implementation and compiles the code in release profile |
+| `openrouter-debug` | Uses the OpenRouter LLM implementation and compiles the code in debug profile |
+| `openrouter-release` | Uses the OpenRouter LLM implementation and compiles the code in release profile |
+
+```bash
+cd test
+golem app build -b openai-debug
+golem app deploy -b openai-debug
+```
+
+Depending on the provider selected, an environment variable has to be set for the worker to be started, containing the API key for the given provider:
+
+```bash
+golem worker new test:llm/debug --env OPENAI_API_KEY=xxx --env GOLEM_LLM_LOG=trace
+```
+
+Then you can invoke the test functions on this worker:
+
+```bash
+golem worker invoke test:llm/debug test1 --stream 
+```
 
 ## Development
 

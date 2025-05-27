@@ -1,6 +1,6 @@
 [package]
 name = "test_llm"
-version = "0.0.1"
+version = "0.0.0"
 edition = "2021"
 
 [lib]
@@ -15,6 +15,7 @@ bedrock = []
 grok = []
 openai = []
 openrouter = []
+ollama = []
 
 [dependencies]
 # To use common shared libs, use the following:
@@ -36,8 +37,8 @@ path = "wit-generated"
 "golem:rpc/types@0.2.0" = "golem_rust::wasm_rpc::golem_rpc_0_2_x::types"
 
 [package.metadata.component.target.dependencies]
-"wasi:io" = { path = "wit-generated/deps/io" }
 "golem:llm" = { path = "wit-generated/deps/golem-llm" }
+"wasi:io" = { path = "wit-generated/deps/io" }
 "wasi:clocks" = { path = "wit-generated/deps/clocks" }
 "golem:rpc" = { path = "wit-generated/deps/golem-rpc" }
 "test:helper-client" = { path = "wit-generated/deps/test_helper-client" }

@@ -1,14 +1,13 @@
 use crate::event_source::parser::{is_bom, is_lf, line, RawEventLine};
-use crate::event_source::utf8_stream::{Utf8Stream, Utf8StreamError};
+use crate::event_source::utf8_stream::Utf8Stream;
 use crate::event_source::MessageEvent;
-use core::fmt;
 use core::time::Duration;
 use golem_rust::bindings::wasi::io::streams::{InputStream, StreamError};
 use golem_rust::wasm_rpc::Pollable;
 use log::trace;
-use nom::error::Error as NomError;
-use std::string::FromUtf8Error;
 use std::task::Poll;
+
+use super::stream::{LlmStream, StreamError as EventStreamError};
 
 #[derive(Default, Debug)]
 struct EventBuilder {
@@ -133,9 +132,9 @@ pub struct EventStream {
     last_event_id: String,
 }
 
-impl EventStream {
+impl LlmStream for EventStream {
     /// Initialize the EventStream with a Stream
-    pub fn new(stream: InputStream) -> Self {
+    fn new(stream: InputStream) -> Self {
         Self {
             stream: Utf8Stream::new(stream),
             buffer: String::new(),
@@ -147,22 +146,20 @@ impl EventStream {
 
     /// Set the last event ID of the stream. Useful for initializing the stream with a previous
     /// last event ID
-    pub fn set_last_event_id(&mut self, id: impl Into<String>) {
+    fn set_last_event_id(&mut self, id: impl Into<String>) {
         self.last_event_id = id.into();
     }
 
     /// Get the last event ID of the stream
-    pub fn last_event_id(&self) -> &str {
+    fn last_event_id(&self) -> &str {
         &self.last_event_id
     }
 
-    pub fn subscribe(&self) -> Pollable {
+    fn subscribe(&self) -> Pollable {
         self.stream.subscribe()
     }
 
-    pub fn poll_next(
-        &mut self,
-    ) -> Poll<Option<Result<MessageEvent, EventStreamError<StreamError>>>> {
+    fn poll_next(&mut self) -> Poll<Option<Result<MessageEvent, EventStreamError<StreamError>>>> {
         trace!("Polling for next event");
 
         match parse_event(&mut self.buffer, &mut self.builder) {

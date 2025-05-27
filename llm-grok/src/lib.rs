@@ -15,6 +15,7 @@ use golem_llm::golem::llm::llm::{
     ResponseMetadata, StreamDelta, StreamEvent, ToolCall, ToolResult,
 };
 use golem_llm::LOGGING_STATE;
+use golem_rust::wasm_rpc::Pollable;
 use log::trace;
 use std::cell::{Ref, RefCell, RefMut};
 
@@ -195,6 +196,10 @@ impl ExtendedGuest for GrokComponent {
                 Err(err) => GrokChatStream::failed(err),
             }
         })
+    }
+
+    fn subscribe(stream: &Self::ChatStream) -> Pollable {
+        stream.subscribe()
     }
 }
 

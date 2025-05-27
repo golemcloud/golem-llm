@@ -11,11 +11,8 @@ wit_bindgen::generate!({
     world: "llm-library",
     generate_all,
     generate_unused_types: true,
-    additional_derives: [PartialEq],
+    additional_derives: [PartialEq, golem_rust::FromValueAndType, golem_rust::IntoValue],
     pub_export_macro: true,
-    with: {
-        "wasi:io/poll@0.2.0": golem_rust::wasm_rpc::wasi::io::poll,
-    }
 });
 
 pub use crate::exports::golem;

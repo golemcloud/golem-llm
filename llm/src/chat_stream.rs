@@ -1,5 +1,6 @@
 use crate::event_source::{Event, EventSource, MessageEvent};
-use crate::golem::llm::llm::{Error, ErrorCode, GuestChatStream, Pollable, StreamEvent};
+use crate::golem::llm::llm::{Error, ErrorCode, GuestChatStream, StreamEvent};
+use golem_rust::wasm_rpc::Pollable;
 use std::cell::{Ref, RefMut};
 use std::task::Poll;
 
@@ -19,6 +20,14 @@ pub struct LlmChatStream<T> {
 impl<T: LlmChatStreamState> LlmChatStream<T> {
     pub fn new(implementation: T) -> Self {
         Self { implementation }
+    }
+
+    pub fn subscribe(&self) -> Pollable {
+        if let Some(stream) = self.implementation.stream().as_ref() {
+            stream.subscribe()
+        } else {
+            golem_rust::bindings::wasi::clocks::monotonic_clock::subscribe_duration(0)
+        }
     }
 }
 
@@ -101,14 +110,6 @@ impl<T: LlmChatStreamState> GuestChatStream for LlmChatStream<T> {
                 }
                 None => continue,
             }
-        }
-    }
-
-    fn subscribe(&self) -> Pollable {
-        if let Some(stream) = self.implementation.stream().as_ref() {
-            stream.subscribe()
-        } else {
-            golem_rust::bindings::wasi::clocks::monotonic_clock::subscribe_duration(0)
         }
     }
 }

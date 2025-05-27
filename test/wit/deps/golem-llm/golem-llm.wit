@@ -1,8 +1,6 @@
 package golem:llm@1.0.0;
 
 interface llm {
-  use wasi:io/poll@0.2.0.{pollable};
-
   // --- Roles, Error Codes, Finish Reasons ---
 
   enum role {
@@ -43,9 +41,20 @@ interface llm {
     detail: option<image-detail>,
   }
 
+  record image-source {
+    data: list<u8>,
+    mime-type: string,
+    detail: option<image-detail>,
+  }
+
+  variant image-reference {
+    url(image-url),
+    inline(image-source),
+  }
+
   variant content-part {
     text(string),
-    image(image-url),
+    image(image-reference),
   }
 
   record message {
@@ -159,7 +168,6 @@ interface llm {
   resource chat-stream {
     get-next: func() -> option<list<stream-event>>;
     blocking-get-next: func() -> list<stream-event>;
-    subscribe: func() -> pollable;
   }
 
   // --- Core Functions ---
@@ -182,11 +190,5 @@ interface llm {
 }
 
 world llm-library {
-    import wasi:io/poll@0.2.0;
     export llm;
 }
-
-// UPDATE NOTES
-// send() and continue() returning chat-event directly as it already encodes the error
-// made continue's `tool-results` parameter get the original `tool-call` for each `tool-result` - according to OpenAI's docs the call has to be send back too
-// made the streaming API use wasi:io/poll.pollable

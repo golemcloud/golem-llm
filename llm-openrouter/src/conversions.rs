@@ -1,9 +1,10 @@
 use crate::client::{
     CompletionsRequest, CompletionsResponse, Detail, FunctionName, ToolChoiceFunction,
 };
+use base64::{engine::general_purpose, Engine as _};
 use golem_llm::golem::llm::llm::{
     ChatEvent, CompleteResponse, Config, ContentPart, Error, ErrorCode, FinishReason, ImageDetail,
-    Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
+    ImageReference, Message, ResponseMetadata, Role, ToolCall, ToolDefinition, ToolResult, Usage,
 };
 use std::collections::HashMap;
 
@@ -169,12 +170,26 @@ fn convert_content_parts(contents: Vec<ContentPart>) -> crate::client::Content {
     for content in contents {
         match content {
             ContentPart::Text(text) => result.push(crate::client::ContentPart::TextInput { text }),
-            ContentPart::Image(image_url) => result.push(crate::client::ContentPart::ImageInput {
-                image_url: crate::client::ImageUrl {
-                    url: image_url.url,
-                    detail: image_url.detail.map(|d| d.into()),
-                },
-            }),
+            ContentPart::Image(image_reference) => match image_reference {
+                ImageReference::Url(image_url) => {
+                    result.push(crate::client::ContentPart::ImageInput {
+                        image_url: crate::client::ImageUrl {
+                            url: image_url.url,
+                            detail: image_url.detail.map(|d| d.into()),
+                        },
+                    })
+                }
+                ImageReference::Inline(image_source) => {
+                    let base64_data = general_purpose::STANDARD.encode(&image_source.data);
+                    let media_type = &image_source.mime_type; // This is already a string
+                    result.push(crate::client::ContentPart::ImageInput {
+                        image_url: crate::client::ImageUrl {
+                            url: format!("data:{};base64,{}", media_type, base64_data),
+                            detail: image_source.detail.map(|d| d.into()),
+                        },
+                    });
+                }
+            },
         }
     }
     crate::client::Content::List(result)
@@ -185,7 +200,7 @@ fn convert_content_parts_to_string(contents: Vec<ContentPart>) -> String {
     for content in contents {
         match content {
             ContentPart::Text(text) => result.push_str(&text),
-            ContentPart::Image(_) => {}
+            ContentPart::Image(_) => {} // Correctly ignores any image content
         }
     }
     result
