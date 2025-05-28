@@ -310,7 +310,7 @@ args = [
 ]
 
 [tasks.build-llm-test-components]
-dependencies = ["build"]
+dependencies = ["build-llm"]
 description = "Builds all test components with golem-cli"
 install_crate = "cargo-binstall"
 script = '''
