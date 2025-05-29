@@ -139,6 +139,28 @@ components:
         clean:
           - src/bindings.rs
 
+      bedrock-debug:
+        build:
+          - command: cargo component build --no-default-features --features bedrock
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_llm_bedrock.wasm ../../target/wasm32-wasip1/debug/test_llm.wasm -o ../../target/wasm32-wasip1/debug/test_bedrock_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_llm.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_llm_bedrock.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_bedrock_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_bedrock_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_bedrock_debug.wasm
+        clean:
+          - src/bindings.rs
+
       # RELEASE PROFILES
       openai-release:
         files:
@@ -244,6 +266,10 @@ components:
         clean:
           - src/bindings.rs
 
+      bedrock-release:
+        build:
+          - command: cargo component build --release --no-default-features --features bedrock
+
       ollama-release:
         files:
         - sourcePath: ../../data/cat.png
@@ -251,12 +277,25 @@ components:
           permissions: read-only
         build:
           - command: cargo component build --release --no-default-features --features ollama
+
             sources:
               - src
               - wit-generated
               - ../../common-rust
             targets:
               - ../../target/wasm32-wasip1/release/test_llm.wasm
+
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_llm_bedrock.wasm ../../target/wasm32-wasip1/release/test_llm.wasm -o ../../target/wasm32-wasip1/release/test_bedrock_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_llm.wasm
+              - ../../../target/wasm32-wasip1/release/golem_llm_bedrock.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_bedrock_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_bedrock_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_bedrock_release.wasm
+
           - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_llm_ollama.wasm ../../target/wasm32-wasip1/release/test_llm.wasm -o ../../target/wasm32-wasip1/release/test_ollama_plugged.wasm
             sources:
               - ../../target/wasm32-wasip1/release/test_llm.wasm
@@ -267,6 +306,7 @@ components:
         generatedWit: wit-generated
         componentWasm: ../../target/wasm32-wasip1/release/test_ollama_plugged.wasm
         linkedWasm: ../../golem-temp/components/test_ollama_release.wasm
+
         clean:
           - src/bindings.rs
 
