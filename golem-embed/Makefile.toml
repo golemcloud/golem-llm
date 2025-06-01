@@ -1,0 +1,208 @@
+[config]
+default_to_workspace = false
+skip_core_tasks = true
+
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
+[tasks.unit-tests]
+command = "cargo"
+args = ["test"]
+
+[tasks.build-openai]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-openai"]
+
+[tasks.build-openai-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-openai", "--no-default-features"]
+
+[tasks.build]
+dependencies = [
+    "build-openai",
+]
+
+[tasks.build-portable]
+dependencies = [
+    "build-openai-portable",
+]
+
+[tasks.build-all]
+script_runner = "@duckscript"
+script = '''
+mkdir components/debug
+
+cm_run_task clean
+cm_run_task build
+
+cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/embed/debug/golem_llm_openai.wasm
+
+cm_run_task clean
+cm_run_task build-portable
+
+cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/embed/debug/golem_llm_openai-portable.wasm
+'''
+
+[tasks.release-build-openai]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-openai", "--release"]
+
+[tasks.release-build-openai-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-openai", "--release", "--no-default-features"]
+
+[tasks.release-build]
+dependencies = [
+    "release-build-openai",
+]
+
+[tasks.release-build-portable]
+dependencies = [
+    "release-build-openai-portable",
+]
+
+[tasks.release-build-all]
+script_runner = "@duckscript"
+script = '''
+mkdir components/release
+
+cm_run_task set-version
+
+cm_run_task clean
+cm_run_task release-build
+
+cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/embed/release/golem_llm_openai.wasm
+
+cm_run_task clean
+cm_run_task release-build-portable
+
+cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/embed/release/golem_llm_openai-portable.wasm
+'''
+
+[tasks.wit-update]
+install_crate = { crate_name = "wit-deps-cli" }
+command = "wit-deps"
+args = ["update"]
+
+[tasks.wit]
+dependencies = ["wit-update"]
+
+#condition = { files_modified = { input = [
+#    "wit/golem-llm.wit",
+#    "wit/deps/wasi:io",
+#], output = [
+#    "llm/wit/deps/golem-llm/golem-llm.wit",
+#    "llm-anthropic/wit/deps/golem-llm/golem-llm.wit",
+#    "llm-grok/wit/deps/golem-llm/golem-llm.wit",
+#    "llm-openai/wit/deps/golem-llm/golem-llm.wit",
+#    "llm-openrouter/wit/deps/golem-llm/golem-llm.wit",
+#] } }
+
+script_runner = "@duckscript"
+script = """
+rm -r embed/wit/deps
+mkdir embed/wit/deps/golem-embed
+cp wit/golem-embed.wit embed/wit/deps/golem-embed/golem-embed.wit
+cp wit/deps/wasi:io embed/wit/deps
+
+rm -r embed-openai/wit/deps
+mkdir embed-openai/wit/deps/golem-embed
+cp wit/golem-embed.wit embed-openai/wit/deps/golem-embed/golem-embed.wit
+cp wit/deps/wasi:io embed-openai/wit/deps
+
+
+rm -r test/wit
+mkdir test/wit/deps/golem-embed
+mkdir test/wit/deps/io
+cp wit/golem-embed.wit test/wit/deps/golem-embed/golem-embed.wit
+cp wit/deps/wasi:io/error.wit test/wit/deps/io/error.wit
+cp wit/deps/wasi:io/poll.wit test/wit/deps/io/poll.wit
+cp wit/deps/wasi:io/streams.wit test/wit/deps/io/streams.wit
+cp wit/deps/wasi:io/world.wit test/wit/deps/io/world.wit
+"""
+
+[tasks.check]
+description = "Runs rustfmt and clippy checks without applying any fix"
+dependencies = ["check-clippy", "check-rustfmt"]
+
+[tasks.check-rustfmt]
+description = "Runs rustfmt checks without applying any fix"
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--all", "--", "--check"]
+
+[tasks.check-clippy]
+description = "Runs clippy checks without applying any fix"
+install_crate = "clippy"
+command = "cargo"
+args = ["clippy", "--all-targets", "--", "--no-deps", "-Dwarnings"]
+
+[tasks.fix]
+description = "Runs rustfmt and clippy checks and applies fixes"
+dependencies = ["wit", "fix-clippy", "fix-rustfmt"]
+
+[tasks.fix-rustfmt]
+description = "Runs rustfmt checks and applies fixes"
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.fix-clippy]
+description = "Runs clippy checks and applies fixes"
+install_crate = "clippy"
+command = "cargo"
+args = [
+    "clippy",
+    "--fix",
+    "--allow-dirty",
+    "--allow-staged",
+    "--",
+    "--no-deps",
+    "-Dwarnings",
+]
+
+[tasks.build-test-components]
+dependencies = ["build"]
+description = "Builds all test components with golem-cli"
+install_crate = "cargo-binstall"
+script = '''
+cargo-binstall golem-cli@1.2.2-dev.11 --locked --force --no-confirm
+cargo-binstall wac-cli --locked --force --no-confirm
+cd test
+golem-cli --version
+golem-cli app clean
+golem-cli app build -b openai-debug
+'''
+
+
+[tasks.set-version]
+description = "Sets the version in all Cargo.toml files to the value of the VERSION environment variable"
+condition = { env_set = ["VERSION"] }
+script = '''
+grep -rl --include 'Cargo.toml' '0\.0\.0' | xargs sed -i "s/0\.0\.0/${VERSION}/g"
+'''
+
+[tasks.set-version.mac]
+condition = { env_set = ["VERSION"] }
+script = '''
+grep -rl --include '.*Cargo\.toml' '0\.0\.0' | xargs sed -i "" "s/0\.0\.0/${VERSION}/g"
+'''
+
+[tasks.set-version.windows]
+script_runner = "powershell"
+script_extension = "ps1"
+condition = { env_set = ["VERSION"] }
+script = '''
+$cargoFiles = Get-ChildItem . Cargo.toml -rec
+foreach ($file in $cargoFiles)
+{
+    (Get-Content $file.PSPath) |
+    Foreach-Object { $_ -replace "0.0.0", $Env:VERSION } |
+    Set-Content $file.PSPath
+}
+'''

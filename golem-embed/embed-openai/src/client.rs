@@ -20,6 +20,83 @@ pub struct EmbeddingsApi {
     client: reqwest::Client,
 }
 
+
+
+impl EmbeddingsApi {
+    pub fn new(openai_api_key: String) -> Self {
+        let client = Client::builder()
+            .build()
+            .expect("Failed to initialize HTTP client");
+        Self {
+            openai_api_key,
+            client,
+        }
+    }
+
+    pub fn generate_embeding(&self, request: EmbeddingRequest) -> Result<EmbeddingResponse, Error> {
+        trace!("Sending request to OpenAI API: {request:?}");
+        let response = self
+            .client
+            .request(Method::POST, format!("{BASE_URL}/v1/embeddings"))
+            .bearer_auth(&self.openai_api_key)
+            .json(&request)
+            .send()
+            .map_err(|err| from_reqwest_error("Request failed", err))?;
+        parse_response::<EmbeddingResponse>(response)
+    }
+}
+
+fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, Error> {
+    let status = response.status();
+    if status.is_success() {
+        let response_data = response
+            .json::<T>()
+            .map_err(|error| from_reqwest_error("Failed to decode response body", error))?;
+        trace!("Response from OpenAI Embeddings API: {response_data:?}");
+        Ok(response_data)
+    } else {
+        let response_data = response
+            .text()
+            .map_err(|error| from_reqwest_error("Failed to decode response body", error))?;
+        trace!("Response from OpenAI Embeddings API: {response_data:?}");
+        Err(Error {
+            code: error_code_from_status(status),
+            message: format!("Request failed with {status}"),
+            provider_error_json: Some(response_data),
+        })
+    }
+}
+
+
+
+impl EmbeddingVector {
+    pub fn to_float_vec(&self) -> Result<Vec<f32>, String> {
+        match self {
+            EmbeddingVector::FloatArray(vec) => Ok(vec.clone()),
+            EmbeddingVector::Base64(base64_str) => {
+                use base64::{engine::general_purpose, Engine};
+
+                let bytes = general_purpose::STANDARD
+                    .decode(base64_str)
+                    .map_err(|e| format!("Failed to decode base64: {}", e))?;
+
+                if bytes.len() % 4 != 0 {
+                    return Err("Invalid base64 data: length not divisible by 4".to_string());
+                }
+
+                let mut floats: Vec<f32> = Vec::with_capacity(bytes.len() / 4);
+                for chunk in bytes.chunks_exact(4) {
+                    floats.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+                }
+
+                Ok(floats)
+            }
+        }
+    }
+}
+
+
+
 /// OpenAI allows only allows float and base64 as output formats.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum EncodingFormat {
@@ -67,31 +144,6 @@ pub enum EmbeddingVector {
     Base64(String),
 }
 
-impl EmbeddingVector {
-    pub fn to_float_vec(&self) -> Result<Vec<f32>, String> {
-        match self {
-            EmbeddingVector::FloatArray(vec) => Ok(vec.clone()),
-            EmbeddingVector::Base64(base64_str) => {
-                use base64::{engine::general_purpose, Engine};
-
-                let bytes = general_purpose::STANDARD
-                    .decode(base64_str)
-                    .map_err(|e| format!("Failed to decode base64: {}", e))?;
-
-                if bytes.len() % 4 != 0 {
-                    return Err("Invalid base64 data: length not divisible by 4".to_string());
-                }
-
-                let mut floats: Vec<f32> = Vec::with_capacity(bytes.len() / 4);
-                for chunk in bytes.chunks_exact(4) {
-                    floats.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
-                }
-
-                Ok(floats)
-            }
-        }
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OpenAIError {
@@ -105,49 +157,4 @@ pub struct OpenAIErrorDetails {
     pub _type: String,
     pub param: Option<String>,
     pub code: Option<String>,
-}
-
-impl EmbeddingsApi {
-    pub fn new(openai_api_key: String) -> Self {
-        let client = Client::builder()
-            .build()
-            .expect("Failed to initialize HTTP client");
-        Self {
-            openai_api_key,
-            client,
-        }
-    }
-
-    pub fn generate_embeding(&self, request: EmbeddingRequest) -> Result<EmbeddingResponse, Error> {
-        trace!("Sending request to OpenAI API: {request:?}");
-        let response = self
-            .client
-            .request(Method::POST, format!("{BASE_URL}/v1/embeddings"))
-            .bearer_auth(&self.openai_api_key)
-            .json(&request)
-            .send()
-            .map_err(|err| from_reqwest_error("Request failed", err))?;
-        parse_response(response)
-    }
-}
-
-fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, Error> {
-    let status = response.status();
-    if status.is_success() {
-        let response_data = response
-            .json::<T>()
-            .map_err(|error| from_reqwest_error("Failed to decode response body", error))?;
-        trace!("Response from OpenAI Embeddings API: {response_data:?}");
-        Ok(response_data)
-    } else {
-        let response_data = response
-            .text()
-            .map_err(|error| from_reqwest_error("Failed to decode response body", error))?;
-        trace!("Response from OpenAI Embeddings API: {response_data:?}");
-        Err(Error {
-            code: error_code_from_status(status),
-            message: format!("Request failed with {status}"),
-            provider_error_json: Some(response_data),
-        })
-    }
 }
