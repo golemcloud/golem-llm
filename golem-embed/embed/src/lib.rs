@@ -2,7 +2,7 @@ pub mod error;
 pub mod config;
 
 wit_bindgen::generate!({
-    path: "../wit",
+    path: "./wit",
     world: "embed-library",
     generate_all,
     generate_unused_types: true,

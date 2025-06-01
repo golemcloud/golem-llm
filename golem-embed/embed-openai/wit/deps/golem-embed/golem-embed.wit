@@ -123,3 +123,8 @@ interface embed {
     config: config
   ) -> result<rerank-response, error>;
 }
+
+
+world embed-library {
+    export embed;
+}
