@@ -1,5 +1,5 @@
 use client::{EmbeddingResponse, EmbeddingsApi};
-use conversions::{create_request};
+use conversions::create_request;
 use golem_embed::{
     config::with_config_key,
     golem::embed::embed::{
@@ -8,6 +8,8 @@ use golem_embed::{
     },
     LOGGING_STATE,
 };
+
+use crate::conversions::process_embedding_response;
 
 mod client;
 mod conversions;
@@ -22,15 +24,14 @@ impl CohereComponent {
         inputs: Vec<ContentPart>,
         config: Config,
     ) -> Result<GolemEmbeddingResponse, Error> {
-        todo!()
-        // let request = create_request(inputs, config);
-        // match request {
-        //     Ok(request) => match client.generate_embeding(request) {
-        //         Ok(response) => process_embedding_response(response),
-        //         Err(err) => Err(err),
-        //     },
-        //     Err(err) => Err(err),
-        // }
+        let request = create_request(inputs, config.clone());
+        match request {
+            Ok(request) => match client.generate_embeding(request) {
+                Ok(response) => process_embedding_response(response, config),
+                Err(err) => Err(err),
+            },
+            Err(err) => Err(err),
+        }
     }
 
     fn rerank(
@@ -63,6 +64,3 @@ impl Guest for CohereComponent {
         todo!()
     }
 }
-
-
-

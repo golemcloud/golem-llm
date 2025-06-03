@@ -370,6 +370,7 @@ dependencies = [
 name = "golem-embed-openai"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "bytemuck",
  "golem-embed",
  "golem-rust",

@@ -107,6 +107,7 @@ pub fn image_to_base64(source: &str) -> Result<String, Box<dyn std::error::Error
 
 pub fn process_embedding_response(
     response: EmbeddingResponse,
+    config: Config,
 ) -> Result<GolemEmbeddingResponse, Error> {
     let mut embeddings: Vec<Embedding> = Vec::new();
     if let Some(emdeddings_array) = &response.embeddings.int8 {
@@ -117,7 +118,7 @@ pub fn process_embedding_response(
                 vector: float_embedding,
             });
         }
-    }
+    };
 
     if let Some(emdeddings_array) = &response.embeddings.uint8 {
         for uint_embedding in emdeddings_array {
@@ -127,7 +128,7 @@ pub fn process_embedding_response(
                 vector: float_embedding,
             });
         }
-    }
+    };
     if let Some(emdeddings_array) = &response.embeddings.binary {
         for binary_embedding in emdeddings_array {
             let float_embedding = binary_embedding.iter().map(|&v| v as f32).collect();
@@ -136,7 +137,7 @@ pub fn process_embedding_response(
                 vector: float_embedding,
             });
         }
-    }
+    };
     if let Some(emdeddings_array) = &response.embeddings.ubinary {
         for ubinary_embedding in emdeddings_array {
             let float_embedding = ubinary_embedding.iter().map(|&v| v as f32).collect();
@@ -145,7 +146,7 @@ pub fn process_embedding_response(
                 vector: float_embedding,
             });
         }
-    }
+    };
     if let Some(emdeddings_array) = &response.embeddings.float {
         for float_embedding in emdeddings_array {
             embeddings.push(Embedding {
@@ -153,29 +154,45 @@ pub fn process_embedding_response(
                 vector: float_embedding.to_vec(),
             });
         }
-    }
+    };
 
     Ok(GolemEmbeddingResponse {
         embeddings: embeddings,
-        usage: todo!(),
-        model: todo!(),
-        provider_metadata_json: todo!(),
+        provider_metadata_json: Some(get_provider_metadata(response.clone())),
+        model: config
+            .model
+            .unwrap_or_else(|| "embed-english-v3.0".to_string()),
+        usage: Some(Usage {
+            input_tokens: response.meta.unwrap().billed_units.unwrap().input_tokens,
+            total_tokens: None,
+        }),
     })
 }
 
+pub fn get_provider_metadata(response: EmbeddingResponse) -> String {
+    let meta = serde_json::to_string(&response.meta.unwrap()).unwrap_or_default();
+    format!(r#"{{"id":"{}","meta":"{}",}}"#, response.id, meta)
+}
+
 #[cfg(test)]
-mod test {
+mod tests {
+    use crate::client::{ApiVersion, BilledUnits, Meta};
+
     use super::*;
     use serde_json;
 
+    #[test]
     fn test_conversion() {
         let data = EmbeddingResponse {
             id: "54910170-852f-4322-9767-63d36e55c3bf".to_owned(),
             images: None,
-            texts: Some(["This is the sentence I want to embed.", "Hey !"]),
+            texts: Some(vec![
+                "This is the sentence I want to embed.".to_owned(),
+                "Hey !".to_owned(),
+            ]),
             embeddings: EmbeddingData {
-                float: Some([
-                    [
+                float: Some(vec![
+                    vec![
                         0.016967773,
                         0.031982422,
                         0.041503906,
@@ -186,7 +203,7 @@ mod test {
                         -0.046875,
                         0.021240234,
                     ],
-                    [
+                    vec![
                         0.013977051,
                         0.012084961,
                         0.005554199,
@@ -199,22 +216,24 @@ mod test {
                         0.026611328,
                     ],
                 ]),
-                int8: Some([
-                    [
+                int8: Some(vec![
+                    vec![
                         -15, -65, 0, -31, -43, -14, -48, 59, -34, 15, 36, 49, -5, 3, -49, -34, -74,
                         21,
                     ],
-                    [
+                    vec![
                         14, 38, -30, -13, -49, 4, -33, -49, 48, 9, -84, 8, 0, -84, -46, -20, 24,
                         -26, -98, 28,
                     ],
                 ]),
                 uint8: None,
-                binary: Some([[-54, 99, -87, 60, 15, 10, 93, 97, -42, -51, 9]]),
+                binary: Some(vec![vec![-54, 99, -87, 60, 15, 10, 93, 97, -42, -51, 9]]),
                 ubinary: None,
             },
             meta: Some(Meta {
-                api_version: Some(ApiVersion { version: Some("2") }),
+                api_version: Some(ApiVersion {
+                    version: Some("2".to_owned()),
+                }),
                 billed_units: Some(BilledUnits {
                     input_tokens: Some(11),
                 }),
@@ -222,7 +241,18 @@ mod test {
             response_type: Some("embeddings_by_type".to_owned()),
         };
 
-        let result = process_embedding_response(data);
+        let config = Config {
+            model: Some("embed-english-v3.0".to_string()),
+            task_type: None,
+            dimensions: None,
+            truncation: None,
+            output_format: None,
+            output_dtype: None,
+            user: None,
+            provider_options: vec![],
+        };
+
+        let result = process_embedding_response(data, config);
         print!("{:?}", result);
         assert!(result.is_ok())
     }
