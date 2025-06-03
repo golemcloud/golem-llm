@@ -104,3 +104,126 @@ pub fn image_to_base64(source: &str) -> Result<String, Box<dyn std::error::Error
     let base64_data = general_purpose::STANDARD.encode(&bytes);
     Ok(base64_data)
 }
+
+pub fn process_embedding_response(
+    response: EmbeddingResponse,
+) -> Result<GolemEmbeddingResponse, Error> {
+    let mut embeddings: Vec<Embedding> = Vec::new();
+    if let Some(emdeddings_array) = &response.embeddings.int8 {
+        for int_embedding in emdeddings_array {
+            let float_embedding = int_embedding.iter().map(|&v| v as f32).collect();
+            embeddings.push(Embedding {
+                index: 0,
+                vector: float_embedding,
+            });
+        }
+    }
+
+    if let Some(emdeddings_array) = &response.embeddings.uint8 {
+        for uint_embedding in emdeddings_array {
+            let float_embedding = uint_embedding.iter().map(|&v| v as f32).collect();
+            embeddings.push(Embedding {
+                index: 0,
+                vector: float_embedding,
+            });
+        }
+    }
+    if let Some(emdeddings_array) = &response.embeddings.binary {
+        for binary_embedding in emdeddings_array {
+            let float_embedding = binary_embedding.iter().map(|&v| v as f32).collect();
+            embeddings.push(Embedding {
+                index: 0,
+                vector: float_embedding,
+            });
+        }
+    }
+    if let Some(emdeddings_array) = &response.embeddings.ubinary {
+        for ubinary_embedding in emdeddings_array {
+            let float_embedding = ubinary_embedding.iter().map(|&v| v as f32).collect();
+            embeddings.push(Embedding {
+                index: 0,
+                vector: float_embedding,
+            });
+        }
+    }
+    if let Some(emdeddings_array) = &response.embeddings.float {
+        for float_embedding in emdeddings_array {
+            embeddings.push(Embedding {
+                index: 0,
+                vector: float_embedding.to_vec(),
+            });
+        }
+    }
+
+    Ok(GolemEmbeddingResponse {
+        embeddings: embeddings,
+        usage: todo!(),
+        model: todo!(),
+        provider_metadata_json: todo!(),
+    })
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use serde_json;
+
+    fn test_conversion() {
+        let data = EmbeddingResponse {
+            id: "54910170-852f-4322-9767-63d36e55c3bf".to_owned(),
+            images: None,
+            texts: Some(["This is the sentence I want to embed.", "Hey !"]),
+            embeddings: EmbeddingData {
+                float: Some([
+                    [
+                        0.016967773,
+                        0.031982422,
+                        0.041503906,
+                        0.0021514893,
+                        0.008178711,
+                        -0.029541016,
+                        -0.018432617,
+                        -0.046875,
+                        0.021240234,
+                    ],
+                    [
+                        0.013977051,
+                        0.012084961,
+                        0.005554199,
+                        -0.053955078,
+                        -0.026977539,
+                        -0.008361816,
+                        0.02368164,
+                        -0.013183594,
+                        -0.063964844,
+                        0.026611328,
+                    ],
+                ]),
+                int8: Some([
+                    [
+                        -15, -65, 0, -31, -43, -14, -48, 59, -34, 15, 36, 49, -5, 3, -49, -34, -74,
+                        21,
+                    ],
+                    [
+                        14, 38, -30, -13, -49, 4, -33, -49, 48, 9, -84, 8, 0, -84, -46, -20, 24,
+                        -26, -98, 28,
+                    ],
+                ]),
+                uint8: None,
+                binary: Some([[-54, 99, -87, 60, 15, 10, 93, 97, -42, -51, 9]]),
+                ubinary: None,
+            },
+            meta: Some(Meta {
+                api_version: Some(ApiVersion { version: Some("2") }),
+                billed_units: Some(BilledUnits {
+                    input_tokens: Some(11),
+                }),
+            }),
+            response_type: Some("embeddings_by_type".to_owned()),
+        };
+
+        let result = process_embedding_response(data);
+        print!("{:?}", result);
+        assert!(result.is_ok())
+    }
+}

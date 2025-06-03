@@ -64,7 +64,7 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
     }
 }
 
-fn parse_json<T: DeserializeOwned + Debug>(response: &str) -> Result<T, Error> {
+fn parse_json<T: DeserializeOwned + Debug>(response: &str) -> Result<T, serde_json::Error> {
     serde_json::from_str::<T>(response)
 }
 
@@ -319,6 +319,10 @@ mod tests {
           }"#;
 
         let result = parse_json::<client::EmbeddingResponse>(json_data);
-        print!("{:#?}", result.unwrap());
+        print!("{:?}", result);
+        assert!(result.is_ok());
+
+        // TODO: print the response on the console
+
     }
 }
