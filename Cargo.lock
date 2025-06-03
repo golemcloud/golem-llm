@@ -367,6 +367,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "golem-embed-hugging-face"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "bytemuck",
+ "golem-embed",
+ "golem-rust",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "wit-bindgen-rt 0.40.0",
+]
+
+[[package]]
 name = "golem-embed-openai"
 version = "0.0.0"
 dependencies = [

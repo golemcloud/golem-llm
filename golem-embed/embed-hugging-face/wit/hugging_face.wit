@@ -1,0 +1,5 @@
+package golem:embed-hugging-face@1.0.0;
+
+world embed-library {
+  include golem:embed/embed-library@1.0.0;
+}
