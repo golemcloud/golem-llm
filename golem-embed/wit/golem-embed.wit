@@ -21,7 +21,7 @@ interface embed {
   }
 
   enum output-dtype {
-    float32,
+    float-array,
     int8,
     uint8,
     binary,
@@ -32,6 +32,7 @@ interface embed {
     invalid-request,
     model-not-found,
     unsupported,
+    authentication-failed, 
     provider-error,
     rate-limit-exceeded,
     internal-error,
@@ -123,7 +124,6 @@ interface embed {
   ) -> result<rerank-response, error>;
 }
 
-
 world embed-library {
-    export embed;
+   export embed;
 }

@@ -1,0 +1,70 @@
+# Schema for IDEA:
+# $schema: https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+# Schema for vscode-yaml
+# yaml-language-server: $schema=https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+
+# See https://learn.golem.cloud/docs/app-manifest#field-reference for field reference
+
+components:
+  test:embed:
+    profiles:
+      # DEBUG PROFILES
+      openai-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --no-default-features --features openai
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - target/wasm32-wasip1/debug/test_embed.wasm
+          - command: wac plug --plug ../../../../target/wasm32-wasip1/debug/golem_embed_openai.wasm ../../target/wasm32-wasip1/debug/test_embed.wasm -o ../../target/wasm32-wasip1/debug/test_openai_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_embed.wasm
+              - ../../../../target/wasm32-wasip1/debug/golem_embed_openai.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_openai_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_openai_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_openai_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      # RELEASE PROFILES
+      openai-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features openai
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_embed_openai.wasm ../../target/wasm32-wasip1/release/test_embed.wasm -o ../../target/wasm32-wasip1/release/test_openai_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+              - ../../../target/wasm32-wasip1/release/golem_embed_openai.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_openai_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_openai_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_openai_release.wasm
+        clean:
+          - src/bindings.rs
+
+    defaultProfile: openai-debug
+
+dependencies:
+  test:embed:
+    - target: test:helper
+      type: wasm-rpc

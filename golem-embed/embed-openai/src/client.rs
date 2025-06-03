@@ -5,6 +5,8 @@ use golem_embed::{
     golem::embed::embed::Error,
 };
 use log::trace;
+use base64::{engine::general_purpose, Engine};
+
 #[allow(dead_code, unused, unused_imports)]
 use reqwest::Client;
 use reqwest::{Method, Response};
@@ -68,35 +70,6 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
 }
 
 
-
-impl EmbeddingVector {
-    pub fn to_float_vec(&self) -> Result<Vec<f32>, String> {
-        match self {
-            EmbeddingVector::FloatArray(vec) => Ok(vec.clone()),
-            EmbeddingVector::Base64(base64_str) => {
-                use base64::{engine::general_purpose, Engine};
-
-                let bytes = general_purpose::STANDARD
-                    .decode(base64_str)
-                    .map_err(|e| format!("Failed to decode base64: {}", e))?;
-
-                if bytes.len() % 4 != 0 {
-                    return Err("Invalid base64 data: length not divisible by 4".to_string());
-                }
-
-                let mut floats: Vec<f32> = Vec::with_capacity(bytes.len() / 4);
-                for chunk in bytes.chunks_exact(4) {
-                    floats.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
-                }
-
-                Ok(floats)
-            }
-        }
-    }
-}
-
-
-
 /// OpenAI allows only allows float and base64 as output formats.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum EncodingFormat {
@@ -143,6 +116,34 @@ pub enum EmbeddingVector {
     FloatArray(Vec<f32>),
     Base64(String),
 }
+
+
+
+impl EmbeddingVector {
+    pub fn to_float_vec(&self) -> Result<Vec<f32>, String> {
+        match self {
+            EmbeddingVector::FloatArray(vec) => Ok(vec.clone()),
+            EmbeddingVector::Base64(base64_str) => {
+
+                let bytes = general_purpose::STANDARD
+                    .decode(base64_str)
+                    .map_err(|e| format!("Failed to decode base64: {}", e))?;
+
+                if bytes.len() % 4 != 0 {
+                    return Err("Invalid base64 data: length not divisible by 4".to_string());
+                }
+
+                let mut floats: Vec<f32> = Vec::with_capacity(bytes.len() / 4);
+                for chunk in bytes.chunks_exact(4) {
+                    floats.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+                }
+
+                Ok(floats)
+            }
+        }
+    }
+}
+
 
 
 #[derive(Debug, Serialize, Deserialize)]

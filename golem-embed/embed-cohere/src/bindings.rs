@@ -6,7 +6,7 @@
 use golem_embed::golem::embed::embed as __with_name0;
 #[cfg(target_arch = "wasm32")]
 #[unsafe(
-    link_section = "component-type:wit-bindgen:0.41.0:golem:embed-openai@1.0.0:embed-library:encoded world"
+    link_section = "component-type:wit-bindgen:0.41.0:golem:embed-cohere@1.0.0:embed-library:encoded world"
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
@@ -33,7 +33,7 @@ dels\x16provider-metadata-json\x0e\x04\0\x0frerank-response\x03\0#\x01r\x03\x04c
 ode\x07\x07messages\x13provider-error-json\x0e\x04\0\x05error\x03\0%\x01p\x0b\x01\
 j\x01\x1f\x01&\x01@\x02\x06inputs'\x06config\x16\0(\x04\0\x08generate\x01)\x01ps\
 \x01j\x01$\x01&\x01@\x03\x05querys\x09documents*\x06config\x16\0+\x04\0\x06reran\
-k\x01,\x04\0\x17golem:embed/embed@1.0.0\x05\0\x04\0&golem:embed-openai/embed-lib\
+k\x01,\x04\0\x17golem:embed/embed@1.0.0\x05\0\x04\0&golem:embed-cohere/embed-lib\
 rary@1.0.0\x04\0\x0b\x13\x01\0\x0dembed-library\x03\0\0\0G\x09producers\x01\x0cp\
 rocessed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]

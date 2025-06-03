@@ -20,14 +20,29 @@ install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
 args = ["build", "-p", "golem-embed-openai", "--no-default-features"]
 
+
+[tasks.build-cohere]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-cohere"]
+
+[tasks.build-cohere-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-cohere", "--no-default-features"]
+
+
+
 [tasks.build]
 dependencies = [
     "build-openai",
+    "build-cohere",
 ]
 
 [tasks.build-portable]
 dependencies = [
     "build-openai-portable",
+    "build-cohere-portable",
 ]
 
 [tasks.build-all]
@@ -38,12 +53,14 @@ mkdir components/debug
 cm_run_task clean
 cm_run_task build
 
-cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/embed/debug/golem_llm_openai.wasm
+cp target/wasm32-wasip1/debug/golem_embed_openai.wasm components/embed/debug/golem_embed_openai.wasm
+cp target/wasm32-wasip1/debug/golem_embed_cohere.wasm components/embed/debug/golem_embed_cohere.wasm
 
 cm_run_task clean
 cm_run_task build-portable
 
-cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/embed/debug/golem_llm_openai-portable.wasm
+cp target/wasm32-wasip1/debug/golem_embed_openai.wasm components/embed/debug/golem_embed_openai-portable.wasm
+cp target/wasm32-wasip1/debug/golem_embed_cohere.wasm components/embed/debug/golem_embed_cohere-portable.wasm
 '''
 
 [tasks.release-build-openai]
@@ -56,14 +73,26 @@ install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
 args = ["build", "-p", "golem-embed-openai", "--release", "--no-default-features"]
 
+[tasks.release-build-cohere]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-cohere", "--release"]
+
+[tasks.release-build-cohere-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-cohere", "--release", "--no-default-features"]
+
 [tasks.release-build]
 dependencies = [
     "release-build-openai",
+    "release-build-cohere",
 ]
 
 [tasks.release-build-portable]
 dependencies = [
     "release-build-openai-portable",
+    "release-build-cohere-portable",
 ]
 
 [tasks.release-build-all]
@@ -76,12 +105,14 @@ cm_run_task set-version
 cm_run_task clean
 cm_run_task release-build
 
-cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/embed/release/golem_llm_openai.wasm
+cp target/wasm32-wasip1/release/golem_embed_openai.wasm components/embed/release/golem_embed_openai.wasm
+cp target/wasm32-wasip1/release/golem_embed_cohere.wasm components/embed/release/golem_embed_cohere.wasm
 
 cm_run_task clean
 cm_run_task release-build-portable
 
-cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/embed/release/golem_llm_openai-portable.wasm
+cp target/wasm32-wasip1/release/golem_embed_openai.wasm components/embed/release/golem_embed_openai-portable.wasm
+cp target/wasm32-wasip1/release/golem_embed_cohere.wasm components/embed/release/golem_embed_cohere-portable.wasm
 '''
 
 [tasks.wit-update]
@@ -91,18 +122,6 @@ args = ["update"]
 
 [tasks.wit]
 dependencies = ["wit-update"]
-
-#condition = { files_modified = { input = [
-#    "wit/golem-llm.wit",
-#    "wit/deps/wasi:io",
-#], output = [
-#    "llm/wit/deps/golem-llm/golem-llm.wit",
-#    "llm-anthropic/wit/deps/golem-llm/golem-llm.wit",
-#    "llm-grok/wit/deps/golem-llm/golem-llm.wit",
-#    "llm-openai/wit/deps/golem-llm/golem-llm.wit",
-#    "llm-openrouter/wit/deps/golem-llm/golem-llm.wit",
-#] } }
-
 script_runner = "@duckscript"
 script = """
 rm -r embed/wit/deps
@@ -115,6 +134,10 @@ mkdir embed-openai/wit/deps/golem-embed
 cp wit/golem-embed.wit embed-openai/wit/deps/golem-embed/golem-embed.wit
 cp wit/deps/wasi:io embed-openai/wit/deps
 
+rm -r embed-cohere/wit/deps
+mkdir embed-cohere/wit/deps/golem-embed
+cp wit/golem-embed.wit embed-cohere/wit/deps/golem-embed/golem-embed.wit
+cp wit/deps/wasi:io embed-cohere/wit/deps
 
 rm -r test/wit
 mkdir test/wit/deps/golem-embed
@@ -177,6 +200,8 @@ cd test
 golem-cli --version
 golem-cli app clean
 golem-cli app build -b openai-debug
+golem-cli app clean
+golem-cli app build -b cohere-debug
 '''
 
 

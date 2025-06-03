@@ -2,7 +2,7 @@
 resolver = "2"
 
 members = [ 
-    "golem-embed/embed", 
+    "golem-embed/embed", "golem-embed/embed-cohere",  
     "golem-embed/embed-openai", 
     "golem-llm/llm", 
     "golem-llm/llm-anthropic",

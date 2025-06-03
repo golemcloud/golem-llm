@@ -1,5 +1,5 @@
 [package]
-name = "golem-embed-openai"
+name = "golem-embed-cohere"
 version = "0.0.0"
 edition = "2021"
 license = "Apache-2.0"
@@ -23,13 +23,13 @@ golem-rust = { workspace = true }
 log = { workspace = true }
 reqwest = { workspace = true }
 serde = {workspace = true}
+base64 = { workspace = true }
 serde_json = { workspace = true }
 wit-bindgen-rt = { workspace = true }
-bytemuck = "1.23.0"
 
 
 [package.metadata.component]
-package="golem:embed-openai"
+package="golem:embed-cohere"
 
 [package.metadata.component.bindings]
 generate_unused_types=true

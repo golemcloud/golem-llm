@@ -1,0 +1,9 @@
+package test:helper;
+
+interface test-helper-api {
+  inc-and-get: func() -> u64;
+}
+
+world test-helper {
+  export test-helper-api;
+}

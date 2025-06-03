@@ -1,11 +1,13 @@
+
+mod client;
+mod conversions;
+
 use client::EmbeddingsApi;
 use conversions::{create_request, process_embedding_response};
 use golem_embed::{config::with_config_key, golem::embed::embed::{
     Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse
 }, LOGGING_STATE};
 
-mod client;
-mod conversions;
 
 struct OpenAIComponent;
 
@@ -27,8 +29,9 @@ impl OpenAIComponent {
         }
     }
 
-
-    
+    fn rerank(query:String,documents:Vec::<String>,config:Config,) -> Result<RerankResponse,Error> {
+        todo!()
+    }
 }
 
 
