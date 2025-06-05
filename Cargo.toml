@@ -5,7 +5,7 @@ members = [
     "golem-embed/embed",
     "golem-embed/embed-cohere",
     "golem-embed/embed-hugging-face",
-    "golem-embed/embed-openai",
+    "golem-embed/embed-openai", "golem-embed/embed-voyageai",
     "golem-llm/llm",
     "golem-llm/llm-anthropic",
     "golem-llm/llm-grok",
