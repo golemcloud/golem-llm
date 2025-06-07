@@ -33,13 +33,26 @@ impl EmbeddingsApi {
         trace!("Sending request to Cohere API: {request:?}");
         let response = self
             .client
-            .request(Method::POST, format!("{BASE_URL}/v1/embed"))
+            .request(Method::POST, format!("{BASE_URL}/v2/embed"))
             .bearer_auth(&self.cohere_api_key)
             .json(&request)
             .send()
             .map_err(|err| from_reqwest_error("Request failed", err))?;
         trace!("Recived response: {:#?}", response);
         parse_response::<EmbeddingResponse>(response)
+    }
+
+    pub fn rerank(&self, request: RerankRequest) -> Result<RerankResponse, Error> {
+        trace!("Sending request to Cohere API: {request:?}");
+        let response = self
+            .client
+            .request(Method::POST, format!("{BASE_URL}/v2/rerank"))
+            .bearer_auth(&self.cohere_api_key)
+            .json(&request)
+            .send()
+            .map_err(|err| from_reqwest_error("Request failed", err))?;
+        trace!("Recived response: {:#?}", response);
+        parse_response::<RerankResponse>(response)
     }
 }
 
@@ -62,10 +75,6 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
             provider_error_json: Some(response_data),
         })
     }
-}
-
-fn parse_json<T: DeserializeOwned + Debug>(response: &str) -> Result<T, serde_json::Error> {
-    serde_json::from_str::<T>(response)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -174,26 +183,6 @@ pub struct EmbeddingData {
     pub ubinary: Option<Vec<Vec<u8>>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Meta {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub api_version: Option<ApiVersion>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub billed_units: Option<BilledUnits>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ApiVersion {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub version: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct BilledUnits {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub input_tokens: Option<u32>,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CohereError {
     pub message: String,
@@ -201,128 +190,148 @@ pub struct CohereError {
     pub code: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RerankRequest {
+    pub model: String,
+    pub query: String,
+    pub documents: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub top_n: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_tokens_per_doc: Option<u32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RerankResponse {
+    pub results: Vec<RerankData>,
+    pub scores: Vec<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub meta: Option<Meta>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RerankData {
+    pub index: u32,
+    pub relevance_score: f32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Meta {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_version: Option<ApiVersion>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub billed_units: Option<BilledUnits>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tokens: Option<MetaTokens>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub warning: Option<Vec<String>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MetaTokens {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_tokens: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub output_tokens: Option<u32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ApiVersion {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_deprecated: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_experimental: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BilledUnits {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub images: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_tokens: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub output_tokens: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub search_units: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub classifications: Option<u32>,
+}
+
 #[cfg(test)]
 mod tests {
     use crate::client;
 
     use super::*;
-    use golem_embed::golem::embed::embed::EmbeddingResponse;
     use serde_json;
 
+    fn parse_json<T: DeserializeOwned + Debug>(response: &str) -> Result<T, serde_json::Error> {
+        serde_json::from_str::<T>(response)
+    }
+
     #[test]
-    fn test_parse_data() {
+    fn test_parse_embedding_response_data() {
         let json_data = r#"{
-            "id": "54910170-852f-4322-9767-63d36e55c3bf",
-            "texts": [
-              "This is the sentence I want to embed.",
-              "Hey !"
-            ],
-            "embeddings": {
-              "binary": [
-                [
-                  -54,
-                  99,
-                  -87,
-                  60,
-                  15,
-                  10,
-                  93,
-                  97,
-                  -42,
-                  -51,
-                  9
-                ]
-              ],
-              "float": [
-                [
-                
-                  0.016967773,
-                  0.031982422,
-                  0.041503906,
-                  0.0021514893,
-                  0.008178711,
-                  -0.029541016,
-                  -0.018432617,
-                  -0.046875,
-                  0.021240234
+                "id": "54910170-852f-4322-9767-63d36e55c3bf",
+                "texts": [
+                "This is the sentence I want to embed.",
+                "Hey !"
                 ],
-                [
-                  0.013977051,
-                  0.012084961,
-                  0.005554199,
-                  -0.053955078,
-                  -0.026977539,
-                  -0.008361816,
-                  0.02368164,
-                  -0.013183594,
-                  -0.063964844,
-                  0.026611328
-                ]
-              ],
-              "int8": [
-                [
-              
-                  -15,
-                  -65,
-                  0,
-                  -31,
-                  -43,
-                  -14,
-                  -48,
-                  59,
-                  -34,
-                  15,
-                  36,
-                  49,
-                  -5,
-                  3,
-                  -49,
-                  -34,
-                  -74,
-                  21
-                ],
-                [
-                
-                  14,
-                  38,
-                  -30,
-                  -13,
-                  -49,
-                  4,
-                  -33,
-                  -49,
-                  48,
-                  9,
-                  -84,
-                  8,
-                  0,
-                  -84,
-                  -46,
-                  -20,
-                  24,
-                  -26,
-                  -98,
-                  28
-                ]
-              ]
-            },
-            "meta": {
-              "api_version": {
-                "version": "2"
-              },
-              "billed_units": {
-                "input_tokens": 11,
-                "image_tokens": 0
-              }
-            },
-            "response_type": "embeddings_by_type"
+                "embeddings": {
+                "binary": [[-54,99,-87,60,9]], 
+                "float": [[0.016967773,0.031982422,0.041503906],[0.013977051,0.012084961,0.005554199,-0.053955078]], 
+                "int8": [[-15,-65,0,-31,-43,-14],[14,38,-30,-13,-49,4,-33,-49]]
+                },
+                "meta": {
+                "api_version": {
+                    "version": "2"
+                },
+                "billed_units": {
+                    "input_tokens": 11,
+                    "image_tokens": 0
+                }
+                },
+                "response_type": "embeddings_by_type"
           }"#;
 
         let result = parse_json::<client::EmbeddingResponse>(json_data);
         print!("{:?}", result);
         assert!(result.is_ok());
+    }
 
-        // TODO: print the response on the console
-
+    #[test]
+    fn test_parse_rerank_response_data() {
+        let json_data = r#"{
+            "results": [
+                {
+                "index": 3,
+                "relevance_score": 0.999071
+                },
+                {
+                "index": 4,
+                "relevance_score": 0.7867867
+                },
+                {
+                "index": 0,
+                "relevance_score": 0.32713068
+                }
+            ],
+            "id": "07734bd2-2473-4f07-94e1-0d9f0e6843cf",
+            "meta": {
+                "api_version": {
+                "version": "2",
+                "is_experimental": false
+                },
+                "billed_units": {
+                "search_units": 1
+                }
+            }
+        }"#;
+        let result = parse_json::<client::RerankResponse>(json_data);
+        print!("{:?}", result);
+        assert!(result.is_ok());
     }
 }

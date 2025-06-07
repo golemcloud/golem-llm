@@ -4,14 +4,16 @@ use base64::{engine::general_purpose, Engine};
 use golem_embed::{
     error::unsupported,
     golem::embed::embed::{
-        self, Config, ContentPart, Embedding, EmbeddingResponse as GolemEmbeddingResponse, Error,
-        OutputDtype, OutputFormat, TaskType, Usage,
+        Config, ContentPart, Embedding, EmbeddingResponse as GolemEmbeddingResponse, Error,
+        OutputDtype, RerankResponse as GolemRerankResponse, RerankResult, TaskType, Usage,
     },
 };
 use log::trace;
 use reqwest::{Client, Url};
 
-use crate::client::{EmbeddingData, EmbeddingRequest, EmbeddingResponse, EmbeddingType, InputType};
+use crate::client::{
+    EmbeddingRequest, EmbeddingResponse, EmbeddingType, InputType, RerankRequest, RerankResponse,
+};
 
 fn output_dtype_to_cohere_embedding_type(dtype: OutputDtype) -> EmbeddingType {
     match dtype {
@@ -23,7 +25,10 @@ fn output_dtype_to_cohere_embedding_type(dtype: OutputDtype) -> EmbeddingType {
     }
 }
 
-pub fn create_request(inputs: Vec<ContentPart>, config: Config) -> Result<EmbeddingRequest, Error> {
+pub fn create_embed_request(
+    inputs: Vec<ContentPart>,
+    config: Config,
+) -> Result<EmbeddingRequest, Error> {
     let mut text_inputs = Vec::new();
     let mut image_inputs = Vec::new();
     for input in inputs {
@@ -86,6 +91,21 @@ pub fn create_request(inputs: Vec<ContentPart>, config: Config) -> Result<Embedd
         truncate: None,
         max_tokens: None,
         output_dimension: Some(config.dimensions.unwrap().to_string()),
+    })
+}
+
+pub fn create_rerank_request(
+    query: String,
+    documents: Vec<String>,
+    config: Config,
+) -> Result<RerankRequest, Error> {
+    let model = config.model.unwrap_or_else(|| "rerank-2-lite".to_string());
+    Ok(RerankRequest {
+        model,
+        query,
+        documents,
+        top_n: None,
+        max_tokens_per_doc: None,
     })
 }
 
@@ -158,7 +178,7 @@ pub fn process_embedding_response(
 
     Ok(GolemEmbeddingResponse {
         embeddings: embeddings,
-        provider_metadata_json: Some(get_provider_metadata(response.clone())),
+        provider_metadata_json: Some(get_embed_provider_metadata(response.clone())),
         model: config
             .model
             .unwrap_or_else(|| "embed-english-v3.0".to_string()),
@@ -169,20 +189,65 @@ pub fn process_embedding_response(
     })
 }
 
-pub fn get_provider_metadata(response: EmbeddingResponse) -> String {
+pub fn get_embed_provider_metadata(response: EmbeddingResponse) -> String {
     let meta = serde_json::to_string(&response.meta.unwrap()).unwrap_or_default();
     format!(r#"{{"id":"{}","meta":"{}",}}"#, response.id, meta)
 }
 
+pub fn process_rerank_response(
+    response: RerankResponse,
+    config: Config,
+) -> Result<GolemRerankResponse, Error> {
+    let results = response
+        .results
+        .iter()
+        .map(|result| RerankResult {
+            index: result.index,
+
+            relevance_score: result.relevance_score,
+            document: None,
+        })
+        .collect();
+
+    let usage = if let Some(meta) = response.clone().meta {
+        if let Some(tokens) = meta.tokens {
+            Some(Usage {
+                input_tokens: tokens.input_tokens,
+                total_tokens: tokens.output_tokens,
+            })
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    Ok(GolemRerankResponse {
+        results,
+        usage,
+        model: config.model.unwrap_or_else(|| "rerank-2-lite".to_string()),
+        provider_metadata_json: Some(get_rerank_provider_metadata(response.clone())),
+    })
+}
+
+fn get_rerank_provider_metadata(response: RerankResponse) -> String {
+    let meta = serde_json::to_string(&response.meta.unwrap()).unwrap_or_default();
+    format!(
+        r#"{{"id":"{}","meta":"{}",}}"#,
+        response.id.unwrap_or_default(),
+        meta
+    )
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::client::{ApiVersion, BilledUnits, Meta};
+    use crate::client::{ApiVersion, BilledUnits, EmbeddingData, Meta};
 
     use super::*;
     use serde_json;
 
     #[test]
-    fn test_conversion() {
+    fn test_embedding_response_conversion() {
         let data = EmbeddingResponse {
             id: "54910170-852f-4322-9767-63d36e55c3bf".to_owned(),
             images: None,
@@ -233,10 +298,18 @@ mod tests {
             meta: Some(Meta {
                 api_version: Some(ApiVersion {
                     version: Some("2".to_owned()),
+                    is_experimental: None,
+                    is_deprecated: None,
                 }),
                 billed_units: Some(BilledUnits {
                     input_tokens: Some(11),
+                    classifications: None,
+                    images: None,
+                    output_tokens: None,
+                    search_units: None,
                 }),
+                tokens: None,
+                warning: None,
             }),
             response_type: Some("embeddings_by_type".to_owned()),
         };
