@@ -5,18 +5,9 @@ use client::EmbeddingsApi;
 use conversions::{create_request, process_embedding_response};
 use golem_embed::{
     config::with_config_key,
-    golem::embed::embed::{
-        Config, ContentPart, EmbeddingResponse, Error, ErrorCode, Guest, RerankResponse,
-    },
-    LOGGING_STATE,
-};
-use golem_embed::{
-    config::with_config_key, 
     durability::{DurableEmbed, ExtendedGuest},
-    golem::embed::embed::{
-        Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse
-    }, 
-    LOGGING_STATE
+    golem::embed::embed::{Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse, ErrorCode},
+    LOGGING_STATE,
 };
 
 
@@ -66,8 +57,6 @@ impl Guest for OpenAIComponent {
         })
     }
 }
-    
-  
 
 impl ExtendedGuest for OpenAIComponent {}
 

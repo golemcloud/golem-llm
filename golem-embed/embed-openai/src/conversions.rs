@@ -1,7 +1,7 @@
-use bytemuck::checked::cast_slice;
 use golem_embed::error::unsupported;
 use golem_embed::golem::embed::embed::{
-    Config, ContentPart, EmbeddingResponse as GolemEmbeddingResponse, Error,
+    Config, ContentPart, EmbeddingResponse as GolemEmbeddingResponse, Error, ErrorCode,
+    ImageUrl, OutputDtype, OutputFormat, TaskType,
 };
 
 use crate::client::{EmbeddingRequest, EmbeddingResponse, EncodingFormat};
@@ -27,16 +27,12 @@ pub fn create_request(inputs: Vec<ContentPart>, config: Config) -> Result<Embedd
         _ => return Err(unsupported("OpenAI only supports float and base64 output formats.")),
     };
 
-    let dimension = config.dimensions;
-
-    let user = config.user;
-
     Ok(EmbeddingRequest {
         input,
         model,
         encoding_format,
-        dimension,
-        user,
+        dimension :config.dimensions,
+        user: config.user,
     })
 }
 
@@ -67,4 +63,78 @@ pub fn process_embedding_response(
         model: response.model,
         provider_metadata_json: None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use golem_embed::golem::embed::embed::{ImageUrl, TaskType};
+
+    use crate::client::{EmbeddingData, EmbeddingUsage, EmbeddingVector};
+
+    use super::*;
+
+    #[test]
+    fn test_process_embedding_response() {
+        let response = EmbeddingResponse {
+            data: vec![EmbeddingData {
+                embedding: EmbeddingVector::FloatArray(vec![0.1, 0.2, 0.3]),
+                index: 0,
+                object: "embedding".to_string(),
+            }],
+            model: "text-embedding-ada-002".to_string(),
+            usage: EmbeddingUsage {
+                prompt_tokens: 1,
+                total_tokens: 1,
+            },
+            object: "list".to_string(),
+        };
+        let result = process_embedding_response(response);
+        let embedding_response = result.unwrap();
+        assert_eq!(embedding_response.embeddings.len(), 1);
+        assert_eq!(embedding_response.embeddings[0].index, 0);
+        assert_eq!(embedding_response.embeddings[0].vector, vec![0.1, 0.2, 0.3]);
+        assert_eq!(embedding_response.provider_metadata_json, None);
+    }
+
+    #[test]
+    fn test_create_request() {
+        let inputs = vec![ContentPart::Text("Hello, world!".to_string())];
+        let config = Config {
+            model: Some("text-embedding-ada-002".to_string()),
+            dimensions: Some(1536),
+            user: Some("test_user".to_string()),
+            task_type: Some(TaskType::RetrievalQuery),
+            truncation: Some(false),
+            output_format: Some(OutputFormat::FloatArray),
+            output_dtype: Some(OutputDtype::FloatArray),
+            provider_options: vec![],
+        };
+        let request = create_request(inputs, config);
+        let embedding_request = request.unwrap();
+        assert_eq!(embedding_request.input, "Hello, world!");
+        assert_eq!(embedding_request.model, "text-embedding-ada-002");
+        assert_eq!(embedding_request.dimension, Some(1536));
+        assert_eq!(embedding_request.user, Some("test_user".to_string()));
+        assert_eq!(embedding_request.encoding_format, Some(EncodingFormat::Float));
+    }
+
+    #[test]
+    fn test_create_request_with_image() {
+        // OpenAI does not support image embeddings so this should return an error
+        let inputs = vec![ContentPart::Image(ImageUrl {
+            url: "https://example.com/image.png".to_string(),
+        })];
+        let config = Config {
+            model: Some("text-embedding-ada-002".to_string()),
+            dimensions: Some(1536),
+            user: Some("test_user".to_string()),
+            task_type: Some(TaskType::RetrievalQuery),
+            truncation: Some(false),
+            output_format: Some(OutputFormat::FloatArray),
+            output_dtype: Some(OutputDtype::FloatArray),
+            provider_options: vec![],
+        };
+        let request = create_request(inputs, config);
+        assert!(request.is_err());
+    }
 }
