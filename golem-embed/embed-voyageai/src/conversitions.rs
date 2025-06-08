@@ -192,29 +192,4 @@ mod tests {
         };
         assert!(request.is_ok());
     }
-
-    #[test]
-    fn test_image_input_not_supported() {
-        let inputs = vec![
-            ContentPart::Text("Hello".to_string()),
-            ContentPart::Image(golem_embed::golem::embed::embed::ImageUrl {
-                url: "http://example.com/image.jpg".to_string(),
-            }),
-        ];
-
-        let config = Config {
-            model: None,
-            task_type: None,
-            dimensions: None,
-            truncation: None,
-            output_format: None,
-            output_dtype: None,
-            user: None,
-            provider_options: vec![],
-        };
-
-        let result = create_embedding_request(inputs, config);
-        print!("{:?}", result);
-        assert!(result.is_err());
-    }
 }

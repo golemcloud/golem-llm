@@ -1,12 +1,10 @@
 use client::{EmbeddingResponse, EmbeddingsApi};
 use conversions::create_embed_request;
 use golem_embed::{
-    config::with_config_key,
-    golem::embed::embed::{
+    config::with_config_key, durability::{DurableEmbed, ExtendedGuest}, golem::embed::embed::{
         Config, ContentPart, EmbeddingResponse as GolemEmbeddingResponse, Error, Guest,
         RerankResponse,
-    },
-    LOGGING_STATE,
+    }, LOGGING_STATE
 };
 
 use crate::conversions::{
@@ -82,3 +80,10 @@ impl Guest for CohereComponent {
         )
     }
 }
+
+
+impl ExtendedGuest for CohereComponent {}
+
+type DurableCohereComponent = DurableEmbed<CohereComponent>;
+
+golem_embed::export_embed!(DurableCohereComponent with_types_in golem_embed);

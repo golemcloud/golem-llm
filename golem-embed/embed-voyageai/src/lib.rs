@@ -1,6 +1,6 @@
-use golem_embed::golem::embed::embed::{
+use golem_embed::{durability::{DurableEmbed, ExtendedGuest}, golem::embed::embed::{
     Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse,
-};
+}};
 
 use crate::{
     client::VoyageAIApi,
@@ -65,3 +65,10 @@ impl Guest for VoyageAIApiComponent {
         Self::rerank(client, query, documents, config)
     }
 }
+
+
+impl ExtendedGuest for VoyageAIApiComponent {}
+
+type DurableVoyageAIApiComponent = DurableEmbed<VoyageAIApiComponent>;
+
+golem_embed::export_embed!(DurableVoyageAIApiComponent with_types_in golem_embed);
