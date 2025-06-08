@@ -10,6 +10,15 @@ use golem_embed::{
     },
     LOGGING_STATE,
 };
+use golem_embed::{
+    config::with_config_key, 
+    durability::{DurableEmbed, ExtendedGuest},
+    golem::embed::embed::{
+        Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse
+    }, 
+    LOGGING_STATE
+};
+
 
 struct OpenAIComponent;
 
@@ -57,3 +66,11 @@ impl Guest for OpenAIComponent {
         })
     }
 }
+    
+  
+
+impl ExtendedGuest for OpenAIComponent {}
+
+type DurableOpenAIComponent = DurableEmbed<OpenAIComponent>;
+
+golem_embed::export_embed!(DurableOpenAIComponent with_types_in golem_embed);

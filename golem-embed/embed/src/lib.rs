@@ -1,5 +1,6 @@
 pub mod error;
 pub mod config;
+pub mod durability;
 
 wit_bindgen::generate!({
     path: "../wit",
@@ -12,7 +13,6 @@ wit_bindgen::generate!({
 
 pub use crate::exports::golem;
 pub use __export_embed_library_impl as export_embed;
-use exports::golem::embed::embed::{ Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse};
 use std::cell::RefCell;
 use std::str::FromStr;
 
