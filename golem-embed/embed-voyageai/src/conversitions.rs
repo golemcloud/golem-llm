@@ -1,16 +1,11 @@
-use std::{fs, path::Path};
-
-use base64::{engine::general_purpose, Engine};
 use golem_embed::{
     error::unsupported,
     golem::embed::embed::{
-        self, Config, ContentPart, Embedding, EmbeddingResponse as GolemEmbeddingResponse, Error,
+        Config, ContentPart, Embedding, EmbeddingResponse as GolemEmbeddingResponse, Error,
         OutputDtype as GolemOutputDtype, OutputFormat as GolemOutputFormat,
         RerankResponse as GolemRerankResponse, RerankResult as GolemRerankResult, TaskType, Usage,
     },
 };
-use log::trace;
-use reqwest::{Client, Url};
 
 use crate::client::{
     EmbeddingRequest, EmbeddingResponse, EncodingFormat, InputType, OutputDtype, RerankRequest,

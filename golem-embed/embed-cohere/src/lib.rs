@@ -1,10 +1,13 @@
-use client::{EmbeddingResponse, EmbeddingsApi};
+use client::EmbeddingsApi;
 use conversions::create_embed_request;
 use golem_embed::{
-    config::with_config_key, durability::{DurableEmbed, ExtendedGuest}, golem::embed::embed::{
+    config::with_config_key,
+    durability::{DurableEmbed, ExtendedGuest},
+    golem::embed::embed::{
         Config, ContentPart, EmbeddingResponse as GolemEmbeddingResponse, Error, Guest,
         RerankResponse,
-    }, LOGGING_STATE
+    },
+    LOGGING_STATE,
 };
 
 use crate::conversions::{
@@ -54,14 +57,10 @@ impl CohereComponent {
 impl Guest for CohereComponent {
     fn generate(inputs: Vec<ContentPart>, config: Config) -> Result<GolemEmbeddingResponse, Error> {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
-        with_config_key(
-            Self::ENV_VAR_NAME,
-            |error| Err(error),
-            |cohere_api_key| {
-                let client = EmbeddingsApi::new(cohere_api_key);
-                Self::embeddings(client, inputs, config)
-            },
-        )
+        with_config_key(Self::ENV_VAR_NAME, Err, |cohere_api_key| {
+            let client = EmbeddingsApi::new(cohere_api_key);
+            Self::embeddings(client, inputs, config)
+        })
     }
 
     fn rerank(
@@ -70,17 +69,12 @@ impl Guest for CohereComponent {
         config: Config,
     ) -> Result<RerankResponse, Error> {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
-        with_config_key(
-            Self::ENV_VAR_NAME,
-            |error| Err(error),
-            |cohere_api_key| {
-                let client = EmbeddingsApi::new(cohere_api_key);
-                Self::rerank(client, query, documents, config)
-            },
-        )
+        with_config_key(Self::ENV_VAR_NAME, Err, |cohere_api_key| {
+            let client = EmbeddingsApi::new(cohere_api_key);
+            Self::rerank(client, query, documents, config)
+        })
     }
 }
-
 
 impl ExtendedGuest for CohereComponent {}
 

@@ -1,9 +1,6 @@
 use crate::golem::embed::embed::{Error, ErrorCode};
 use reqwest::StatusCode;
 
-
-
-
 pub fn unsupported(what: impl AsRef<str>) -> Error {
     Error {
         code: ErrorCode::Unsupported,
@@ -20,7 +17,6 @@ pub fn model_not_found(model: impl AsRef<str>) -> Error {
     }
 }
 
-
 pub fn from_reqwest_error(details: impl AsRef<str>, err: reqwest::Error) -> Error {
     Error {
         code: ErrorCode::InternalError,
@@ -29,7 +25,7 @@ pub fn from_reqwest_error(details: impl AsRef<str>, err: reqwest::Error) -> Erro
     }
 }
 
- pub fn error_code_from_status(status: StatusCode) -> ErrorCode {
+pub fn error_code_from_status(status: StatusCode) -> ErrorCode {
     if status == StatusCode::TOO_MANY_REQUESTS {
         ErrorCode::RateLimitExceeded
     } else if status == StatusCode::UNAUTHORIZED

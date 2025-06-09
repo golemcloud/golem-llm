@@ -1,11 +1,11 @@
 use std::fmt::Debug;
 
+use base64::{engine::general_purpose, Engine};
 use golem_embed::{
     error::{error_code_from_status, from_reqwest_error},
     golem::embed::embed::Error,
 };
 use log::trace;
-use base64::{engine::general_purpose, Engine};
 
 #[allow(dead_code, unused, unused_imports)]
 use reqwest::Client;
@@ -21,8 +21,6 @@ pub struct EmbeddingsApi {
     openai_api_key: String,
     client: reqwest::Client,
 }
-
-
 
 impl EmbeddingsApi {
     pub fn new(openai_api_key: String) -> Self {
@@ -68,7 +66,6 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
         })
     }
 }
-
 
 /// OpenAI allows only allows float and base64 as output formats.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -117,14 +114,11 @@ pub enum EmbeddingVector {
     Base64(String),
 }
 
-
-
 impl EmbeddingVector {
     pub fn to_float_vec(&self) -> Result<Vec<f32>, String> {
         match self {
             EmbeddingVector::FloatArray(vec) => Ok(vec.clone()),
             EmbeddingVector::Base64(base64_str) => {
-
                 let bytes = general_purpose::STANDARD
                     .decode(base64_str)
                     .map_err(|e| format!("Failed to decode base64: {}", e))?;
@@ -143,8 +137,6 @@ impl EmbeddingVector {
         }
     }
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OpenAIError {

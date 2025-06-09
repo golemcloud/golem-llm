@@ -1,7 +1,6 @@
 use golem_embed::error::unsupported;
 use golem_embed::golem::embed::embed::{
-    Config, ContentPart, EmbeddingResponse as GolemEmbeddingResponse, Error, ErrorCode,
-    ImageUrl, OutputDtype, OutputFormat, TaskType,
+    Config, ContentPart, EmbeddingResponse as GolemEmbeddingResponse, Error,
 };
 
 use crate::client::{EmbeddingRequest, EmbeddingResponse, EncodingFormat};
@@ -22,16 +21,24 @@ pub fn create_request(inputs: Vec<ContentPart>, config: Config) -> Result<Embedd
         .unwrap_or_else(|| "text-embedding-ada-002".to_string());
 
     let encoding_format = match config.output_format {
-        Some(golem_embed::golem::embed::embed::OutputFormat::FloatArray) => Some(EncodingFormat::Float),
-        Some(golem_embed::golem::embed::embed::OutputFormat::Base64) => Some(EncodingFormat::Base64),
-        _ => return Err(unsupported("OpenAI only supports float and base64 output formats.")),
+        Some(golem_embed::golem::embed::embed::OutputFormat::FloatArray) => {
+            Some(EncodingFormat::Float)
+        }
+        Some(golem_embed::golem::embed::embed::OutputFormat::Base64) => {
+            Some(EncodingFormat::Base64)
+        }
+        _ => {
+            return Err(unsupported(
+                "OpenAI only supports float and base64 output formats.",
+            ))
+        }
     };
 
     Ok(EmbeddingRequest {
         input,
         model,
         encoding_format,
-        dimension :config.dimensions,
+        dimension: config.dimensions,
         user: config.user,
     })
 }
@@ -67,7 +74,7 @@ pub fn process_embedding_response(
 
 #[cfg(test)]
 mod tests {
-    use golem_embed::golem::embed::embed::{ImageUrl, TaskType};
+    use golem_embed::golem::embed::embed::{ImageUrl, OutputDtype, OutputFormat, TaskType};
 
     use crate::client::{EmbeddingData, EmbeddingUsage, EmbeddingVector};
 
@@ -115,7 +122,10 @@ mod tests {
         assert_eq!(embedding_request.model, "text-embedding-ada-002");
         assert_eq!(embedding_request.dimension, Some(1536));
         assert_eq!(embedding_request.user, Some("test_user".to_string()));
-        assert_eq!(embedding_request.encoding_format, Some(EncodingFormat::Float));
+        assert_eq!(
+            embedding_request.encoding_format,
+            Some(EncodingFormat::Float)
+        );
     }
 
     #[test]

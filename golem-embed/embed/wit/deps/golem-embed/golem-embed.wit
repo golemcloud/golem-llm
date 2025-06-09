@@ -32,6 +32,7 @@ interface embed {
     invalid-request,
     model-not-found,
     unsupported,
+    authentication-failed, 
     provider-error,
     rate-limit-exceeded,
     internal-error,
@@ -124,5 +125,5 @@ interface embed {
 }
 
 world embed-library {
-    export embed;
+   export embed;
 }

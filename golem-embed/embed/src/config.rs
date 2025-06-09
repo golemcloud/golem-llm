@@ -1,4 +1,3 @@
-
 use crate::golem::embed::embed::{Error, ErrorCode};
 use std::ffi::OsStr;
 

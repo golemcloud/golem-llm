@@ -6,10 +6,11 @@ use conversions::{create_request, process_embedding_response};
 use golem_embed::{
     config::with_config_key,
     durability::{DurableEmbed, ExtendedGuest},
-    golem::embed::embed::{Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse, ErrorCode},
+    golem::embed::embed::{
+        Config, ContentPart, EmbeddingResponse, Error, ErrorCode, Guest, RerankResponse,
+    },
     LOGGING_STATE,
 };
-
 
 struct OpenAIComponent;
 
@@ -35,14 +36,10 @@ impl OpenAIComponent {
 impl Guest for OpenAIComponent {
     fn generate(inputs: Vec<ContentPart>, config: Config) -> Result<EmbeddingResponse, Error> {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
-        with_config_key(
-            Self::ENV_VAR_NAME,
-            |error| Err(error),
-            |openai_api_key| {
-                let client = EmbeddingsApi::new(openai_api_key);
-                Self::embeddings(client, inputs, config)
-            },
-        )
+        with_config_key(Self::ENV_VAR_NAME, Err, |openai_api_key| {
+            let client = EmbeddingsApi::new(openai_api_key);
+            Self::embeddings(client, inputs, config)
+        })
     }
 
     fn rerank(

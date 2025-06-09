@@ -97,15 +97,14 @@ pub enum EncodingFormat {
     Base64,
 }
 
-
-#[derive(Debug,Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum InputType {
     Document,
-    Query
+    Query,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum OutputDtype{
+pub enum OutputDtype {
     Float,
     Int8,
     Uint8,

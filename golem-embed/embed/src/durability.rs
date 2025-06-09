@@ -1,4 +1,4 @@
-use crate::golem::embed::embed::{Guest};
+use crate::golem::embed::embed::Guest;
 use std::marker::PhantomData;
 
 /// Wraps an embed implementation with custom durability
@@ -18,10 +18,7 @@ mod passthrough_impl {
     };
 
     impl<Impl: ExtendedGuest> Guest for DurableEmbed<Impl> {
-        fn generate(
-            inputs: Vec<ContentPart>,
-            config: Config,
-        ) -> Result<EmbeddingResponse, Error> {
+        fn generate(inputs: Vec<ContentPart>, config: Config) -> Result<EmbeddingResponse, Error> {
             Impl::generate(inputs, config)
         }
 
@@ -55,10 +52,7 @@ mod durable_impl {
     use std::fmt::{Display, Formatter};
 
     impl<Impl: ExtendedGuest> Guest for DurableEmbed<Impl> {
-        fn generate(
-            inputs: Vec<ContentPart>,
-            config: Config,
-        ) -> Result<EmbeddingResponse, Error> {
+        fn generate(inputs: Vec<ContentPart>, config: Config) -> Result<EmbeddingResponse, Error> {
             let durability = Durability::<Result<EmbeddingResponse, Error>, UnusedError>::new(
                 "golem_embed",
                 "generate",
@@ -68,10 +62,7 @@ mod durable_impl {
                 let result = with_persistence_level(PersistenceLevel::PersistNothing, || {
                     Impl::generate(inputs.clone(), config.clone())
                 });
-                durability.persist_infallible(
-                    GenerateInput { inputs, config },
-                    result.clone(),
-                )
+                durability.persist_infallible(GenerateInput { inputs, config }, result.clone())
             } else {
                 durability.replay_infallible()
             }
@@ -130,9 +121,7 @@ mod durable_impl {
     #[cfg(test)]
     mod tests {
         use crate::durability::durable_impl::{GenerateInput, RerankInput};
-        use crate::golem::embed::embed::{
-            Config, ContentPart, ImageUrl, TaskType,
-        };
+        use crate::golem::embed::embed::{Config, ContentPart, ImageUrl, TaskType};
         use golem_rust::value_and_type::{FromValueAndType, IntoValueAndType};
         use std::fmt::Debug;
 

@@ -124,7 +124,6 @@ interface embed {
   ) -> result<rerank-response, error>;
 }
 
-
 world embed-library {
-    export embed;
+   export embed;
 }

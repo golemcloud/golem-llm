@@ -1,6 +1,7 @@
-use golem_embed::{durability::{DurableEmbed, ExtendedGuest}, golem::embed::embed::{
-    Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse,
-}};
+use golem_embed::{
+    durability::{DurableEmbed, ExtendedGuest},
+    golem::embed::embed::{Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse},
+};
 
 use crate::{
     client::VoyageAIApi,
@@ -65,7 +66,6 @@ impl Guest for VoyageAIApiComponent {
         Self::rerank(client, query, documents, config)
     }
 }
-
 
 impl ExtendedGuest for VoyageAIApiComponent {}
 
