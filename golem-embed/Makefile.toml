@@ -31,18 +31,30 @@ install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
 args = ["build", "-p", "golem-embed-cohere", "--no-default-features"]
 
+[tasks.build-hugging-face]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-hugging-face"]
+
+[tasks.build-hugging-face-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-hugging-face", "--no-default-features"]
+
 
 
 [tasks.build]
 dependencies = [
     "build-openai",
     "build-cohere",
+    "build-hugging-face",
 ]
 
 [tasks.build-portable]
 dependencies = [
     "build-openai-portable",
     "build-cohere-portable",
+    "build-hugging-face-portable",
 ]
 
 [tasks.build-all]
@@ -83,16 +95,28 @@ install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
 args = ["build", "-p", "golem-embed-cohere", "--release", "--no-default-features"]
 
+[tasks.release-build-hugging-face]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-hugging-face", "--release"]
+
+[tasks.release-build-hugging-face-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-hugging-face", "--release", "--no-default-features"]
+
 [tasks.release-build]
 dependencies = [
     "release-build-openai",
     "release-build-cohere",
+    "release-build-hugging-face",
 ]
 
 [tasks.release-build-portable]
 dependencies = [
     "release-build-openai-portable",
     "release-build-cohere-portable",
+    "release-build-hugging-face-portable",
 ]
 
 [tasks.release-build-all]
@@ -138,6 +162,11 @@ rm -r embed-cohere/wit/deps
 mkdir embed-cohere/wit/deps/golem-embed
 cp wit/golem-embed.wit embed-cohere/wit/deps/golem-embed/golem-embed.wit
 cp wit/deps/wasi:io embed-cohere/wit/deps
+
+rm -r embed-hugging-face/wit/deps
+mkdir embed-hugging-face/wit/deps/golem-embed
+cp wit/golem-embed.wit embed-hugging-face/wit/deps/golem-embed/golem-embed.wit
+cp wit/deps/wasi:io embed-hugging-face/wit/deps
 
 rm -r test/wit
 mkdir test/wit/deps/golem-embed
