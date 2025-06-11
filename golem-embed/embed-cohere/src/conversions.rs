@@ -90,7 +90,7 @@ pub fn create_embed_request(
         },
         truncate: None,
         max_tokens: None,
-        output_dimension: Some(config.dimensions.unwrap().to_string()),
+        output_dimension: Some(config.dimensions.unwrap()),
     })
 }
 
@@ -263,7 +263,7 @@ mod tests {
         assert_eq!(request.texts, Some(vec!["Hello, world!".to_string()]));
         // assert_eq!(request.truncate, None);
         assert_eq!(request.max_tokens, None);
-        assert_eq!(request.output_dimension, Some("1024".to_string()));
+        assert_eq!(request.output_dimension, Some(1024));
     }
 
 

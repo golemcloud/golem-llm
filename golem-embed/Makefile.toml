@@ -10,6 +10,16 @@ args = ["clean"]
 command = "cargo"
 args = ["test"]
 
+[tasks.build-voyageai]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-voyageai"]
+
+[tasks.build-voyageai-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-voyageai", "--no-default-features"]
+
 [tasks.build-openai]
 install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
@@ -48,6 +58,7 @@ dependencies = [
     "build-openai",
     "build-cohere",
     "build-hugging-face",
+    "build-voyageai",
 ]
 
 [tasks.build-portable]
@@ -55,24 +66,29 @@ dependencies = [
     "build-openai-portable",
     "build-cohere-portable",
     "build-hugging-face-portable",
+    "build-voyageai-portable"
 ]
 
 [tasks.build-all]
 script_runner = "@duckscript"
 script = '''
-mkdir components/debug
+mkdir ../components/embed/debug
 
 cm_run_task clean
 cm_run_task build
 
-cp target/wasm32-wasip1/debug/golem_embed_openai.wasm components/embed/debug/golem_embed_openai.wasm
-cp target/wasm32-wasip1/debug/golem_embed_cohere.wasm components/embed/debug/golem_embed_cohere.wasm
+cp ../target/wasm32-wasip1/debug/golem_embed_openai.wasm ../components/embed/debug/golem_embed_openai.wasm
+cp ../target/wasm32-wasip1/debug/golem_embed_cohere.wasm ../components/embed/debug/golem_embed_cohere.wasm
+cp ../target/wasm32-wasip1/debug/golem_embed_hugging_face.wasm ../components/embed/debug/golem_embed_hugging_face.wasm
+cp ../target/wasm32-wasip1/debug/golem_embed_voyageai.wasm ../components/embed/debug/golem_embed_voyageai.wasm
 
 cm_run_task clean
 cm_run_task build-portable
 
-cp target/wasm32-wasip1/debug/golem_embed_openai.wasm components/embed/debug/golem_embed_openai-portable.wasm
-cp target/wasm32-wasip1/debug/golem_embed_cohere.wasm components/embed/debug/golem_embed_cohere-portable.wasm
+cp ../target/wasm32-wasip1/debug/golem_embed_openai.wasm ../components/embed/debug/golem_embed_openai-portable.wasm
+cp ../target/wasm32-wasip1/debug/golem_embed_cohere.wasm ../components/embed/debug/golem_embed_cohere-portable.wasm
+cp ../target/wasm32-wasip1/debug/golem_embed_hugging_face.wasm ../components/embed/debug/golem_embed_hugging_face-portable.wasm
+cp ../target/wasm32-wasip1/debug/golem_embed_voyageai.wasm ../components/embed/debug/golem_embed_voyageai.wasm
 '''
 
 [tasks.release-build-openai]
@@ -105,11 +121,22 @@ install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
 args = ["build", "-p", "golem-embed-hugging-face", "--release", "--no-default-features"]
 
+[tasks.release-build-voyageai]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-voyageai", "--release"]
+
+[tasks.release-build-voyageai-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-embed-voyageai", "--release", "--no-default-features"]
+
 [tasks.release-build]
 dependencies = [
     "release-build-openai",
     "release-build-cohere",
     "release-build-hugging-face",
+    "release-build-voyageai",
 ]
 
 [tasks.release-build-portable]
@@ -117,26 +144,31 @@ dependencies = [
     "release-build-openai-portable",
     "release-build-cohere-portable",
     "release-build-hugging-face-portable",
+    "release-build-voyageai-portable",
 ]
 
 [tasks.release-build-all]
 script_runner = "@duckscript"
 script = '''
-mkdir components/release
+mkdir ../components/release
 
 cm_run_task set-version
 
 cm_run_task clean
 cm_run_task release-build
 
-cp target/wasm32-wasip1/release/golem_embed_openai.wasm components/embed/release/golem_embed_openai.wasm
-cp target/wasm32-wasip1/release/golem_embed_cohere.wasm components/embed/release/golem_embed_cohere.wasm
+cp ../target/wasm32-wasip1/release/golem_embed_openai.wasm ../components/embed/release/golem_embed_openai.wasm
+cp ../target/wasm32-wasip1/release/golem_embed_cohere.wasm ../components/embed/release/golem_embed_cohere.wasm
+cp ../target/wasm32-wasip1/release/golem_embed_hugging_face.wasm ../components/embed/release/golem_embed_hugging_face.wasm
+cp ../target/wasm32-wasip1/release/golem_embed_voyageai.wasm ../components/embed/release/golem_embed_voyageai.wasm
 
 cm_run_task clean
 cm_run_task release-build-portable
 
-cp target/wasm32-wasip1/release/golem_embed_openai.wasm components/embed/release/golem_embed_openai-portable.wasm
-cp target/wasm32-wasip1/release/golem_embed_cohere.wasm components/embed/release/golem_embed_cohere-portable.wasm
+cp ../target/wasm32-wasip1/release/golem_embed_openai.wasm ../components/embed/release/golem_embed_openai-portable.wasm
+cp ../target/wasm32-wasip1/release/golem_embed_cohere.wasm ../components/embed/release/golem_embed_cohere-portable.wasm
+cp ../target/wasm32-wasip1/release/golem_embed_hugging_face.wasm ../components/embed/release/golem_embed_hugging_face-portable.wasm
+cp ../target/wasm32-wasip1/release/golem_embed_voyageai.wasm ../components/embed/release/golem_embed_voyageai-portable.wasm
 '''
 
 [tasks.wit-update]
@@ -167,6 +199,12 @@ rm -r embed-hugging-face/wit/deps
 mkdir embed-hugging-face/wit/deps/golem-embed
 cp wit/golem-embed.wit embed-hugging-face/wit/deps/golem-embed/golem-embed.wit
 cp wit/deps/wasi:io embed-hugging-face/wit/deps
+
+rm -r embed-voyageai/wit/deps
+mkdir embed-voyageai/wit/deps/golem-embed
+cp wit/golem-embed.wit embed-voyageai/wit/deps/golem-embed/golem-embed.wit
+cp wit/deps/wasi:io embed-voyageai/wit/deps
+
 
 rm -r test/wit
 mkdir test/wit/deps/golem-embed
@@ -231,6 +269,10 @@ golem-cli app clean
 golem-cli app build -b openai-debug
 golem-cli app clean
 golem-cli app build -b cohere-debug
+golem-cli app clean
+golem-cli app build -b hugging-face-debug
+golem-cli app clean
+golem-cli app build -b voyageai-debug
 '''
 
 

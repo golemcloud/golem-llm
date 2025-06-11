@@ -48,22 +48,29 @@ impl EmbeddingsApi {
 
 fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, Error> {
     let status = response.status();
-    if status.is_success() {
-        let response_data = response
-            .json::<T>()
-            .map_err(|error| from_reqwest_error("Failed to decode response body", error))?;
-        trace!("Response from OpenAI Embeddings API: {response_data:?}");
-        Ok(response_data)
-    } else {
-        let response_data = response
-            .text()
-            .map_err(|error| from_reqwest_error("Failed to decode response body", error))?;
-        trace!("Response from OpenAI Embeddings API: {response_data:?}");
-        Err(Error {
-            code: error_code_from_status(status),
-            message: format!("Request failed with {status}"),
-            provider_error_json: Some(response_data),
-        })
+    match status.is_success() {
+        true => match response.json::<T>() {
+            Ok(response_data) => {
+                trace!("Response from Cohere API: {response_data:?}");
+                Ok(response_data)
+            }
+            Err(error) => {
+                trace!("Error parsing response: {error:?}");
+                Err(Error {
+                    code: error_code_from_status(status),
+                    message: format!(
+                        "Failed to decode response body: {}",
+                        response.text().unwrap_or_default()
+                    ),
+                    provider_error_json: Some(error.to_string()),
+                })
+            }
+        },
+        false =>  Err(Error {
+            code: error_code_from_status(response.status()),
+            message: "Failed to parse response".to_string(),
+            provider_error_json: response.json(),
+        }),
     }
 }
 

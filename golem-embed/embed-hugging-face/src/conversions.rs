@@ -46,7 +46,7 @@ pub fn process_embedding_response(
 
     Ok(GolemEmbeddingResponse {
         embeddings,
-        usage: None, // Hugging Face doesn't provide usage info in their response
+        usage: None, 
         model,
         provider_metadata_json: None,
     })
@@ -64,7 +64,7 @@ pub fn create_rerank_request(
     let request = RerankRequest {
         query,
         documents,
-        top_k: config.dimensions, // Use dimensions field as top_k
+        top_k: config.dimensions, 
         return_documents: Some(true),
     };
 
@@ -86,7 +86,7 @@ pub fn process_rerank_response(
 
     Ok(GolemRerankResponse {
         results,
-        usage: None, // Hugging Face doesn't provide usage info
+        usage: None, 
         model,
         provider_metadata_json: None,
     })
@@ -159,7 +159,7 @@ mod tests {
         let documents = vec!["Paris is the capital of France.".to_string()];
         let config = Config {
             model: Some("cross-encoder/ms-marco-MiniLM-L-2-v2".to_string()),
-            dimensions: Some(10), // Use as top_k
+            dimensions: Some(10), 
             user: Some("test_user".to_string()),
             task_type: Some(TaskType::RetrievalQuery),
             truncation: Some(false),

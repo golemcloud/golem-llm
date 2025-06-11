@@ -5,7 +5,6 @@ package test:embed;
 interface test-embed-api {
   test1: func() -> string;
   test2: func() -> string;
-  test3: func() -> string;
 }
 
 world test-embed {

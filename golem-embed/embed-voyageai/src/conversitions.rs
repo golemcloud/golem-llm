@@ -21,7 +21,7 @@ pub fn create_embedding_request(
     for input in inputs {
         match input {
             ContentPart::Text(text) => text_inputs.push(text),
-            ContentPart::Image(image) => {
+            ContentPart::Image(_) => {
                 return Err(unsupported(
                     "VoyageAI text embeddings do not support image inputs. Use multimodal embeddings instead.",
                 ));
@@ -33,10 +33,9 @@ pub fn create_embedding_request(
         .model
         .unwrap_or_else(|| "voyage-3.5-lite".to_string());
 
-    let mut input_type = None;
-    match config.task_type {
-        Some(TaskType::RetrievalQuery) => input_type = Some(InputType::Query),
-        Some(TaskType::RetrievalDocument) => input_type = Some(InputType::Document),
+    let input_type = match config.task_type {
+        Some(TaskType::RetrievalQuery) => Some(InputType::Query),
+        Some(TaskType::RetrievalDocument) => Some(InputType::Document),
         _ => return Err(unsupported("Unsupported task type")),
     };
 
