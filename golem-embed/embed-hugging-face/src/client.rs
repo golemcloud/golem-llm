@@ -7,6 +7,7 @@ use golem_embed::{
 use log::trace;
 use reqwest::{Client, Method, Response};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json;
 
 const BASE_URL: &str = "https://router.huggingface.co/hf-inference";
 
@@ -66,28 +67,31 @@ impl EmbeddingsApi {
 fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, Error> {
     let status = response.status();
     match status.is_success() {
-        true => match response.json::<T>() {
-            Ok(response_data) => {
-                trace!("Response from Cohere API: {response_data:?}");
-                Ok(response_data)
-            }
-            Err(error) => {
-                trace!("Error parsing response: {error:?}");
-                Err(Error {
-                    code: error_code_from_status(status),
-                    message: format!(
-                        "Failed to decode response body: {}",
-                        response.text().unwrap_or_default()
-                    ),
-                    provider_error_json: Some(error.to_string()),
-                })
+        true => {
+            let response_text = response.text().map_err(|err| from_reqwest_error("Failed to read response body", err))?;
+            match serde_json::from_str::<T>(&response_text) {
+                Ok(response_data) => {
+                    trace!("Response from Hugging Face API: {response_data:?}");
+                    Ok(response_data)
+                }
+                Err(error) => {
+                    trace!("Error parsing response: {error:?}");
+                    Err(Error {
+                        code: error_code_from_status(status),
+                        message: format!("Failed to decode response body: {}", response_text),
+                        provider_error_json: Some(error.to_string()),
+                    })
+                }
             }
         },
-        false =>  Err(Error {
-            code: error_code_from_status(response.status()),
-            message: "Failed to parse response".to_string(),
-            provider_error_json: response.json(),
-        }),
+        false => {
+            let error_text = response.text().ok();
+            Err(Error {
+                code: error_code_from_status(status),
+                message: "Failed to parse response".to_string(),
+                provider_error_json: error_text,
+            })
+        },
     }
 }
 
