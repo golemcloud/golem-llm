@@ -215,7 +215,6 @@ pub struct RerankRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RerankResponse {
     pub results: Vec<RerankData>,
-    pub scores: Vec<f32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

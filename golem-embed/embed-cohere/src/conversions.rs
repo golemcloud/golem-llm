@@ -430,7 +430,6 @@ mod tests {
                 index: 0,
                 relevance_score: 0.9,
             }],
-            scores: vec![0.9],
             meta: Some(Meta {
                 api_version: Some(ApiVersion {
                     version: Some("2".to_owned()),
