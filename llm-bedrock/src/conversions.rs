@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use aws_sdk_bedrockruntime::{
     self as bedrock,
     error::SdkError,
-    operation::converse,
+    operation::{converse, converse_stream},
     types::{
         ContentBlockDeltaEvent, ContentBlockStartEvent, ConversationRole,
         ConverseStreamMetadataEvent, ConverseStreamOutput, ImageBlock, ImageFormat,
@@ -34,7 +34,7 @@ impl BedrockInput {
             messages_to_bedrock_message_groups(messages)?;
 
         if let Some(tool_results) = tool_results {
-            user_messages.push(tool_call_results_to_bedrock_tool_results(tool_results));
+            user_messages.extend(tool_call_results_to_bedrock_tools(tool_results)?);
         }
 
         let options = config
@@ -62,12 +62,22 @@ impl BedrockInput {
     }
 }
 
-fn tool_call_results_to_bedrock_tool_results(
+fn tool_call_results_to_bedrock_tools(
     results: Vec<(llm::ToolCall, llm::ToolResult)>,
-) -> bedrock::types::Message {
+) -> Result<Vec<bedrock::types::Message>, llm::Error> {
+    let mut tool_calls: Vec<bedrock::types::ContentBlock> = vec![];
     let mut tool_results: Vec<bedrock::types::ContentBlock> = vec![];
 
     for (tool_call, tool_result) in results {
+        tool_calls.push(bedrock::types::ContentBlock::ToolUse(
+            bedrock::types::ToolUseBlock::builder()
+                .tool_use_id(tool_call.id.clone())
+                .name(tool_call.name)
+                .input(json_str_to_smithy_document(&tool_call.arguments_json)?)
+                .build()
+                .unwrap(),
+        ));
+
         tool_results.push(bedrock::types::ContentBlock::ToolResult(
             bedrock::types::ToolResultBlock::builder()
                 .tool_use_id(tool_call.id)
@@ -82,11 +92,18 @@ fn tool_call_results_to_bedrock_tool_results(
         ));
     }
 
-    bedrock::types::Message::builder()
-        .role(ConversationRole::User)
-        .set_content(Some(tool_results))
-        .build()
-        .unwrap()
+    Ok(vec![
+        bedrock::types::Message::builder()
+            .role(ConversationRole::Assistant)
+            .set_content(Some(tool_calls))
+            .build()
+            .unwrap(),
+        bedrock::types::Message::builder()
+            .role(ConversationRole::User)
+            .set_content(Some(tool_results))
+            .build()
+            .unwrap(),
+    ])
 }
 
 fn tool_defs_to_bedrock_tool_config(
@@ -549,10 +566,24 @@ fn serde_json_to_smithy_document(value: serde_json::Value) -> Document {
     }
 }
 
-pub fn from_sdk_error<U, V>(model_id: String, sdk_error: SdkError<U, V>) -> llm::Error {
+pub fn from_converse_sdk_error(
+    model_id: String,
+    sdk_error: SdkError<converse::ConverseError>,
+) -> llm::Error {
     llm::Error {
         code: llm::ErrorCode::InternalError,
-        message: format!("Error calling Bedrock model {}: {}", model_id, sdk_error),
+        message: format!("Error calling Bedrock model {model_id}: {sdk_error:?}",),
+        provider_error_json: None,
+    }
+}
+
+pub fn from_converse_stream_sdk_error(
+    model_id: String,
+    sdk_error: SdkError<converse_stream::ConverseStreamError>,
+) -> llm::Error {
+    llm::Error {
+        code: llm::ErrorCode::InternalError,
+        message: format!("Error calling Bedrock model {model_id}: {sdk_error:?}",),
         provider_error_json: None,
     }
 }

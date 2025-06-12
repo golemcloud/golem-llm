@@ -1,10 +1,11 @@
 use crate::{
-    conversions::{self, from_sdk_error, BedrockInput},
+    conversions::{self, from_converse_sdk_error, from_converse_stream_sdk_error, BedrockInput},
     stream::BedrockChatStream,
 };
 use aws_config::BehaviorVersion;
 use aws_sdk_bedrockruntime::{
     self as bedrock,
+    config::{AsyncSleep, Sleep},
     operation::{
         converse::builders::ConverseFluentBuilder,
         converse_stream::builders::ConverseStreamFluentBuilder,
@@ -16,6 +17,7 @@ use golem_llm::{
     config::{get_config_key, get_config_key_or_none},
     golem::llm::llm,
 };
+use log::trace;
 
 #[derive(Debug)]
 pub struct Bedrock {
@@ -35,6 +37,7 @@ impl Bedrock {
                 .region(environment.aws_region())
                 .http_client(wasi_http)
                 .credentials_provider(environment.aws_credentials())
+                .sleep_impl(TokioSleep)
                 .load()
                 .await;
             let client = bedrock::Client::new(&sdk_config);
@@ -57,13 +60,14 @@ impl Bedrock {
 
         let runtime = get_async_runtime();
 
+        trace!("Sending request to AWS Bedrock: {input:?}");
         runtime.block_on(async {
             let model_id = input.model_id.clone();
             let response = self
                 .init_converse(input)
                 .send()
                 .await
-                .map_err(|e| from_sdk_error(model_id, e));
+                .map_err(|e| from_converse_sdk_error(model_id, e));
 
             if let Err(err) = response {
                 return llm::ChatEvent::Error(err);
@@ -95,15 +99,16 @@ impl Bedrock {
         let input = bedrock_input.unwrap();
 
         let runtime = get_async_runtime();
-
+        trace!("Sending request to AWS Bedrock: {input:?}");
         runtime.block_on(async {
             let model_id = input.model_id.clone();
             let response = self
                 .init_converse_stream(input)
                 .send()
                 .await
-                .map_err(|e| from_sdk_error(model_id, e));
+                .map_err(|e| from_converse_stream_sdk_error(model_id, e));
 
+            trace!("Creating AWS Bedrock event stream");
             match response {
                 Ok(response) => BedrockChatStream::new(response.stream),
                 Err(error) => BedrockChatStream::failed(error),
@@ -172,6 +177,17 @@ impl BedrockEnvironment {
 
 pub fn get_async_runtime() -> tokio::runtime::Runtime {
     tokio::runtime::Builder::new_current_thread()
+        .enable_time()
         .build()
         .unwrap()
+}
+
+#[derive(Debug, Clone)]
+struct TokioSleep;
+impl AsyncSleep for TokioSleep {
+    fn sleep(&self, duration: std::time::Duration) -> Sleep {
+        Sleep::new(Box::pin(async move {
+            tokio::time::sleep(duration).await;
+        }))
+    }
 }

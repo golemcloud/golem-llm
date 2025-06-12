@@ -1,11 +1,10 @@
-use std::cell::{RefCell, RefMut};
-
 use aws_sdk_bedrockruntime::{
     self as bedrock, primitives::event_stream::EventReceiver,
     types::error::ConverseStreamOutputError,
 };
 use golem_llm::golem::llm::llm;
-use golem_rust::wasm_rpc::Pollable;
+use golem_rust::wasm_rpc::wasi::io::poll::Pollable;
+use std::cell::{RefCell, RefMut};
 
 use crate::{
     client::get_async_runtime,
@@ -72,7 +71,10 @@ impl llm::GuestChatStream for BedrockChatStream {
                 let token = stream.recv().await;
 
                 match token {
-                    Ok(Some(output)) => converse_stream_output_to_stream_event(output),
+                    Ok(Some(output)) => {
+                        log::trace!("Processing bedrock stream event: {output:?}");
+                        converse_stream_output_to_stream_event(output)
+                    }
                     Ok(None) => {
                         self.set_finished();
                         Some(vec![])
