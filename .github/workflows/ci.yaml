@@ -84,7 +84,7 @@ jobs:
         run: cargo binstall --force --locked cargo-component@0.21.1
       - name: Build all test components
         run: cargo make build-test-components
-  ollama-llm-integration-tests:
+  ollama-integration-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -115,13 +115,13 @@ jobs:
           set -e
           docker run -d --name ollama -p 11434:11434 ollama/ollama:latest
           timeout 60 bash -c 'until curl -f http://localhost:11434/api/version; do sleep 2; done'
-          echo "Pulling qwen3:1.7b"
-          docker exec ollama ollama pull qwen3:1.7b
-          echo "Pulling gemma3:4b"
-          docker exec ollama ollama pull gemma3:4b
+          echo "Pulling Qwen2.5:1.5b"
+          docker exec ollama ollama pull qwen2.5:1.5b
+          echo "Pulling Gemma2:2b"
+          docker exec ollama ollama pull gemma2:2b
           echo "Verifying models are available"
-          docker exec ollama ollama list | grep -q "qwen3:1.7b" || exit 1
-          docker exec ollama ollama list | grep -q "gemma3:4b" || exit 1
+          docker exec ollama ollama list | grep -q "qwen2.5:1.5b" || exit 1
+          docker exec ollama ollama list | grep -q "gemma2:2b" || exit 1
           echo "Ollama setup completed."
       - name: Install and Run latest Golem Server
         run: |
@@ -137,8 +137,8 @@ jobs:
       - name: Build and test Ollama integration
         run: |
           set -e
-          cargo make build-llm-ollama
-          cd golem-llm/test
+          cargo make build-ollama
+          cd test
           golem-cli app build -b ollama-debug
           golem-cli app deploy -b ollama-debug
           golem-cli worker new -e GOLEM_OLLAMA_BASE_URL=http://localhost:11434 test:llm/ollama-1
@@ -153,7 +153,7 @@ jobs:
     needs:
       - tests
       - build-test-components
-      - ollama-llm-integration-tests
+      - ollama-integration-tests
     runs-on: ubuntu-latest
     permissions:
       contents: write
