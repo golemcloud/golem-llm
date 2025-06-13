@@ -1,7 +1,9 @@
+use std::{cell::RefCell, sync::Arc};
+
 use client::Bedrock;
 use golem_llm::{
     durability::{DurableLLM, ExtendedGuest},
-    golem::llm::llm::{ChatEvent, ChatStream, Config, Guest, Message, ToolCall, ToolResult},
+    golem::llm::llm::{self, ChatEvent, ChatStream, Config, Guest, Message, ToolCall, ToolResult},
     LOGGING_STATE,
 };
 use stream::BedrockChatStream;
@@ -18,7 +20,7 @@ impl Guest for BedrockComponent {
     fn send(messages: Vec<Message>, config: Config) -> ChatEvent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
-        let bedrock = Bedrock::new();
+        let bedrock = get_bedrock_client();
         if let Err(err) = bedrock {
             return ChatEvent::Error(err);
         }
@@ -33,7 +35,7 @@ impl Guest for BedrockComponent {
     ) -> ChatEvent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
-        let bedrock = Bedrock::new();
+        let bedrock = get_bedrock_client();
         if let Err(err) = bedrock {
             return ChatEvent::Error(err);
         }
@@ -55,7 +57,7 @@ impl ExtendedGuest for BedrockComponent {
     ) -> Self::ChatStream {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
-        let bedrock = Bedrock::new();
+        let bedrock = get_bedrock_client();
         if let Err(err) = bedrock {
             return BedrockChatStream::failed(err);
         }
@@ -66,6 +68,19 @@ impl ExtendedGuest for BedrockComponent {
     fn subscribe(_stream: &Self::ChatStream) -> golem_rust::wasm_rpc::Pollable {
         unimplemented!()
     }
+}
+
+fn get_bedrock_client() -> Result<Arc<Bedrock>, llm::Error> {
+    BEDROCK_CLIENT.with_borrow_mut(|client_opt| {
+        if client_opt.is_none() {
+            *client_opt = Some(Arc::new(Bedrock::new()?));
+        }
+        Ok(client_opt.as_ref().map(Arc::clone).unwrap())
+    })
+}
+
+thread_local! {
+    static BEDROCK_CLIENT: RefCell<Option<Arc<Bedrock>>> = RefCell::new(None);
 }
 
 type DurableBedrockComponent = DurableLLM<BedrockComponent>;
