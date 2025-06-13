@@ -1,0 +1,13 @@
+package test:embed;
+
+// See https://component-model.bytecodealliance.org/design/wit.html for more details about the WIT syntax
+
+interface test-embed-api {
+  test1: func() -> string;
+  test2: func() -> string;
+}
+
+world test-embed {
+  import golem:embed/embed@1.0.0;
+  export test-embed-api;
+}
