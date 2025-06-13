@@ -16,16 +16,16 @@ const BASE_URL: &str = "https://api.voyageai.com";
 /// Based on https://docs.voyageai.com/reference/embeddings-api
 /// and https://docs.voyageai.com/reference/reranker-api
 pub struct VoyageAIApi {
-    api_key: String,
+    voyageai_api_key: String,
     client: Client,
 }
 
 impl VoyageAIApi {
-    pub fn new(api_key: String) -> Self {
+    pub fn new(voyageai_api_key: String) -> Self {
         let client = Client::builder()
             .build()
             .expect("Failed to initialize HTTP client");
-        Self { api_key, client }
+        Self { voyageai_api_key, client }
     }
 
     pub fn generate_embedding(
@@ -36,7 +36,7 @@ impl VoyageAIApi {
         let response = self
             .client
             .request(Method::POST, format!("{BASE_URL}/v1/embeddings"))
-            .bearer_auth(&self.api_key)
+            .bearer_auth(&self.voyageai_api_key)
             .json(&request)
             .send()
             .map_err(|err| from_reqwest_error("Embedding request failed", err))?;
@@ -48,7 +48,7 @@ impl VoyageAIApi {
         let response = self
             .client
             .request(Method::POST, format!("{BASE_URL}/v1/rerank"))
-            .bearer_auth(&self.api_key)
+            .bearer_auth(&self.voyageai_api_key)
             .json(&request)
             .send()
             .map_err(|err| from_reqwest_error("Rerank request failed", err))?;
@@ -58,32 +58,49 @@ impl VoyageAIApi {
 
 fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, Error> {
     let status = response.status();
-    match status.is_success() {
-        true => {
-            let response_text = response.text().map_err(|err| from_reqwest_error("Failed to read response body", err))?;
-            match serde_json::from_str::<T>(&response_text) {
-                Ok(response_data) => {
-                    trace!("Response from VoyageAI API: {response_data:?}");
-                    Ok(response_data)
-                }
-                Err(error) => {
-                    trace!("Error parsing response: {error:?}");
-                    Err(Error {
-                        code: error_code_from_status(status),
-                        message: format!("Failed to decode response body: {}", response_text),
-                        provider_error_json: Some(error.to_string()),
-                    })
-                }
+    let response_text = response
+        .text()
+        .map_err(|err| from_reqwest_error("Failed to read response body", err))?;
+    
+    if !status.is_success() {
+        if let Ok(error_response) = serde_json::from_str::<VoyageAIError>(&response_text) {
+            return Err(Error {
+                code: error_code_from_status(status),
+                message: error_response.error.message,
+                provider_error_json: Some(response_text),
+            });
+        }
+        
+        if let Ok(detail_error) = serde_json::from_str::<serde_json::Value>(&response_text) {
+            if let Some(detail) = detail_error.get("detail").and_then(|d| d.as_str()) {
+                return Err(Error {
+                    code: error_code_from_status(status),
+                    message: detail.to_string(),
+                    provider_error_json: Some(response_text),
+                });
             }
-        },
-        false => {
-            let error_text = response.text().ok();
+        }
+        
+        return Err(Error {
+            code: error_code_from_status(status),
+            message: format!("Request failed with status {}: {}", status, response_text),
+            provider_error_json: Some(response_text),
+        });
+    }
+    
+    match serde_json::from_str::<T>(&response_text) {
+        Ok(response_data) => {
+            trace!("Response from VoyageAI API: {response_data:?}");
+            Ok(response_data)
+        }
+        Err(error) => {
+            trace!("Error parsing response: {error:?}");
             Err(Error {
                 code: error_code_from_status(status),
-                message: "Failed to parse response".to_string(),
-                provider_error_json: error_text,
+                message: format!("Failed to decode response body: {}", response_text),
+                provider_error_json: Some(error.to_string()),
             })
-        },
+        }
     }
 }
 
@@ -110,11 +127,14 @@ pub enum EncodingFormat {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum InputType {
+    #[serde(rename = "document")]
     Document,
+    #[serde(rename = "query")]
     Query,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum OutputDtype {
     Float,
     Int8,
@@ -143,7 +163,7 @@ pub struct EmbeddingUsage {
     pub total_tokens: u32,
 }
 
-// Rerank API structures
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RerankRequest {
     pub query: String,

@@ -16,7 +16,7 @@ const MODEL: &'static str = "embed-english-v3.0";
 #[cfg(feature = "hugging-face")]
 const MODEL: &'static str = "sentence-transformers/all-MiniLM-L6-v2";
 #[cfg(feature = "voyageai")]
-const MODEL: &'static str = "voyage-3.5-lite";
+const MODEL: &'static str = "voyage-3";
 
 #[cfg(feature = "openai")]
 const RERANKING_MODEL: &'static str = "";
@@ -25,7 +25,7 @@ const RERANKING_MODEL: &'static str = "rerank-v3.5";
 #[cfg(feature = "hugging-face")]
 const RERANKING_MODEL: &'static str = "cross-encoder/ms-marco-MiniLM-L-2-v2";
 #[cfg(feature = "voyageai")]
-const RERANKING_MODEL: &'static str = "rerank-2-lite";
+const RERANKING_MODEL: &'static str = "rerank-1";
 
 impl Guest for Component {
     /// test1 demonstrates text embedding generation.

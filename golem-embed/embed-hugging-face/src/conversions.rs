@@ -22,7 +22,7 @@ pub fn create_embedding_request(inputs: Vec<ContentPart>, config: Config) -> Res
         .unwrap_or_else(|| "sentence-transformers/all-MiniLM-L6-v2".to_string());
 
     let request = EmbeddingRequest {
-        input: input_texts,
+        inputs: input_texts,
         normalize: Some(true),
         prompt_name: None,
         truncate: config.truncation,
@@ -52,46 +52,6 @@ pub fn process_embedding_response(
     })
 }
 
-pub fn create_rerank_request(
-    query: String,
-    documents: Vec<String>,
-    config: Config,
-) -> Result<(RerankRequest, String), Error> {
-    let model = config
-        .model
-        .unwrap_or_else(|| "cross-encoder/ms-marco-MiniLM-L-2-v2".to_string());
-
-    let request = RerankRequest {
-        query,
-        documents,
-        top_k: config.dimensions, 
-        return_documents: Some(true),
-    };
-
-    Ok((request, model))
-}
-
-pub fn process_rerank_response(
-    response: RerankResponse,
-    model: String,
-) -> Result<GolemRerankResponse, Error> {
-    let mut results = Vec::new();
-    for result in response.results {
-        results.push(golem_embed::golem::embed::embed::RerankResult {
-            index: result.index,
-            relevance_score: result.relevance_score,
-            document: result.document,
-        });
-    }
-
-    Ok(GolemRerankResponse {
-        results,
-        usage: None, 
-        model,
-        provider_metadata_json: None,
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use golem_embed::golem::embed::embed::{ImageUrl, OutputDtype, OutputFormat, TaskType};
@@ -113,7 +73,7 @@ mod tests {
         };
         let result = create_embedding_request(inputs, config);
         let (request, model) = result.unwrap();
-        assert_eq!(request.input, vec!["Hello, world!"]);
+        assert_eq!(request.inputs, vec!["Hello, world!"]);
         assert_eq!(model, "sentence-transformers/all-MiniLM-L6-v2");
         assert_eq!(request.normalize, Some(true));
         assert_eq!(request.truncate, Some(false));
@@ -151,28 +111,5 @@ mod tests {
         };
         let request = create_embedding_request(inputs, config);
         assert!(request.is_err());
-    }
-
-    #[test]
-    fn test_create_rerank_request() {
-        let query = "What is the capital of France?".to_string();
-        let documents = vec!["Paris is the capital of France.".to_string()];
-        let config = Config {
-            model: Some("cross-encoder/ms-marco-MiniLM-L-2-v2".to_string()),
-            dimensions: Some(10), 
-            user: Some("test_user".to_string()),
-            task_type: Some(TaskType::RetrievalQuery),
-            truncation: Some(false),
-            output_format: Some(OutputFormat::FloatArray),
-            output_dtype: Some(OutputDtype::FloatArray),
-            provider_options: vec![],
-        };
-        let result = create_rerank_request(query.clone(), documents.clone(), config);
-        let (request, model) = result.unwrap();
-        assert_eq!(request.query, query);
-        assert_eq!(request.documents, documents);
-        assert_eq!(request.top_k, Some(10));
-        assert_eq!(request.return_documents, Some(true));
-        assert_eq!(model, "cross-encoder/ms-marco-MiniLM-L-2-v2");
     }
 }

@@ -1,6 +1,7 @@
 use golem_embed::{
+    config::with_config_key,
     durability::{DurableEmbed, ExtendedGuest},
-    golem::embed::embed::{Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse},
+    golem::embed::embed::{Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse}, LOGGING_STATE,
 };
 
 use crate::{
@@ -53,8 +54,12 @@ impl VoyageAIApiComponent {
 
 impl Guest for VoyageAIApiComponent {
     fn generate(inputs: Vec<ContentPart>, config: Config) -> Result<EmbeddingResponse, Error> {
-        let client = VoyageAIApi::new(Self::ENV_VAR_NAME.to_string());
-        Self::embeddings(client, inputs, config)
+        LOGGING_STATE.with_borrow_mut(|state| state.init());
+
+        with_config_key(Self::ENV_VAR_NAME, Err, |voyageai_api_key| {
+            let client = VoyageAIApi::new(voyageai_api_key);
+            Self::embeddings(client, inputs, config)
+        })
     }
 
     fn rerank(
@@ -62,8 +67,12 @@ impl Guest for VoyageAIApiComponent {
         documents: Vec<String>,
         config: Config,
     ) -> Result<RerankResponse, Error> {
-        let client = VoyageAIApi::new(Self::ENV_VAR_NAME.to_string());
-        Self::rerank(client, query, documents, config)
+        LOGGING_STATE.with_borrow_mut(|state| state.init());
+
+        with_config_key(Self::ENV_VAR_NAME, Err, |voyageai_api_key| {
+            let client = VoyageAIApi::new(voyageai_api_key);
+            Self::rerank(client, query, documents, config)
+        })
     }
 }
 

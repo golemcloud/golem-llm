@@ -21,7 +21,6 @@ pub struct LoggingState {
 }
 
 impl LoggingState {
-    /// Initializes WASI logging based on the `GOLEM_LLM_LOG` environment variable.
     pub fn init(&mut self) {
         if !self.logging_initialized {
             let _ = wasi_logger::Logger::install();
@@ -35,7 +34,6 @@ impl LoggingState {
 }
 
 thread_local! {
-    /// This holds the state of our application.
     pub static LOGGING_STATE: RefCell<LoggingState> = const { RefCell::new(LoggingState {
         logging_initialized: false,
     }) };

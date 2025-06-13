@@ -38,9 +38,10 @@ impl EmbeddingsApi {
         trace!("Sending request to Hugging Face API: {request:?}");
         let response = self
             .client
-            .request(Method::POST, format!(
-                "{BASE_URL}/models/{model}/pipeline/feature-extraction"
-            ))
+            .request(
+                Method::POST,
+                format!("{BASE_URL}/models/{model}/pipeline/feature-extraction"),
+            )
             .bearer_auth(&self.huggingface_api_key)
             .json(&request)
             .send()
@@ -48,64 +49,40 @@ impl EmbeddingsApi {
         parse_response::<EmbeddingResponse>(response)
     }
 
-
-    pub fn rerank(&self, request: RerankRequest, model: &str) -> Result<RerankResponse, Error> {
-        trace!("Sending rerank request to Hugging Face API: {request:?}");
-        let response = self
-            .client
-            .request(Method::POST, format!(
-                "{BASE_URL}/models/{model}/pipeline/text-classification"
-            ))
-            .bearer_auth(&self.huggingface_api_key)
-            .json(&request)
-            .send()
-            .map_err(|err| from_reqwest_error("Request failed", err))?;
-        parse_response::<RerankResponse>(response)
-    }
 }
 
 fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, Error> {
     let status = response.status();
-    match status.is_success() {
-        true => {
-            let response_text = response.text().map_err(|err| from_reqwest_error("Failed to read response body", err))?;
-            match serde_json::from_str::<T>(&response_text) {
-                Ok(response_data) => {
-                    trace!("Response from Hugging Face API: {response_data:?}");
-                    Ok(response_data)
-                }
-                Err(error) => {
-                    trace!("Error parsing response: {error:?}");
-                    Err(Error {
-                        code: error_code_from_status(status),
-                        message: format!("Failed to decode response body: {}", response_text),
-                        provider_error_json: Some(error.to_string()),
-                    })
-                }
-            }
-        },
-        false => {
-            let error_text = response.text().ok();
+    let response_text = response
+        .text()
+        .map_err(|err| from_reqwest_error("Failed to read response body", err))?;
+    match serde_json::from_str::<T>(&response_text) {
+        Ok(response_data) => {
+            trace!("Response from Hugging Face API: {response_data:?}");
+            Ok(response_data)
+        }
+        Err(error) => {
+            trace!("Error parsing response: {error:?}");
             Err(Error {
                 code: error_code_from_status(status),
-                message: "Failed to parse response".to_string(),
-                provider_error_json: error_text,
+                message: format!("Failed to decode response body: {}", response_text),
+                provider_error_json: Some(error.to_string()),
             })
-        },
+        }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmbeddingRequest {
-    pub input: Vec<String>,
+    pub inputs: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub normalize: Option<bool>,
     /// The name of the prompt that should be used by for encoding.
     /// If not set, no prompt will be applied. Must be a key in the
     /// `sentence-transformers` configuration `prompts` dictionary.
-    /// For example if `prompt_name` is “query” and the `prompts` is {“query”: “query: ”, …},
-    /// then the sentence “What is the capital of France?” will be encoded as
-    /// “query: What is the capital of France?” because the prompt text will
+    /// For example if `prompt_name` is "query" and the `prompts` is {"query": "query: ", …},
+    /// then the sentence "What is the capital of France?" will be encoded as
+    /// "query: What is the capital of France?" because the prompt text will
     /// be prepended before any text to encode.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prompt_name: Option<String>,
