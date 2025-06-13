@@ -2,16 +2,17 @@
 resolver = "2"
 
 members = [
+    "llm",
+    "llm-anthropic",
+    "llm-grok",
+    "llm-ollama",
+    "llm-openai",
+    "llm-openrouter",
     "golem-embed/embed",
     "golem-embed/embed-cohere",
     "golem-embed/embed-hugging-face",
-    "golem-embed/embed-openai", "golem-embed/embed-voyageai",
-    "golem-llm/llm",
-    "golem-llm/llm-anthropic",
-    "golem-llm/llm-grok",
-    "golem-llm/llm-ollama",
-    "golem-llm/llm-openai",
-    "golem-llm/llm-openrouter",
+    "golem-embed/embed-openai", 
+    "golem-embed/embed-voyageai",
 ]
 
 [profile.release]
