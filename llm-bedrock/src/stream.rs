@@ -3,7 +3,6 @@ use aws_sdk_bedrockruntime::{
     types::error::ConverseStreamOutputError,
 };
 use golem_llm::golem::llm::llm;
-use golem_rust::wasm_rpc::wasi::io::poll::Pollable;
 use std::cell::{RefCell, RefMut};
 
 use crate::{
@@ -52,10 +51,6 @@ impl BedrockChatStream {
     fn set_finished(&self) {
         *self.finished.borrow_mut() = true;
     }
-
-    pub fn subscribe(&self) -> Pollable {
-        golem_rust::bindings::wasi::clocks::monotonic_clock::subscribe_duration(0)
-    }
 }
 
 impl llm::GuestChatStream for BedrockChatStream {
@@ -97,10 +92,8 @@ impl llm::GuestChatStream for BedrockChatStream {
     }
 
     fn blocking_get_next(&self) -> Vec<llm::StreamEvent> {
-        let pollable = self.subscribe();
         let mut result = Vec::new();
         loop {
-            pollable.block();
             match self.get_next() {
                 Some(events) => {
                     result.extend(events);

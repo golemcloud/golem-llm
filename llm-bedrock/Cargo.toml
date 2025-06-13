@@ -8,8 +8,6 @@ repository = "https://github.com/golemcloud/golem-llm"
 description = "WebAssembly component for working with Amazon Bedrock APIs, with special support for Golem Cloud"
 
 [dependencies]
-golem-llm = { path = "../llm", version = "0.0.0", default-features = false }
-
 # AWS SDK crates
 aws-config = { version = "1.5.19", default-features = false, features = [
     "behavior-version-latest",
@@ -23,6 +21,8 @@ tokio = { version = "1.43.0", features = ["rt", "sync", "time"] }
 
 # To infer mime types of downloaded images before passing to bedrock
 infer = { version = "0.19.0", default-features = false }
+
+golem-llm = { workspace = true }
 
 golem-rust = { workspace = true }
 log = { workspace = true }
@@ -38,7 +38,11 @@ path = "src/lib.rs"
 
 [features]
 default = ["durability"]
-durability = ["golem-rust/durability", "golem-llm/durability"]
+durability = [
+    "golem-rust/durability",
+    "golem-llm/durability",
+    "golem-llm/nopoll",
+]
 
 [package.metadata.component]
 package = "golem:llm-bedrock"

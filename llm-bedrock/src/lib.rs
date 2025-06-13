@@ -63,8 +63,8 @@ impl ExtendedGuest for BedrockComponent {
         bedrock.unwrap().converse_stream(messages, config)
     }
 
-    fn subscribe(stream: &Self::ChatStream) -> golem_rust::wasm_rpc::Pollable {
-        stream.subscribe()
+    fn subscribe(_stream: &Self::ChatStream) -> golem_rust::wasm_rpc::Pollable {
+        unimplemented!()
     }
 }
 
