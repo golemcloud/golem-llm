@@ -7,7 +7,6 @@ use golem_embed::{
 use log::trace;
 use reqwest::{Client, Method, Response};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use serde_json;
 
 const BASE_URL: &str = "https://router.huggingface.co/hf-inference";
 
@@ -48,7 +47,6 @@ impl EmbeddingsApi {
             .map_err(|err| from_reqwest_error("Request failed", err))?;
         parse_response::<EmbeddingResponse>(response)
     }
-
 }
 
 fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, Error> {

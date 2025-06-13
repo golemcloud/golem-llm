@@ -1,18 +1,22 @@
 use golem_embed::error::unsupported;
 use golem_embed::golem::embed::embed::{
-    Config, ContentPart, EmbeddingResponse as GolemEmbeddingResponse, Error, 
-    RerankResponse as GolemRerankResponse,
+    Config, ContentPart, EmbeddingResponse as GolemEmbeddingResponse, Error,
 };
 
-use crate::client::{EmbeddingRequest, EmbeddingResponse, RerankRequest, RerankResponse};
+use crate::client::{EmbeddingRequest, EmbeddingResponse};
 
-pub fn create_embedding_request(inputs: Vec<ContentPart>, config: Config) -> Result<(EmbeddingRequest, String), Error> {
+pub fn create_embedding_request(
+    inputs: Vec<ContentPart>,
+    config: Config,
+) -> Result<(EmbeddingRequest, String), Error> {
     let mut input_texts = Vec::new();
     for content in inputs {
         match content {
             ContentPart::Text(text) => input_texts.push(text),
             ContentPart::Image(_) => {
-                return Err(unsupported("Image embeddings are not supported by Hugging Face."))
+                return Err(unsupported(
+                    "Image embeddings are not supported by Hugging Face.",
+                ))
             }
         }
     }
@@ -46,7 +50,7 @@ pub fn process_embedding_response(
 
     Ok(GolemEmbeddingResponse {
         embeddings,
-        usage: None, 
+        usage: None,
         model,
         provider_metadata_json: None,
     })

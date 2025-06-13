@@ -7,7 +7,6 @@ use golem_embed::{
 use log::trace;
 use reqwest::{Client, Method, Response};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use serde_json;
 
 const BASE_URL: &str = "https://api.voyageai.com";
 
@@ -25,7 +24,10 @@ impl VoyageAIApi {
         let client = Client::builder()
             .build()
             .expect("Failed to initialize HTTP client");
-        Self { voyageai_api_key, client }
+        Self {
+            voyageai_api_key,
+            client,
+        }
     }
 
     pub fn generate_embedding(
@@ -61,7 +63,7 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
     let response_text = response
         .text()
         .map_err(|err| from_reqwest_error("Failed to read response body", err))?;
-    
+
     if !status.is_success() {
         if let Ok(error_response) = serde_json::from_str::<VoyageAIError>(&response_text) {
             return Err(Error {
@@ -70,7 +72,7 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
                 provider_error_json: Some(response_text),
             });
         }
-        
+
         if let Ok(detail_error) = serde_json::from_str::<serde_json::Value>(&response_text) {
             if let Some(detail) = detail_error.get("detail").and_then(|d| d.as_str()) {
                 return Err(Error {
@@ -80,14 +82,14 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
                 });
             }
         }
-        
+
         return Err(Error {
             code: error_code_from_status(status),
             message: format!("Request failed with status {}: {}", status, response_text),
             provider_error_json: Some(response_text),
         });
     }
-    
+
     match serde_json::from_str::<T>(&response_text) {
         Ok(response_data) => {
             trace!("Response from VoyageAI API: {response_data:?}");
@@ -162,7 +164,6 @@ pub struct EmbeddingData {
 pub struct EmbeddingUsage {
     pub total_tokens: u32,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RerankRequest {

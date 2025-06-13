@@ -2,15 +2,12 @@ mod client;
 mod conversions;
 
 use client::EmbeddingsApi;
-use conversions::{
-    create_embedding_request, create_rerank_request, process_embedding_response, 
-    process_rerank_response,
-};
+use conversions::{create_embedding_request, process_embedding_response};
 use golem_embed::{
     config::with_config_key,
     durability::{DurableEmbed, ExtendedGuest},
     golem::embed::embed::{
-        Config, ContentPart, EmbeddingResponse, Error, Guest, RerankResponse,
+        Config, ContentPart, EmbeddingResponse, Error, ErrorCode, Guest, RerankResponse,
     },
     LOGGING_STATE,
 };
@@ -31,8 +28,6 @@ impl HuggingFaceComponent {
             Err(err) => Err(err),
         }
     }
-
-   
 }
 
 impl Guest for HuggingFaceComponent {

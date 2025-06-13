@@ -266,7 +266,6 @@ mod tests {
         assert_eq!(request.output_dimension, Some(1024));
     }
 
-
     #[test]
     fn test_embedding_response_conversion() {
         let data = EmbeddingResponse {
@@ -394,7 +393,6 @@ mod tests {
             })
         );
     }
-
 
     #[test]
     fn test_create_rerank_request() {
