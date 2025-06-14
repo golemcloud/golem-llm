@@ -1,0 +1,61 @@
+[package]
+name = "golem-llm-bedrock"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://golem.cloud"
+repository = "https://github.com/golemcloud/golem-llm"
+description = "WebAssembly component for working with Amazon Bedrock APIs, with special support for Golem Cloud"
+
+[dependencies]
+# AWS SDK crates
+aws-config = { version = "1.5.19", default-features = false, features = [
+    "behavior-version-latest",
+] }
+aws-types = { version = "1.3.4", default-features = false }
+aws-smithy-wasm = { version = "0.1.4", default-features = false }
+aws-sdk-bedrockruntime = { version = "1.56.0", default-features = false }
+aws-smithy-types = { version = "1.3.1" }
+
+tokio = { version = "1.43.0", features = ["rt", "sync", "time"] }
+
+# To infer mime types of downloaded images before passing to bedrock
+infer = { version = "0.19.0", default-features = false }
+
+golem-llm = { workspace = true }
+
+golem-rust = { workspace = true }
+log = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wit-bindgen-rt = { workspace = true }
+base64 = { workspace = true }
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[features]
+default = ["durability"]
+durability = [
+    "golem-rust/durability",
+    "golem-llm/durability",
+    "golem-llm/nopoll",
+]
+
+[package.metadata.component]
+package = "golem:llm-bedrock"
+
+[package.metadata.component.bindings]
+generate_unused_types = true
+
+[package.metadata.component.bindings.with]
+"golem:llm/llm@1.0.0" = "golem_llm::golem::llm::llm"
+
+[package.metadata.component.target]
+path = "wit"
+
+[package.metadata.component.target.dependencies]
+"golem:llm" = { path = "wit/deps/golem-llm" }
+"wasi:io" = { path = "wit/deps/wasi:io" }

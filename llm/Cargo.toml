@@ -24,3 +24,4 @@ wit-bindgen = { version = "0.40.0" }
 [features]
 default = ["durability"]
 durability = ["golem-rust/durability"]
+nopoll = []

@@ -15,6 +15,7 @@ grok = []
 openai = []
 openrouter = []
 ollama = []
+bedrock = []
 
 [dependencies]
 # To use common shared libs, use the following:

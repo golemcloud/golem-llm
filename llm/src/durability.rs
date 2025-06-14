@@ -105,9 +105,9 @@ mod durable_impl {
         ChatEvent, ChatStream, Config, Guest, GuestChatStream, Message, StreamDelta, StreamEvent,
         ToolCall, ToolResult,
     };
-    use golem_rust::bindings::golem::durability::durability::{
-        DurableFunctionType, LazyInitializedPollable,
-    };
+    use golem_rust::bindings::golem::durability::durability::DurableFunctionType;
+    #[cfg(not(feature = "nopoll"))]
+    use golem_rust::bindings::golem::durability::durability::LazyInitializedPollable;
     use golem_rust::durability::Durability;
     use golem_rust::wasm_rpc::Pollable;
     use golem_rust::{with_persistence_level, FromValueAndType, IntoValue, PersistenceLevel};
@@ -197,11 +197,13 @@ mod durable_impl {
     enum DurableChatStreamState<Impl: ExtendedGuest> {
         Live {
             stream: Impl::ChatStream,
+            #[cfg(not(feature = "nopoll"))]
             pollables: Vec<LazyInitializedPollable>,
         },
         Replay {
             original_messages: Vec<Message>,
             config: Config,
+            #[cfg(not(feature = "nopoll"))]
             pollables: Vec<LazyInitializedPollable>,
             partial_result: Vec<StreamDelta>,
             finished: bool,
@@ -218,6 +220,7 @@ mod durable_impl {
             Self {
                 state: RefCell::new(Some(DurableChatStreamState::Live {
                     stream,
+                    #[cfg(not(feature = "nopoll"))]
                     pollables: Vec::new(),
                 })),
                 subscription: RefCell::new(None),
@@ -229,6 +232,7 @@ mod durable_impl {
                 state: RefCell::new(Some(DurableChatStreamState::Replay {
                     original_messages,
                     config,
+                    #[cfg(not(feature = "nopoll"))]
                     pollables: Vec::new(),
                     partial_result: Vec::new(),
                     finished: false,
@@ -236,7 +240,7 @@ mod durable_impl {
                 subscription: RefCell::new(None),
             }
         }
-
+        #[cfg(not(feature = "nopoll"))]
         fn subscribe(&self) -> Pollable {
             let mut state = self.state.borrow_mut();
             match &mut *state {
@@ -257,17 +261,25 @@ mod durable_impl {
     impl<Impl: ExtendedGuest> Drop for DurableChatStream<Impl> {
         fn drop(&mut self) {
             let _ = self.subscription.take();
+
             match self.state.take() {
                 Some(DurableChatStreamState::Live {
+                    #[cfg(not(feature = "nopoll"))]
                     mut pollables,
                     stream,
                 }) => {
                     with_persistence_level(PersistenceLevel::PersistNothing, move || {
+                        #[cfg(not(feature = "nopoll"))]
                         pollables.clear();
                         drop(stream);
                     });
                 }
-                Some(DurableChatStreamState::Replay { mut pollables, .. }) => {
+                Some(DurableChatStreamState::Replay {
+                    #[cfg(not(feature = "nopoll"))]
+                    mut pollables,
+                    ..
+                }) => {
+                    #[cfg(not(feature = "nopoll"))]
                     pollables.clear();
                 }
                 None => {}
@@ -295,6 +307,7 @@ mod durable_impl {
                     Some(DurableChatStreamState::Replay {
                         original_messages,
                         config,
+                        #[cfg(not(feature = "nopoll"))]
                         pollables,
                         partial_result,
                         finished,
@@ -311,7 +324,7 @@ mod durable_impl {
                                         extended_messages,
                                         config.clone(),
                                     );
-
+                                    #[cfg(not(feature = "nopoll"))]
                                     for lazy_initialized_pollable in pollables {
                                         lazy_initialized_pollable.set(Impl::subscribe(&stream));
                                     }
@@ -330,6 +343,7 @@ mod durable_impl {
                 };
 
                 if let Some(stream) = new_live_stream {
+                    #[cfg(not(feature = "nopoll"))]
                     let pollables = match state.take() {
                         Some(DurableChatStreamState::Live { pollables, .. }) => pollables,
                         Some(DurableChatStreamState::Replay { pollables, .. }) => pollables,
@@ -337,7 +351,11 @@ mod durable_impl {
                             unreachable!()
                         }
                     };
-                    *state = Some(DurableChatStreamState::Live { stream, pollables });
+                    *state = Some(DurableChatStreamState::Live {
+                        stream,
+                        #[cfg(not(feature = "nopoll"))]
+                        pollables,
+                    });
                 }
 
                 result
@@ -378,13 +396,17 @@ mod durable_impl {
         }
 
         fn blocking_get_next(&self) -> Vec<StreamEvent> {
+            #[cfg(not(feature = "nopoll"))]
             let mut subscription = self.subscription.borrow_mut();
+            #[cfg(not(feature = "nopoll"))]
             if subscription.is_none() {
                 *subscription = Some(self.subscribe());
             }
+            #[cfg(not(feature = "nopoll"))]
             let subscription = subscription.as_mut().unwrap();
             let mut result = Vec::new();
             loop {
+                #[cfg(not(feature = "nopoll"))]
                 subscription.block();
                 match self.get_next() {
                     Some(events) => {

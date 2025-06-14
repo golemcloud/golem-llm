@@ -4,6 +4,7 @@ resolver = "2"
 members = [
     "llm",
     "llm-anthropic",
+    "llm-bedrock",
     "llm-grok",
     "llm-ollama",
     "llm-openai",
@@ -16,6 +17,8 @@ lto = true
 opt-level = 's'
 
 [workspace.dependencies]
+golem-llm = { path = "llm", version = "0.0.0", default-features = false }
+
 golem-rust = "1.6.0"
 log = "0.4.27"
 reqwest = { git = "https://github.com/golemcloud/reqwest", branch = "update-may-2025", features = [
