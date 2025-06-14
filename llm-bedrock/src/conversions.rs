@@ -8,8 +8,8 @@ use aws_sdk_bedrockruntime::{
     types::{
         ContentBlockDeltaEvent, ContentBlockStartEvent, ConversationRole,
         ConverseStreamMetadataEvent, ConverseStreamOutput, ImageBlock, ImageFormat,
-        InferenceConfiguration, SystemContentBlock, Tool, ToolConfiguration, ToolInputSchema,
-        ToolSpecification, ToolUseBlock,
+        InferenceConfiguration, MessageStopEvent, SystemContentBlock, Tool, ToolConfiguration,
+        ToolInputSchema, ToolSpecification, ToolUseBlock,
     },
 };
 use golem_llm::golem::llm::llm;
@@ -433,67 +433,77 @@ fn bedrock_image_to_llm_content_part(block: bedrock::types::ImageBlock) -> llm::
 
 pub fn converse_stream_output_to_stream_event(
     event: ConverseStreamOutput,
-) -> Option<Vec<llm::StreamEvent>> {
+) -> Option<llm::StreamEvent> {
     match event {
         ConverseStreamOutput::ContentBlockStart(block) => process_content_block_start_event(block),
         ConverseStreamOutput::ContentBlockDelta(block) => process_content_block_delta_event(block),
         ConverseStreamOutput::Metadata(metadata) => process_metadata_event(metadata),
+        ConverseStreamOutput::MessageStop(event) => process_message_stop_event(event),
         _ => None,
     }
 }
 
-fn process_content_block_start_event(
-    block: ContentBlockStartEvent,
-) -> Option<Vec<llm::StreamEvent>> {
+fn process_content_block_start_event(block: ContentBlockStartEvent) -> Option<llm::StreamEvent> {
     if let Some(start_info) = block.start {
         if start_info.is_tool_use() {
             let tool_use = start_info.as_tool_use().unwrap().clone();
-            return Some(vec![llm::StreamEvent::Delta(llm::StreamDelta {
+            return Some(llm::StreamEvent::Delta(llm::StreamDelta {
                 content: None,
                 tool_calls: Some(vec![llm::ToolCall {
                     id: tool_use.tool_use_id,
                     name: tool_use.name,
                     arguments_json: "".to_owned(),
                 }]),
-            })]);
+            }));
         }
     }
     None
 }
 
-fn process_content_block_delta_event(
-    block: ContentBlockDeltaEvent,
-) -> Option<Vec<llm::StreamEvent>> {
+fn process_content_block_delta_event(block: ContentBlockDeltaEvent) -> Option<llm::StreamEvent> {
     if let Some(block_info) = block.delta {
         if block_info.is_tool_use() {
             let tool_use = block_info.as_tool_use().unwrap().clone();
-            return Some(vec![llm::StreamEvent::Delta(llm::StreamDelta {
+            return Some(llm::StreamEvent::Delta(llm::StreamDelta {
                 content: None,
                 tool_calls: Some(vec![llm::ToolCall {
                     id: "".to_owned(),
                     name: "".to_owned(),
                     arguments_json: tool_use.input,
                 }]),
-            })]);
+            }));
         } else if block_info.is_text() {
             let text = block_info.as_text().unwrap().clone();
-            return Some(vec![llm::StreamEvent::Delta(llm::StreamDelta {
+            return Some(llm::StreamEvent::Delta(llm::StreamDelta {
                 content: Some(vec![llm::ContentPart::Text(text)]),
                 tool_calls: None,
-            })]);
+            }));
         }
     }
     None
 }
 
-fn process_metadata_event(metadata: ConverseStreamMetadataEvent) -> Option<Vec<llm::StreamEvent>> {
-    Some(vec![llm::StreamEvent::Finish(llm::ResponseMetadata {
+fn process_metadata_event(metadata: ConverseStreamMetadataEvent) -> Option<llm::StreamEvent> {
+    Some(llm::StreamEvent::Finish(llm::ResponseMetadata {
         finish_reason: None,
         timestamp: None,
         usage: metadata.usage().map(bedrock_usage_to_llm_usage),
         provider_id: Some("bedrock".to_owned()),
         provider_metadata_json: None,
-    })])
+    }))
+}
+
+fn process_message_stop_event(event: MessageStopEvent) -> Option<llm::StreamEvent> {
+    Some(llm::StreamEvent::Finish(llm::ResponseMetadata {
+        finish_reason: Some(bedrock_stop_reason_to_finish_reason(event.stop_reason())),
+        timestamp: None,
+        usage: None,
+        provider_id: None,
+        provider_metadata_json: event
+            .additional_model_response_fields
+            .clone()
+            .and_then(smithy_document_to_metadata_json),
+    }))
 }
 
 fn json_str_to_smithy_document(value: &str) -> Result<Document, llm::Error> {
@@ -594,4 +604,19 @@ pub fn custom_error(code: llm::ErrorCode, message: String) -> llm::Error {
         message,
         provider_error_json: None,
     }
+}
+
+pub fn merge_metadata(
+    mut metadata1: llm::ResponseMetadata,
+    metadata2: llm::ResponseMetadata,
+) -> llm::ResponseMetadata {
+    metadata1.usage = metadata1.usage.or(metadata2.usage);
+    metadata1.timestamp = metadata1.timestamp.or(metadata2.timestamp);
+    metadata1.provider_id = metadata1.provider_id.or(metadata2.provider_id);
+    metadata1.finish_reason = metadata1.finish_reason.or(metadata2.finish_reason);
+    metadata1.provider_metadata_json = metadata1
+        .provider_metadata_json
+        .or(metadata2.provider_metadata_json);
+
+    metadata1
 }

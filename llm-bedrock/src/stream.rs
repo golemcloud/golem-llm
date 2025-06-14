@@ -7,7 +7,7 @@ use std::cell::{RefCell, RefMut};
 
 use crate::{
     client::get_async_runtime,
-    conversions::{converse_stream_output_to_stream_event, custom_error},
+    conversions::{converse_stream_output_to_stream_event, custom_error, merge_metadata},
 };
 
 type BedrockEventSource =
@@ -51,18 +51,11 @@ impl BedrockChatStream {
     fn set_finished(&self) {
         *self.finished.borrow_mut() = true;
     }
-}
-
-impl llm::GuestChatStream for BedrockChatStream {
-    fn get_next(&self) -> Option<Vec<llm::StreamEvent>> {
-        if self.is_finished() {
-            return Some(vec![]);
-        }
-
+    fn get_single_event(&self) -> Option<llm::StreamEvent> {
         if let Some(stream) = self.stream_mut().as_mut() {
             let runtime = get_async_runtime();
 
-            runtime.block_on(async {
+            runtime.block_on(async move {
                 let token = stream.recv().await;
 
                 match token {
@@ -72,23 +65,42 @@ impl llm::GuestChatStream for BedrockChatStream {
                     }
                     Ok(None) => {
                         self.set_finished();
-                        Some(vec![])
+                        None
                     }
                     Err(error) => {
                         self.set_finished();
-                        Some(vec![llm::StreamEvent::Error(custom_error(
+                        Some(llm::StreamEvent::Error(custom_error(
                             llm::ErrorCode::InternalError,
                             format!("An error occurred while reading event stream: {error}"),
-                        ))])
+                        )))
                     }
                 }
             })
         } else if let Some(error) = self.failure() {
             self.set_finished();
-            Some(vec![llm::StreamEvent::Error(error.clone())])
+            Some(llm::StreamEvent::Error(error.clone()))
         } else {
             None
         }
+    }
+}
+
+impl llm::GuestChatStream for BedrockChatStream {
+    fn get_next(&self) -> Option<Vec<llm::StreamEvent>> {
+        if self.is_finished() {
+            return Some(vec![]);
+        }
+        self.get_single_event().map(|event| {
+            if let llm::StreamEvent::Finish(metadata) = event.clone() {
+                if let Some(llm::StreamEvent::Finish(final_metadata)) = self.get_single_event() {
+                    return vec![llm::StreamEvent::Finish(merge_metadata(
+                        metadata,
+                        final_metadata,
+                    ))];
+                }
+            }
+            vec![event]
+        })
     }
 
     fn blocking_get_next(&self) -> Vec<llm::StreamEvent> {
