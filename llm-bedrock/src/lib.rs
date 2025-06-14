@@ -80,7 +80,7 @@ fn get_bedrock_client() -> Result<Arc<Bedrock>, llm::Error> {
 }
 
 thread_local! {
-    static BEDROCK_CLIENT: RefCell<Option<Arc<Bedrock>>> = RefCell::new(None);
+    static BEDROCK_CLIENT: RefCell<Option<Arc<Bedrock>>> = const { RefCell::new(None) };
 }
 
 type DurableBedrockComponent = DurableLLM<BedrockComponent>;
