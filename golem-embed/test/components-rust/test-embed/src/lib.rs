@@ -4,8 +4,6 @@ mod bindings;
 use crate::bindings::exports::test::embed_exports::test_embed_api::*;
 use crate::bindings::golem::embed::embed;
 use crate::bindings::golem::embed::embed::{Config, ContentPart, Error, EmbeddingResponse};
-use crate::bindings::test::helper_client::test_helper_client::TestHelperApi;
-use golem_rust::atomically;
 
 struct Component;
 

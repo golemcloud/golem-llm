@@ -230,7 +230,7 @@ args = ["fmt", "--all", "--", "--check"]
 description = "Runs clippy checks without applying any fix"
 install_crate = "clippy"
 command = "cargo"
-args = ["clippy", "--all-targets", "--", "--no-deps", "-D warnings"]
+args = ["clippy", "--all-targets", "--", "--no-deps", "-Dwarnings"]
 
 [tasks.fix]
 description = "Runs rustfmt and clippy checks and applies fixes"

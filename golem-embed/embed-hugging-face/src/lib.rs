@@ -40,9 +40,9 @@ impl Guest for HuggingFaceComponent {
     }
 
     fn rerank(
-        query: String,
-        documents: Vec<String>,
-        config: Config,
+        _query: String,
+        _documents: Vec<String>,
+        _config: Config,
     ) -> Result<RerankResponse, Error> {
         Err(Error {
             code: ErrorCode::Unsupported,
