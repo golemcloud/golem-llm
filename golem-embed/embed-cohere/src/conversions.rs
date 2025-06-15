@@ -209,18 +209,12 @@ pub fn process_rerank_response(
         })
         .collect();
 
-    let usage = if let Some(meta) = response.clone().meta {
-        if let Some(billed_units) = meta.billed_units {
-            Some(Usage {
-                input_tokens: billed_units.input_tokens,
-                total_tokens: billed_units.output_tokens,
-            })
-        } else {
-            None
-        }
-    } else {
-        None
-    };
+    let usage = response.clone().meta.and_then(|meta| {
+        meta.billed_units.map(|billed_units| Usage {
+            input_tokens: billed_units.input_tokens,
+            total_tokens: billed_units.output_tokens,
+        })
+    });
 
     Ok(GolemRerankResponse {
         results,
@@ -357,14 +351,16 @@ mod tests {
         assert_eq!(
             embedding_response.embeddings[0].vector,
             vec![
-                -15.0, -65.0, 0.0, -31.0, -43.0, -14.0, -48.0, 59.0, -34.0, 15.0, 36.0, 49.0, -5.0, 3.0, -49.0, -34.0, -74.0, 21.0
+                -15.0, -65.0, 0.0, -31.0, -43.0, -14.0, -48.0, 59.0, -34.0, 15.0, 36.0, 49.0, -5.0,
+                3.0, -49.0, -34.0, -74.0, 21.0
             ]
         );
         assert_eq!(embedding_response.embeddings[1].index, 0);
         assert_eq!(
             embedding_response.embeddings[1].vector,
             vec![
-                14.0, 38.0, -30.0, -13.0, -49.0, 4.0, -33.0, -49.0, 48.0, 9.0, -84.0, 8.0, 0.0, -84.0, -46.0, -20.0, 24.0, -26.0, -98.0, 28.0
+                14.0, 38.0, -30.0, -13.0, -49.0, 4.0, -33.0, -49.0, 48.0, 9.0, -84.0, 8.0, 0.0,
+                -84.0, -46.0, -20.0, 24.0, -26.0, -98.0, 28.0
             ]
         );
         assert_eq!(
@@ -458,7 +454,7 @@ mod tests {
             Some(Usage {
                 input_tokens: Some(11),
                 total_tokens: Some(111),
-            })  
+            })
         );
     }
 }
