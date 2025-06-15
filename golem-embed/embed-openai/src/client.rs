@@ -70,7 +70,9 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
 /// OpenAI allows only allows float and base64 as output formats.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum EncodingFormat {
+    #[serde(rename = "float")]
     Float,
+    #[serde(rename = "base64")]
     Base64,
 }
 
