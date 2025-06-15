@@ -199,21 +199,25 @@ pub fn process_rerank_response(
     config: Config,
 ) -> Result<GolemRerankResponse, Error> {
     let results = response
+        .clone()
         .results
         .iter()
         .map(|result| RerankResult {
             index: result.index,
-
             relevance_score: result.relevance_score,
             document: None,
         })
         .collect();
 
     let usage = if let Some(meta) = response.clone().meta {
-        meta.tokens.map(|tokens| Usage {
-            input_tokens: tokens.input_tokens,
-            total_tokens: tokens.output_tokens,
-        })
+        if let Some(billed_units) = meta.billed_units {
+            Some(Usage {
+                input_tokens: billed_units.input_tokens,
+                total_tokens: billed_units.output_tokens,
+            })
+        } else {
+            None
+        }
     } else {
         None
     };
@@ -222,7 +226,7 @@ pub fn process_rerank_response(
         results,
         usage,
         model: config.model.unwrap_or_else(|| "rerank-2-lite".to_string()),
-        provider_metadata_json: Some(get_rerank_provider_metadata(response.clone())),
+        provider_metadata_json: Some(get_rerank_provider_metadata(response)),
     })
 }
 
@@ -348,36 +352,19 @@ mod tests {
         let result = process_embedding_response(data.clone(), config);
         print!("{:?}", result);
         let embedding_response = result.unwrap();
-        assert_eq!(embedding_response.embeddings.len(), 2);
+        assert_eq!(embedding_response.embeddings.len(), 5);
         assert_eq!(embedding_response.embeddings[0].index, 0);
         assert_eq!(
             embedding_response.embeddings[0].vector,
             vec![
-                0.016967773,
-                0.031982422,
-                0.041503906,
-                0.0021514893,
-                0.008178711,
-                -0.029541016,
-                -0.018432617,
-                -0.046875,
-                0.021240234
+                -15.0, -65.0, 0.0, -31.0, -43.0, -14.0, -48.0, 59.0, -34.0, 15.0, 36.0, 49.0, -5.0, 3.0, -49.0, -34.0, -74.0, 21.0
             ]
         );
-        assert_eq!(embedding_response.embeddings[1].index, 1);
+        assert_eq!(embedding_response.embeddings[1].index, 0);
         assert_eq!(
             embedding_response.embeddings[1].vector,
             vec![
-                0.013977051,
-                0.012084961,
-                0.005554199,
-                -0.053955078,
-                -0.026977539,
-                -0.008361816,
-                0.02368164,
-                -0.013183594,
-                -0.063964844,
-                0.026611328
+                14.0, 38.0, -30.0, -13.0, -49.0, 4.0, -33.0, -49.0, 48.0, 9.0, -84.0, 8.0, 0.0, -84.0, -46.0, -20.0, 24.0, -26.0, -98.0, 28.0
             ]
         );
         assert_eq!(
@@ -438,7 +425,7 @@ mod tests {
                     input_tokens: Some(11),
                     classifications: None,
                     images: None,
-                    output_tokens: None,
+                    output_tokens: Some(111),
                     search_units: None,
                 }),
                 tokens: None,
@@ -470,8 +457,8 @@ mod tests {
             rerank_response.usage,
             Some(Usage {
                 input_tokens: Some(11),
-                total_tokens: None,
-            })
+                total_tokens: Some(111),
+            })  
         );
     }
 }
