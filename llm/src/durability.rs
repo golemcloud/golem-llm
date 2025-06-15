@@ -186,6 +186,9 @@ mod durable_impl {
     ///
     /// In live mode it directly calls the underlying LLM stream which is implemented on
     /// top of an SSE parser using the wasi-http response body stream.
+    /// When the `nopoll` feature flag is enabled, all polling related features are disabled
+    /// and events rely solely on the mechanism defined in the Implementation. Useful for implementations
+    /// that do not expose a wasi-http response body stream e.g AWS Bedrock.
     ///
     /// In replay mode it buffers the replayed messages, and also tracks the created pollables
     /// to be able to reattach them to the new live stream when the switch to live mode
