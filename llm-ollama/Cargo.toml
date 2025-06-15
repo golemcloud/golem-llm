@@ -17,7 +17,7 @@ default = ["durability"]
 durability = ["golem-rust/durability", "golem-llm/durability"]
 
 [dependencies]
-golem-llm = { path = "../llm", version = "0.0.0", default-features = false }
+golem-llm = { workspace = true }
 base64 = "0.21"
 mime_guess = "2.0"
 url = "2.4"

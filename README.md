@@ -13,11 +13,13 @@ There are 8 published WASM files for each release:
 | `golem-llm-grok.wasm`                | LLM implementation for xAI (Grok), using custom Golem specific durability features   |
 | `golem-llm-openai.wasm`              | LLM implementation for OpenAI, using custom Golem specific durability features       |
 | `golem-llm-openrouter.wasm`          | LLM implementation for OpenRouter, using custom Golem specific durability features   |
+| `golem-llm-bedrock.wasm`          | LLM implementation for Amazon Bedrock, using custom Golem specific durability features   |
 | `golem-llm-anthropic-portable.wasm`  | LLM implementation for Anthropic AI, with no Golem specific dependencies.            |
 | `golem-llm-ollama-portable.wasm`  | LLM implementation for Ollama, with no Golem specific dependencies.            |
 | `golem-llm-grok-portable.wasm`       | LLM implementation for xAI (Grok), with no Golem specific dependencies.              |
 | `golem-llm-openai-portable.wasm`     | LLM implementation for OpenAI, with no Golem specific dependencies.                  |
 | `golem-llm-openrouter-portable.wasm` | LLM implementation for OpenRouter, with no Golem specific dependencies.              |
+| `golem-llm-bedrock-portable.wasm` | LLM implementation for Amazon Bedrock, with no Golem specific dependencies.              |
 
 Every component **exports** the same `golem:llm` interface, [defined here](wit/golem-llm.wit).
 
@@ -37,6 +39,7 @@ Each provider has to be configured with an API key passed as an environment vari
 | OpenAI     | `OPENAI_API_KEY`     |
 | OpenRouter | `OPENROUTER_API_KEY` |
 | Ollama | `GOLEM_OLLAMA_BASE_URL` |
+| Amazon Bedrock | `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (optional) |
 
 Additionally, setting the `GOLEM_LLM_LOG=trace` environment variable enables trace logging for all the communication
 with the underlying LLM provider.
@@ -145,6 +148,8 @@ Then build and deploy the _test application_. Select one of the following profil
 | `openai-release` | Uses the OpenAI LLM implementation and compiles the code in release profile |
 | `openrouter-debug` | Uses the OpenRouter LLM implementation and compiles the code in debug profile |
 | `openrouter-release` | Uses the OpenRouter LLM implementation and compiles the code in release profile |
+| `bedrock-debug` | Uses the Amazon Bedrock LLM implementation and compiles the code in debug profile |
+| `bedrock-release` | Uses the Amazon Bedrock LLM implementation and compiles the code in release profile |
 
 ```bash
 cd test
