@@ -57,6 +57,7 @@ impl BedrockChatStream {
 
             runtime.block_on(async move {
                 let token = stream.recv().await;
+                log::trace!("Bedrock stream event: {token:?}");
 
                 match token {
                     Ok(Some(output)) => {
@@ -64,10 +65,12 @@ impl BedrockChatStream {
                         converse_stream_output_to_stream_event(output)
                     }
                     Ok(None) => {
+                        log::trace!("running set_finished on stream due to None event received");
                         self.set_finished();
                         None
                     }
                     Err(error) => {
+                        log::trace!("running set_finished on stream due to error: {error:?}");
                         self.set_finished();
                         Some(llm::StreamEvent::Error(custom_error(
                             llm::ErrorCode::InternalError,

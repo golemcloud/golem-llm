@@ -205,17 +205,18 @@ fn get_image_content_block_from_url(url: &str) -> Result<bedrock::types::Content
 
     let kind = infer::get(&bytes);
 
-    if kind.is_none() {
-        return Err(custom_error(
-            llm::ErrorCode::InvalidRequest,
-            format!(
-                "Could not infer the mime type of the image downloaded from url: {}",
-                url
-            ),
-        ));
-    }
-
-    let mime = str_to_bedrock_mime_type(kind.unwrap().mime_type())?;
+    let mime = match kind {
+        Some(kind) => str_to_bedrock_mime_type(kind.mime_type())?,
+        None => {
+            return Err(custom_error(
+                llm::ErrorCode::InvalidRequest,
+                format!(
+                    "Could not infer the mime type of the image downloaded from url: {}",
+                    url
+                ),
+            ));
+        }
+    };
 
     Ok(bedrock::types::ContentBlock::Image(
         ImageBlock::builder()
@@ -280,24 +281,22 @@ pub fn converse_output_to_tool_calls(
             .to_owned(),
     ))?;
 
-    if !output.is_message() {
-        return Err(custom_error(
+    match output.as_message() {
+        Err(_) => Err(custom_error(
             llm::ErrorCode::InternalError,
             "An error occurred while converting to tool calls: expected output to be a Message"
                 .to_owned(),
-        ));
-    }
-
-    let message = output.as_message().unwrap().clone();
-    let mut tool_calls: Vec<llm::ToolCall> = vec![];
-
-    for block in message.content {
-        if let bedrock::types::ContentBlock::ToolUse(tool) = block {
-            tool_calls.push(bedrock_tool_use_to_llm_tool_call(tool)?);
+        )),
+        Ok(message) => {
+            let mut tool_calls: Vec<llm::ToolCall> = vec![];
+            for block in message.content.clone() {
+                if let bedrock::types::ContentBlock::ToolUse(tool) = block {
+                    tool_calls.push(bedrock_tool_use_to_llm_tool_call(tool)?);
+                }
+            }
+            Ok(tool_calls)
         }
     }
-
-    Ok(tool_calls)
 }
 
 pub fn converse_output_to_complete_response(
@@ -309,44 +308,46 @@ pub fn converse_output_to_complete_response(
             .to_owned(),
     ))?;
 
-    if !output.is_message() {
-        return Err(custom_error(
+    match output.as_message() {
+        Err(_) => Err(custom_error(
             llm::ErrorCode::InternalError,
-            "An error occurred while converting to complete response: expected output to be a Message".to_owned(),
-        ));
-    }
+            "An error occurred while converting to complete response: expected output to be a Message"
+               .to_owned(),
+        )),
+        Ok(message) => {
+            let mut content_parts: Vec<llm::ContentPart> = vec![];
+            let mut tool_calls: Vec<llm::ToolCall> = vec![];
+            for block in message.content.clone() {
+                match block {
+                    bedrock::types::ContentBlock::Text(text) => {
+                        content_parts.push(llm::ContentPart::Text(text.to_owned()));
+                    }
+                    bedrock::types::ContentBlock::Image(image) => {
+                        content_parts.push(bedrock_image_to_llm_content_part(image));
+                    }
+                    bedrock::types::ContentBlock::ToolUse(tool) => {
+                        tool_calls.push(bedrock_tool_use_to_llm_tool_call(tool)?);
+                    }
+                    _ => {}
+                }
+            }
+        
+            let metadata = converse_output_to_response_metadata(&response);
+        
+            Ok(llm::CompleteResponse {
+                // bedrock does not return an id as part of the response struct.
+                // there may be one present in `additional_model_response_fields`
+                // but the schema varies depending on the model being invoked. Leaving it empty for now
+                // until we have a better solution for this.
+                id: "".to_owned(),
+                content: content_parts,
+                tool_calls,
+                metadata,
+            })
 
-    let message = output.as_message().unwrap().clone();
-
-    let mut content_parts: Vec<llm::ContentPart> = vec![];
-    let mut tool_calls: Vec<llm::ToolCall> = vec![];
-    for block in message.content {
-        match block {
-            bedrock::types::ContentBlock::Text(text) => {
-                content_parts.push(llm::ContentPart::Text(text.to_owned()));
-            }
-            bedrock::types::ContentBlock::Image(image) => {
-                content_parts.push(bedrock_image_to_llm_content_part(image));
-            }
-            bedrock::types::ContentBlock::ToolUse(tool) => {
-                tool_calls.push(bedrock_tool_use_to_llm_tool_call(tool)?);
-            }
-            _ => {}
         }
     }
 
-    let metadata = converse_output_to_response_metadata(&response);
-
-    Ok(llm::CompleteResponse {
-        // bedrock does not return an id as part of the response struct.
-        // there may be one present in `additional_model_response_fields`
-        // but the schema varies depending on the model being invoked. Leaving it empty for now
-        // until we have a better solution for this.
-        id: "".to_owned(),
-        content: content_parts,
-        tool_calls,
-        metadata,
-    })
 }
 
 fn bedrock_tool_use_to_llm_tool_call(tool: ToolUseBlock) -> Result<llm::ToolCall, llm::Error> {
@@ -445,13 +446,12 @@ pub fn converse_stream_output_to_stream_event(
 
 fn process_content_block_start_event(block: ContentBlockStartEvent) -> Option<llm::StreamEvent> {
     if let Some(start_info) = block.start {
-        if start_info.is_tool_use() {
-            let tool_use = start_info.as_tool_use().unwrap().clone();
+        if let Ok(tool_use) = start_info.as_tool_use() {
             return Some(llm::StreamEvent::Delta(llm::StreamDelta {
                 content: None,
                 tool_calls: Some(vec![llm::ToolCall {
-                    id: tool_use.tool_use_id,
-                    name: tool_use.name,
+                    id: tool_use.tool_use_id.clone(),
+                    name: tool_use.name.clone(),
                     arguments_json: "".to_owned(),
                 }]),
             }));
@@ -462,20 +462,18 @@ fn process_content_block_start_event(block: ContentBlockStartEvent) -> Option<ll
 
 fn process_content_block_delta_event(block: ContentBlockDeltaEvent) -> Option<llm::StreamEvent> {
     if let Some(block_info) = block.delta {
-        if block_info.is_tool_use() {
-            let tool_use = block_info.as_tool_use().unwrap().clone();
+        if let Ok(tool_use) = block_info.as_tool_use() {
             return Some(llm::StreamEvent::Delta(llm::StreamDelta {
                 content: None,
                 tool_calls: Some(vec![llm::ToolCall {
                     id: "".to_owned(),
                     name: "".to_owned(),
-                    arguments_json: tool_use.input,
+                    arguments_json: tool_use.input.clone(),
                 }]),
             }));
-        } else if block_info.is_text() {
-            let text = block_info.as_text().unwrap().clone();
+        } else if let Ok(text) = block_info.as_text() {
             return Some(llm::StreamEvent::Delta(llm::StreamDelta {
-                content: Some(vec![llm::ContentPart::Text(text)]),
+                content: Some(vec![llm::ContentPart::Text(text.clone())]),
                 tool_calls: None,
             }));
         }

@@ -21,11 +21,11 @@ impl Guest for BedrockComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         let bedrock = get_bedrock_client();
-        if let Err(err) = bedrock {
-            return ChatEvent::Error(err);
-        }
 
-        bedrock.unwrap().converse(messages, config, None)
+        match bedrock {
+            Ok(client) => client.converse(messages, config, None),
+            Err(err) => ChatEvent::Error(err),
+        }
     }
 
     fn continue_(
@@ -36,13 +36,11 @@ impl Guest for BedrockComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         let bedrock = get_bedrock_client();
-        if let Err(err) = bedrock {
-            return ChatEvent::Error(err);
-        }
 
-        bedrock
-            .unwrap()
-            .converse(messages, config, Some(tool_results))
+        match bedrock {
+            Ok(client) => client.converse(messages, config, Some(tool_results)),
+            Err(err) => ChatEvent::Error(err),
+        }
     }
 
     fn stream(messages: Vec<Message>, config: Config) -> ChatStream {
@@ -58,11 +56,11 @@ impl ExtendedGuest for BedrockComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         let bedrock = get_bedrock_client();
-        if let Err(err) = bedrock {
-            return BedrockChatStream::failed(err);
-        }
 
-        bedrock.unwrap().converse_stream(messages, config)
+        match bedrock {
+            Ok(client) => client.converse_stream(messages, config),
+            Err(err) => BedrockChatStream::failed(err),
+        }
     }
 
     fn subscribe(_stream: &Self::ChatStream) -> golem_rust::wasm_rpc::Pollable {

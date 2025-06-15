@@ -52,39 +52,39 @@ impl Bedrock {
         tool_results: Option<Vec<(llm::ToolCall, llm::ToolResult)>>,
     ) -> llm::ChatEvent {
         let bedrock_input = BedrockInput::from(messages, config, tool_results);
-        if let Err(err) = bedrock_input {
-            return llm::ChatEvent::Error(err);
-        }
-
-        let input = bedrock_input.unwrap();
 
         let runtime = get_async_runtime();
 
-        trace!("Sending request to AWS Bedrock: {input:?}");
-        runtime.block_on(async {
-            let model_id = input.model_id.clone();
-            let response = self
-                .init_converse(input)
-                .send()
-                .await
-                .map_err(|e| from_converse_sdk_error(model_id, e));
+        match bedrock_input {
+            Err(err) => llm::ChatEvent::Error(err),
+            Ok(input) => {
+                trace!("Sending request to AWS Bedrock: {input:?}");
+                runtime.block_on(async {
+                    let model_id = input.model_id.clone();
+                    let response = self
+                        .init_converse(input)
+                        .send()
+                        .await
+                        .map_err(|e| from_converse_sdk_error(model_id, e));
 
-            if let Err(err) = response {
-                return llm::ChatEvent::Error(err);
+                    match response {
+                        Err(err) => llm::ChatEvent::Error(err),
+                        Ok(response) => {
+                            let event = match response.stop_reason() {
+                                bedrock::types::StopReason::ToolUse => {
+                                    conversions::converse_output_to_tool_calls(response)
+                                        .map(llm::ChatEvent::ToolRequest)
+                                }
+                                _ => conversions::converse_output_to_complete_response(response)
+                                    .map(llm::ChatEvent::Message),
+                            };
+
+                            event.unwrap_or_else(llm::ChatEvent::Error)
+                        }
+                    }
+                })
             }
-            let response = response.unwrap();
-
-            let event = match response.stop_reason() {
-                bedrock::types::StopReason::ToolUse => {
-                    conversions::converse_output_to_tool_calls(response)
-                        .map(llm::ChatEvent::ToolRequest)
-                }
-                _ => conversions::converse_output_to_complete_response(response)
-                    .map(llm::ChatEvent::Message),
-            };
-
-            event.unwrap_or_else(llm::ChatEvent::Error)
-        })
+        }
     }
 
     pub fn converse_stream(
@@ -93,27 +93,28 @@ impl Bedrock {
         config: llm::Config,
     ) -> BedrockChatStream {
         let bedrock_input = BedrockInput::from(messages, config, None);
-        if let Err(err) = bedrock_input {
-            return BedrockChatStream::failed(err);
-        }
-        let input = bedrock_input.unwrap();
 
-        let runtime = get_async_runtime();
-        trace!("Sending request to AWS Bedrock: {input:?}");
-        runtime.block_on(async {
-            let model_id = input.model_id.clone();
-            let response = self
-                .init_converse_stream(input)
-                .send()
-                .await
-                .map_err(|e| from_converse_stream_sdk_error(model_id, e));
+        match bedrock_input {
+            Err(err) => BedrockChatStream::failed(err),
+            Ok(input) => {
+                let runtime = get_async_runtime();
+                trace!("Sending request to AWS Bedrock: {input:?}");
+                runtime.block_on(async {
+                    let model_id = input.model_id.clone();
+                    let response = self
+                        .init_converse_stream(input)
+                        .send()
+                        .await
+                        .map_err(|e| from_converse_stream_sdk_error(model_id, e));
 
-            trace!("Creating AWS Bedrock event stream");
-            match response {
-                Ok(response) => BedrockChatStream::new(response.stream),
-                Err(error) => BedrockChatStream::failed(error),
+                    trace!("Creating AWS Bedrock event stream");
+                    match response {
+                        Ok(response) => BedrockChatStream::new(response.stream),
+                        Err(error) => BedrockChatStream::failed(error),
+                    }
+                })
             }
-        })
+        }
     }
 
     fn init_converse(&self, input: conversions::BedrockInput) -> ConverseFluentBuilder {
