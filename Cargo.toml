@@ -18,6 +18,7 @@ opt-level = 's'
 [workspace.dependencies]
 golem-rust = "1.6.0"
 log = "0.4.27"
+golem-llm = { path = "llm/llm", version = "0.0.0", default-features = false }
 reqwest = { git = "https://github.com/golemcloud/reqwest", branch = "update-may-2025", features = [
     "json",
 ] }
