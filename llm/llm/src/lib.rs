@@ -7,7 +7,7 @@ pub mod error;
 pub mod event_source;
 
 wit_bindgen::generate!({
-    path: "../wit",
+    path: "../../wit",
     world: "llm-library",
     generate_all,
     generate_unused_types: true,

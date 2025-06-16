@@ -223,39 +223,39 @@ dependencies = ["wit-update"]
 #    "wit/golem-llm.wit",
 #    "wit/deps/wasi:io",
 #], output = [
-#    "llm/wit/deps/golem-llm/golem-llm.wit",
-#    "llm-anthropic/wit/deps/golem-llm/golem-llm.wit",
-#    "llm-grok/wit/deps/golem-llm/golem-llm.wit",
-#    "llm-openai/wit/deps/golem-llm/golem-llm.wit",
-#    "llm-openrouter/wit/deps/golem-llm/golem-llm.wit",
+#    "llm/llm/wit/deps/golem-llm/golem-llm.wit",
+#    "llm/anthropic/wit/deps/golem-llm/golem-llm.wit",
+#    "llm/grok/wit/deps/golem-llm/golem-llm.wit",
+#    "llm/openai/wit/deps/golem-llm/golem-llm.wit",
+#    "llm/openrouter/wit/deps/golem-llm/golem-llm.wit",
 #] } }
 
 script_runner = "@duckscript"
 script = """
-rm -r llm/wit/deps
-mkdir llm/wit/deps/golem-llm
-cp wit/golem-llm.wit llm/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm/wit/deps
-rm -r llm-anthropic/wit/deps
-mkdir llm-anthropic/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-anthropic/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-anthropic/wit/deps
-rm -r llm-grok/wit/deps
-mkdir llm-grok/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-grok/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-grok/wit/deps
-rm -r llm-openai/wit/deps
-mkdir llm-openai/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-openai/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-openai/wit/deps
-rm -r llm-openrouter/wit/deps
-mkdir llm-openrouter/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-openrouter/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-openrouter/wit/deps
-rm -r llm-ollama/wit/deps
-mkdir llm-ollama/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-ollama/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-ollama/wit/deps
+rm -r llm/llm/wit/deps
+mkdir llm/llm/wit/deps/golem-llm
+cp wit/golem-llm.wit llm/llm/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io llm/llm/wit/deps
+rm -r llm/anthropic/wit/deps
+mkdir llm/anthropic/wit/deps/golem-llm
+cp wit/golem-llm.wit llm/anthropic/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io llm/anthropic/wit/deps
+rm -r llm/grok/wit/deps
+mkdir llm/grok/wit/deps/golem-llm
+cp wit/golem-llm.wit llm/grok/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io llm/grok/wit/deps
+rm -r llm/openai/wit/deps
+mkdir llm/openai/wit/deps/golem-llm
+cp wit/golem-llm.wit llm/openai/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io llm/openai/wit/deps
+rm -r llm/openrouter/wit/deps
+mkdir llm/openrouter/wit/deps/golem-llm
+cp wit/golem-llm.wit llm/openrouter/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io llm/openrouter/wit/deps
+rm -r llm/ollama/wit/deps
+mkdir llm/ollama/wit/deps/golem-llm
+cp wit/golem-llm.wit llm/ollama/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io llm/ollama/wit/deps
 
 
 rm -r test/wit
