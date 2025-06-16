@@ -69,11 +69,13 @@ impl ExtendedGuest for BedrockComponent {
 }
 
 fn get_bedrock_client() -> Result<Arc<Bedrock>, llm::Error> {
-    BEDROCK_CLIENT.with_borrow_mut(|client_opt| {
-        if client_opt.is_none() {
-            *client_opt = Some(Arc::new(Bedrock::new()?));
+    BEDROCK_CLIENT.with_borrow_mut(|client_opt| match client_opt {
+        Some(client) => Ok(client.clone()),
+        None => {
+            let client = Arc::new(Bedrock::new()?);
+            *client_opt = Some(client.clone());
+            Ok(client)
         }
-        Ok(client_opt.as_ref().map(Arc::clone).unwrap())
     })
 }
 

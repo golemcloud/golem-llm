@@ -331,9 +331,7 @@ pub fn converse_output_to_complete_response(
                     _ => {}
                 }
             }
-        
             let metadata = converse_output_to_response_metadata(&response);
-        
             Ok(llm::CompleteResponse {
                 // bedrock does not return an id as part of the response struct.
                 // there may be one present in `additional_model_response_fields`
@@ -344,10 +342,8 @@ pub fn converse_output_to_complete_response(
                 tool_calls,
                 metadata,
             })
-
         }
     }
-
 }
 
 fn bedrock_tool_use_to_llm_tool_call(tool: ToolUseBlock) -> Result<llm::ToolCall, llm::Error> {
