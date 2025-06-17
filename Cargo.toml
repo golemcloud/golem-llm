@@ -3,11 +3,6 @@ resolver = "2"
 
 members = [
     "llm",
-    "llm-anthropic",
-    "llm-grok",
-    "llm-ollama",
-    "llm-openai",
-    "llm-openrouter",
 ]
 
 [profile.release]

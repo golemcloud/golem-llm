@@ -1,26 +1,27 @@
-[package]
-name = "golem-llm"
-version = "0.0.0"
-edition = "2021"
-license = "Apache-2.0"
-homepage = "https://golem.cloud"
-repository = "https://github.com/golemcloud/golem-llm"
-description = "WebAssembly components for working with LLM APIs, with special support for Golem Cloud"
+[workspace]
+resolver = "2"
 
-[lib]
-path = "src/lib.rs"
-crate-type = ["rlib"]
+members = [
+    "llm",
+    "providers/anthropic",
+    "providers/grok",
+    "providers/ollama",
+    "providers/openai",
+    "providers/openrouter",
+]
 
-[dependencies]
-golem-rust = { workspace = true }
-log = { workspace = true }
-mime = "0.3.17"
-nom = { version = "7.1", default-features = false }
-reqwest = { workspace = true }
-thiserror = "2.0.12"
-wasi-logger = "0.1.2"
-wit-bindgen = { version = "0.40.0" }
+[profile.release]
+debug = false
+lto = true
+opt-level = 's'
 
-[features]
-default = ["durability"]
-durability = ["golem-rust/durability"]
+[workspace.dependencies]
+golem-rust = "1.6.0"
+log = "0.4.27"
+reqwest = { git = "https://github.com/golemcloud/reqwest", branch = "update-may-2025", features = [
+    "json",
+] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+wit-bindgen-rt = { version = "0.40.0", features = ["bitflags"] }
+base64 = { version = "0.22.1" }
