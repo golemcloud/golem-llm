@@ -84,7 +84,7 @@ jobs:
         run: cargo binstall --force --locked cargo-component@0.21.1
       - name: Build all test components
         run: cargo make build-test-components
-  ollama-integration-tests:
+  ollama-llm-integration-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -137,7 +137,8 @@ jobs:
       - name: Build and test Ollama integration
         run: |
           set -e
-          cargo make build-ollama
+          cd golem-llm
+          cargo make build-ollama 
           cd test
           golem-cli app build -b ollama-debug
           golem-cli app deploy -b ollama-debug
@@ -153,7 +154,7 @@ jobs:
     needs:
       - tests
       - build-test-components
-      - ollama-integration-tests
+      - ollama-llm-integration-tests
     runs-on: ubuntu-latest
     permissions:
       contents: write
