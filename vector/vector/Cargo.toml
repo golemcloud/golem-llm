@@ -11,7 +11,7 @@ with special support for Golem Cloud"
 
 [lib]
 path = "src/lib.rs"
-crate-type = ["rlib]
+crate-type = ["rlib"]
 
 [dependencies]
 golem-rust = { workspace = true }
