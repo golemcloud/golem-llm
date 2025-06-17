@@ -38,19 +38,20 @@ args = ["clippy", "--all-targets", "--", "--no-deps", "-Dwarnings"]
 script_runner = "@duckscript"
 script = '''
 echo "Building all packages..."
-exec --fail-on-error cargo make --makefile golem-llm/Makefile.toml build-all
+exec --fail-on-error sh -c "cd golem-llm && cargo make build-all"
 '''
 
 [tasks.build-test-components]
 script_runner = "@duckscript"
 script = '''
 echo "Building test components..."
-exec --fail-on-error cargo make --makefile golem-llm/Makefile.toml build-test-components
+exec --fail-on-error sh -c "cd golem-llm && cargo make build-test-components"
+
 '''
 
 [tasks.release-build-all]
 script_runner = "@duckscript"
 script = '''
 echo "Building all packages in release mode..."
-exec --fail-on-error cargo make --makefile golem-llm/Makefile.toml release-build-all
+exec --fail-on-error sh -c "cd golem-llm && cargo make release-build-all"
 '''
