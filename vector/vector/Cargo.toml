@@ -22,6 +22,7 @@ reqwest = { workspace = true }
 thiserror = "2.0.12"
 wasi-logger = "0.1.2"
 wit-bindgen = { version = "0.40.0" }
+
 [features]
 default = ["durability"]
 durability = ["golem-rust/durability"]
