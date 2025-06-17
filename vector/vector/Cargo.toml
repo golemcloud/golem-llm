@@ -1,12 +1,11 @@
 [package]
 name = "golem-vector"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2024"
 license = "Apache-2.0"
 homepage = "https://golem.cloud"
 repository = "https://github.com/golemcloud/golem-llm"
-description = "WebAssembly components for working with the Vector databases 
-with special support for Golem Cloud" 
+description = "WebAssembly components for working with the Vector databases with special support for Golem Cloud" 
 
 
 [lib]

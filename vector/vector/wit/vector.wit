@@ -1,5 +1,6 @@
 package golem:vector-library@1.0.0;
 
+
 world vector-library {
-    export golem:vector/vector@1.0.0;
+    export golem:vector/vector-library@1.0.0;
 }

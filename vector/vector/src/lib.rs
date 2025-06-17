@@ -1,10 +1,10 @@
 use wit_bindgen::generate;
 
 generate!({
-    path: "../wit/golem-vector",
+    path: "../wit/golem-vector.wit",
     world: "vector-library",
     generate_all,
-    generate_unused_types,
+    generate_unused_types:true,
     pub_export_macro: true
 });
 
