@@ -83,25 +83,25 @@ dependencies = [
 [tasks.build-all]
 script_runner = "@duckscript"
 script = '''
-mkdir components/llm/debug
+mkdir ../components/llm/debug
 
 cm_run_task clean
 cm_run_task build
 
-cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/llm/debug/golem_llm_anthropic.wasm
-cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/llm/debug/golem_llm_grok.wasm
-cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/llm/debug/golem_llm_openai.wasm
-cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/llm/debug/golem_llm_openrouter.wasm
-cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/llm/debug/golem_llm_ollama.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_anthropic.wasm ../components/llm/debug/golem_llm_anthropic.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_grok.wasm ../components/llm/debug/golem_llm_grok.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_openai.wasm ../components/llm/debug/golem_llm_openai.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_openrouter.wasm ../components/llm/debug/golem_llm_openrouter.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_ollama.wasm ../components/llm/debug/golem_llm_ollama.wasm
 
 cm_run_task clean
 cm_run_task build-portable
 
-cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/llm/debug/golem_llm_anthropic-portable.wasm
-cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/llm/debug/golem_llm_grok-portable.wasm
-cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/llm/debug/golem_llm_openai-portable.wasm
-cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/llm/debug/golem_llm_openrouter-portable.wasm
-cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/llm/debug/golem_llm_ollama-portable.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_anthropic.wasm ../components/llm/debug/golem_llm_anthropic-portable.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_grok.wasm ../components/llm/debug/golem_llm_grok-portable.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_openai.wasm ../components/llm/debug/golem_llm_openai-portable.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_openrouter.wasm ../components/llm/debug/golem_llm_openrouter-portable.wasm
+cp ../target/wasm32-wasip1/debug/golem_llm_ollama.wasm ../components/llm/debug/golem_llm_ollama-portable.wasm
 '''
 
 [tasks.release-build-ollama]
@@ -188,27 +188,27 @@ dependencies = [
 [tasks.release-build-all]
 script_runner = "@duckscript"
 script = '''
-mkdir components/llm/release
+mkdir ../components/llm/release
 
 cm_run_task set-version
 
 cm_run_task clean
 cm_run_task release-build
 
-cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/llm/release/golem_llm_anthropic.wasm
-cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/llm/release/golem_llm_grok.wasm
-cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/llm/release/golem_llm_openai.wasm
-cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/llm/release/golem_llm_openrouter.wasm
-cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/llm/release/golem_llm_ollama.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_anthropic.wasm ../components/llm/release/golem_llm_anthropic.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_grok.wasm ../components/llm/release/golem_llm_grok.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_openai.wasm ../components/llm/release/golem_llm_openai.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_openrouter.wasm ../components/llm/release/golem_llm_openrouter.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_ollama.wasm ../components/llm/release/golem_llm_ollama.wasm
 
 cm_run_task clean
 cm_run_task release-build-portable
 
-cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/llm/release/golem_llm_anthropic-portable.wasm
-cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/llm/release/golem_llm_grok-portable.wasm
-cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/llm/release/golem_llm_openai-portable.wasm
-cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/llm/release/golem_llm_openrouter-portable.wasm
-cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/llm/release/golem_llm_ollama-portable.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_anthropic.wasm ../components/llm/release/golem_llm_anthropic-portable.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_grok.wasm ../components/llm/release/golem_llm_grok-portable.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_openai.wasm ../components/llm/release/golem_llm_openai-portable.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_openrouter.wasm ../components/llm/release/golem_llm_openrouter-portable.wasm
+cp ../target/wasm32-wasip1/release/golem_llm_ollama.wasm ../components/llm/release/golem_llm_ollama-portable.wasm
 '''
 
 [tasks.wit-update]
