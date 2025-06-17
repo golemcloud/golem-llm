@@ -216,6 +216,24 @@ record filter-expression {
         connection-error(string),
     }
     
+// --error--
+    enum error-code {
+    invalid-request,
+    model-not-found,
+    unsupported,
+    authentication-failed, 
+    provider-error,
+    rate-limit-exceeded,
+    internal-error,
+    unknown,
+    }
+    // --- Error Handling ---
+
+  record error {
+    code: error-code,
+    message: string,
+    provider-error-json: option<string>,
+  }
 
 }
 
