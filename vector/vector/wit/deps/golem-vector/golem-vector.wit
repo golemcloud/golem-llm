@@ -67,21 +67,32 @@ interface types {
     }
     
     /// Metadata value types
-    variant metadata-value {
-        string-val(string),
-        number-val(f64),
-        integer-val(s64),
-        boolean-val(bool),
-        array-val(list<metadata-value>),
-        object-val(list<tuple<string, metadata-value>>),
-        null-val,
-        /// Geographic coordinates
-        geo-val(geo-coordinates),
-        /// ISO 8601 datetime string
-        datetime-val(string),
-        /// Binary data
-        blob-val(list<u8>),
-    }
+    type flat-metadata-object = list<tuple<string, flat-metadata-leaf>>;
+
+variant flat-metadata-value {
+    string-val(string),
+    number-val(f64),
+    integer-val(s64),
+    boolean-val(bool),
+    array-val(list<flat-metadata-leaf>),
+    object-val(flat-metadata-object),
+    null-val,
+    geo-val(geo-coordinates),
+    datetime-val(string),
+    blob-val(list<u8>),
+}
+
+variant flat-metadata-leaf {
+    string-val(string),
+    number-val(f64),
+    integer-val(s64),
+    boolean-val(bool),
+    null-val,
+    datetime-val(string),
+    geo-val(geo-coordinates),
+    blob-val(list<u8>),
+}
+
     
     /// Geographic coordinates
     record geo-coordinates {
@@ -90,7 +101,7 @@ interface types {
     }
     
     /// Key-value metadata
-    type metadata = list<tuple<string, metadata-value>>;
+    type metadata = list<tuple<string, flat-metadata-value>>;
     
     /// Filter operators for metadata queries
     enum filter-operator {
@@ -129,20 +140,33 @@ interface types {
         /// Filter operator
         operator: filter-operator,
         /// Value to compare against
-        value: metadata-value,
+        value: flat-metadata-value,
     }
     
     /// Complex filter expressions with boolean logic
-    variant filter-expression {
-        /// Simple condition
-        condition(filter-condition),
-        /// Logical AND of multiple expressions
-        and(list<filter-expression>),
-        /// Logical OR of multiple expressions
-        or(list<filter-expression>),
-        /// Logical NOT of expression
-        not(filter-expression),
-    }
+ /// Supported filter operations
+variant filter-op {
+    condition,
+    and,
+    or,
+    not,
+}
+
+/// Each expression is a node in a flat list
+record filter-node {
+    id: u32, // unique node ID
+    op: filter-op,
+    condition: option<filter-condition>,
+    inputs: list<u32>, // IDs of child nodes (for and/or/not), empty for condition
+}
+
+/// Top-level flat filter expression
+record filter-expression {
+    nodes: list<filter-node>,
+    root-id: u32, // the node that represents the root of the expression
+}
+
+
     
     /// Vector record for storage operations
     record vector-record {
@@ -397,7 +421,7 @@ interface search {
 
 /// Extended search capabilities (provider-dependent)
 interface search-extended {
-    use types.{id, vector-data, search-result, filter-expression, vector-error, metadata-value};
+    use types.{id, vector-data, search-result, filter-expression, vector-error, flat-metadata-value};
     use search.{search-query};
     /// Recommendation example types
     variant recommendation-example {
@@ -419,7 +443,7 @@ interface search-extended {
     
     /// Grouped search result
     record grouped-search-result {
-        group-value: metadata-value,
+        group-value: flat-metadata-value,
         results: list<search-result>,
         group-count: u32,
     }
@@ -486,7 +510,7 @@ interface search-extended {
 
 /// Analytics and statistics
 interface analytics {
-    use types.{vector-error, metadata-value, filter-expression};
+    use types.{vector-error, flat-metadata-value, filter-expression};
     
     /// Collection statistics
     record collection-stats {
@@ -517,7 +541,7 @@ interface analytics {
         unique-values: u64,
         null-count: u64,
         data-type: string,
-        sample-values: list<metadata-value>,
+        sample-values: list<flat-metadata-value>,
     }
     
     /// Get collection statistics
@@ -539,7 +563,7 @@ interface analytics {
         field: string,
         limit: option<u32>,
         namespace: option<string>
-    ) -> result<list<tuple<metadata-value, u64>>, vector-error>;
+    ) -> result<list<tuple<flat-metadata-value, u64>>, vector-error>;
 }
 
 /// Namespace/partition management
@@ -646,3 +670,4 @@ world vector-library {
     export namespaces;
     
 }
+
