@@ -1,0 +1,363 @@
+[config]
+default_to_workspace = false
+skip_core_tasks = true
+
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
+[tasks.unit-tests]
+command = "cargo"
+args = ["test"]
+
+[tasks.build-ollama]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama"]
+
+
+[tasks.build-ollama-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama", "--no-default-features"]
+
+
+[tasks.build-anthropic]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-anthropic"]
+
+[tasks.build-anthropic-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-anthropic", "--no-default-features"]
+
+[tasks.build-grok]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-grok"]
+
+[tasks.build-grok-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-grok", "--no-default-features"]
+
+[tasks.build-openai]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-openai"]
+
+[tasks.build-openai-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-openai", "--no-default-features"]
+
+[tasks.build-openrouter]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-openrouter"]
+
+[tasks.build-openrouter-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-openrouter", "--no-default-features"]
+
+[tasks.build]
+dependencies = [
+    "build-anthropic",
+    "build-grok",
+    "build-openai",
+    "build-openrouter",
+    "build-ollama",
+]
+
+[tasks.build-portable]
+dependencies = [
+    "build-anthropic-portable",
+    "build-grok-portable",
+    "build-openai-portable",
+    "build-openrouter-portable",
+    "build-ollama-portable",
+]
+
+[tasks.build-all]
+script_runner = "@duckscript"
+script = '''
+mkdir components/debug
+
+cm_run_task clean
+cm_run_task build
+
+cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/debug/golem_llm_anthropic.wasm
+cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_grok.wasm
+cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai.wasm
+cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter.wasm
+cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/debug/golem_llm_ollama.wasm
+
+cm_run_task clean
+cm_run_task build-portable
+
+cp target/wasm32-wasip1/debug/golem_llm_anthropic.wasm components/debug/golem_llm_anthropic-portable.wasm
+cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_grok-portable.wasm
+cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai-portable.wasm
+cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter-portable.wasm
+cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/debug/golem_llm_ollama-portable.wasm
+'''
+
+[tasks.release-build-ollama]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama", "--release"]
+
+[tasks.release-build-ollama-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-ollama", "--release", "--no-default-features"]
+
+
+[tasks.release-build-anthropic]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-anthropic", "--release"]
+
+[tasks.release-build-anthropic-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = [
+    "build",
+    "-p",
+    "golem-llm-anthropic",
+    "--release",
+    "--no-default-features",
+]
+
+[tasks.release-build-grok]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-grok", "--release"]
+
+[tasks.release-build-grok-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-grok", "--release", "--no-default-features"]
+
+[tasks.release-build-openai]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-openai", "--release"]
+
+[tasks.release-build-openai-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-openai", "--release", "--no-default-features"]
+
+[tasks.release-build-openrouter]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-llm-openrouter", "--release"]
+
+[tasks.release-build-openrouter-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = [
+    "build",
+    "-p",
+    "golem-llm-openrouter",
+    "--release",
+    "--no-default-features",
+]
+
+[tasks.release-build]
+dependencies = [
+    "release-build-anthropic",
+    "release-build-grok",
+    "release-build-openai",
+    "release-build-openrouter",
+    "release-build-ollama",
+]
+
+[tasks.release-build-portable]
+dependencies = [
+    "release-build-anthropic-portable",
+    "release-build-grok-portable",
+    "release-build-openai-portable",
+    "release-build-openrouter-portable",
+    "release-build-ollama-portable",
+]
+
+[tasks.release-build-all]
+script_runner = "@duckscript"
+script = '''
+mkdir components/release
+
+cm_run_task set-version
+
+cm_run_task clean
+cm_run_task release-build
+
+cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/release/golem_llm_anthropic.wasm
+cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm_grok.wasm
+cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai.wasm
+cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter.wasm
+cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/release/golem_llm_ollama.wasm
+
+cm_run_task clean
+cm_run_task release-build-portable
+
+cp target/wasm32-wasip1/release/golem_llm_anthropic.wasm components/release/golem_llm_anthropic-portable.wasm
+cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm_grok-portable.wasm
+cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai-portable.wasm
+cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter-portable.wasm
+cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/release/golem_llm_ollama-portable.wasm
+'''
+
+[tasks.wit-update]
+install_crate = { crate_name = "wit-deps-cli" }
+command = "wit-deps"
+args = ["update"]
+
+[tasks.wit]
+dependencies = ["wit-update"]
+
+#condition = { files_modified = { input = [
+#    "wit/golem-llm.wit",
+#    "wit/deps/wasi:io",
+#], output = [
+#    "llm/wit/deps/golem-llm/golem-llm.wit",
+#    "providers/anthropic/wit/deps/golem-llm/golem-llm.wit",
+#    "providers/grok/wit/deps/golem-llm/golem-llm.wit",
+#    "providers/openai/wit/deps/golem-llm/golem-llm.wit",
+#    "providers/openrouter/wit/deps/golem-llm/golem-llm.wit",
+#    "providers/ollama/wit/deps/golem-llm/golem-llm.wit",
+#] } }
+
+script_runner = "@duckscript"
+script = """
+rm -r llm/wit/deps
+mkdir llm/wit/deps/golem-llm
+cp wit/golem-llm.wit llm/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io llm/wit/deps
+
+rm -r providers/anthropic/wit/deps
+mkdir providers/anthropic/wit/deps/golem-llm
+cp wit/golem-llm.wit providers/anthropic/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io providers/anthropic/wit/deps
+
+rm -r providers/grok/wit/deps
+mkdir providers/grok/wit/deps/golem-llm
+cp wit/golem-llm.wit providers/grok/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io providers/grok/wit/deps
+
+rm -r providers/openai/wit/deps
+mkdir providers/openai/wit/deps/golem-llm
+cp wit/golem-llm.wit providers/openai/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io providers/openai/wit/deps
+
+rm -r providers/openrouter/wit/deps
+mkdir providers/openrouter/wit/deps/golem-llm
+cp wit/golem-llm.wit providers/openrouter/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io providers/openrouter/wit/deps
+
+rm -r providers/ollama/wit/deps
+mkdir providers/ollama/wit/deps/golem-llm
+cp wit/golem-llm.wit providers/ollama/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io providers/ollama/wit/deps
+
+rm -r test/wit
+mkdir test/wit/deps/golem-llm
+mkdir test/wit/deps/io
+cp wit/golem-llm.wit test/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io/error.wit test/wit/deps/io/error.wit
+cp wit/deps/wasi:io/poll.wit test/wit/deps/io/poll.wit
+cp wit/deps/wasi:io/streams.wit test/wit/deps/io/streams.wit
+cp wit/deps/wasi:io/world.wit test/wit/deps/io/world.wit
+"""
+
+[tasks.check]
+description = "Runs rustfmt and clippy checks without applying any fix"
+dependencies = ["check-clippy", "check-rustfmt"]
+
+[tasks.check-rustfmt]
+description = "Runs rustfmt checks without applying any fix"
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--all", "--", "--check"]
+
+[tasks.check-clippy]
+description = "Runs clippy checks without applying any fix"
+install_crate = "clippy"
+command = "cargo"
+args = ["clippy", "--all-targets", "--", "--no-deps", "-Dwarnings"]
+
+[tasks.fix]
+description = "Runs rustfmt and clippy checks and applies fixes"
+dependencies = ["wit", "fix-clippy", "fix-rustfmt"]
+
+[tasks.fix-rustfmt]
+description = "Runs rustfmt checks and applies fixes"
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.fix-clippy]
+description = "Runs clippy checks and applies fixes"
+install_crate = "clippy"
+command = "cargo"
+args = [
+    "clippy",
+    "--fix",
+    "--allow-dirty",
+    "--allow-staged",
+    "--",
+    "--no-deps",
+    "-Dwarnings",
+]
+
+[tasks.build-test-components]
+dependencies = ["build"]
+description = "Builds all test components with golem-cli"
+install_crate = "cargo-binstall"
+script = '''
+cargo-binstall golem-cli@1.2.2-dev.11 --locked --force --no-confirm
+cargo-binstall wac-cli --locked --force --no-confirm
+cd test
+golem-cli --version
+golem-cli app clean
+golem-cli app build -b anthropic-debug
+golem-cli app clean
+golem-cli app build -b grok-debug
+golem-cli app clean
+golem-cli app build -b openai-debug
+golem-cli app clean
+golem-cli app build -b openrouter-debug
+golem-cli app clean
+golem-cli app build -b ollama-debug
+'''
+
+
+[tasks.set-version]
+description = "Sets the version in all Cargo.toml files to the value of the VERSION environment variable"
+condition = { env_set = ["VERSION"] }
+script = '''
+grep -rl --include 'Cargo.toml' '0\.0\.0' | xargs sed -i "s/0\.0\.0/${VERSION}/g"
+'''
+
+[tasks.set-version.mac]
+condition = { env_set = ["VERSION"] }
+script = '''
+grep -rl --include '.*Cargo\.toml' '0\.0\.0' | xargs sed -i "" "s/0\.0\.0/${VERSION}/g"
+'''
+
+[tasks.set-version.windows]
+script_runner = "powershell"
+script_extension = "ps1"
+condition = { env_set = ["VERSION"] }
+script = '''
+$cargoFiles = Get-ChildItem . Cargo.toml -rec
+foreach ($file in $cargoFiles)
+{
+    (Get-Content $file.PSPath) |
+    Foreach-Object { $_ -replace "0.0.0", $Env:VERSION } |
+    Set-Content $file.PSPath
+}
+'''
