@@ -40,3 +40,4 @@ path = "wit"
 
 [package.metadata.component.bindings]
 generate_unused_types = true
+
