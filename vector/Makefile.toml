@@ -1,0 +1,12 @@
+[config]
+default_to_workspace =  false
+skip_core_tasks = true
+
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
+[tasks.unit-tests]
+command = "cargo"
+args = ["test"]
+
