@@ -221,7 +221,7 @@ dependencies = ["wit-update"]
 
 #condition = { files_modified = { input = [
 #    "wit/golem-llm.wit",
-#    "wit/deps/wasi:io",
+#    "wit/deps/wasi-io",
 #], output = [
 #    "llm/wit/deps/golem-llm/golem-llm.wit",
 #    "llm-anthropic/wit/deps/golem-llm/golem-llm.wit",
@@ -235,37 +235,37 @@ script = """
 rm -r llm/wit/deps
 mkdir llm/wit/deps/golem-llm
 cp wit/golem-llm.wit llm/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm/wit/deps
+cp wit/deps/wasi-io llm/wit/deps
 rm -r llm-anthropic/wit/deps
 mkdir llm-anthropic/wit/deps/golem-llm
 cp wit/golem-llm.wit llm-anthropic/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-anthropic/wit/deps
+cp wit/deps/wasi-io llm-anthropic/wit/deps
 rm -r llm-grok/wit/deps
 mkdir llm-grok/wit/deps/golem-llm
 cp wit/golem-llm.wit llm-grok/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-grok/wit/deps
+cp wit/deps/wasi-io llm-grok/wit/deps
 rm -r llm-openai/wit/deps
 mkdir llm-openai/wit/deps/golem-llm
 cp wit/golem-llm.wit llm-openai/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-openai/wit/deps
+cp wit/deps/wasi-io llm-openai/wit/deps
 rm -r llm-openrouter/wit/deps
 mkdir llm-openrouter/wit/deps/golem-llm
 cp wit/golem-llm.wit llm-openrouter/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-openrouter/wit/deps
+cp wit/deps/wasi-io llm-openrouter/wit/deps
 rm -r llm-ollama/wit/deps
 mkdir llm-ollama/wit/deps/golem-llm
 cp wit/golem-llm.wit llm-ollama/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-ollama/wit/deps
+cp wit/deps/wasi-io llm-ollama/wit/deps
 
 
 rm -r test/wit
 mkdir test/wit/deps/golem-llm
 mkdir test/wit/deps/io
 cp wit/golem-llm.wit test/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io/error.wit test/wit/deps/io/error.wit
-cp wit/deps/wasi:io/poll.wit test/wit/deps/io/poll.wit
-cp wit/deps/wasi:io/streams.wit test/wit/deps/io/streams.wit
-cp wit/deps/wasi:io/world.wit test/wit/deps/io/world.wit
+cp wit/deps/wasi-io/error.wit test/wit/deps/io/error.wit
+cp wit/deps/wasi-io/poll.wit test/wit/deps/io/poll.wit
+cp wit/deps/wasi-io/streams.wit test/wit/deps/io/streams.wit
+cp wit/deps/wasi-io/world.wit test/wit/deps/io/world.wit
 """
 
 [tasks.check]
