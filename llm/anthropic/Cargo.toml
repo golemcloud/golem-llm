@@ -27,7 +27,7 @@ wit-bindgen-rt = { workspace = true }
 base64 = { workspace = true }
 
 [package.metadata.component]
-package = "golem:llm-anhropic"
+package = "golem:llm-anthropic"
 
 [package.metadata.component.bindings]
 generate_unused_types = true
