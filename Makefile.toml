@@ -232,31 +232,16 @@ dependencies = ["wit-update"]
 
 script_runner = "@duckscript"
 script = """
-rm -r llm/llm/wit/deps
-mkdir llm/llm/wit/deps/golem-llm
-cp wit/golem-llm.wit llm/llm/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm/llm/wit/deps
-rm -r llm/anthropic/wit/deps
-mkdir llm/anthropic/wit/deps/golem-llm
-cp wit/golem-llm.wit llm/anthropic/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm/anthropic/wit/deps
-rm -r llm/grok/wit/deps
-mkdir llm/grok/wit/deps/golem-llm
-cp wit/golem-llm.wit llm/grok/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm/grok/wit/deps
-rm -r llm/openai/wit/deps
-mkdir llm/openai/wit/deps/golem-llm
-cp wit/golem-llm.wit llm/openai/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm/openai/wit/deps
-rm -r llm/openrouter/wit/deps
-mkdir llm/openrouter/wit/deps/golem-llm
-cp wit/golem-llm.wit llm/openrouter/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm/openrouter/wit/deps
-rm -r llm/ollama/wit/deps
-mkdir llm/ollama/wit/deps/golem-llm
-cp wit/golem-llm.wit llm/ollama/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm/ollama/wit/deps
+modules = array llm openai anthropic grok openrouter ollama
 
+for module in ${modules}
+    rm -r llm/${module}/wit/deps
+    mkdir llm/${module}/wit/deps/golem-llm
+    cp wit/golem-llm.wit llm/${module}/wit/deps/golem-llm/golem-llm.wit
+    cp wit/deps/wasi:io llm/${module}/wit/deps
+
+    echo "Copied WIT for module llm/${module}"
+end
 
 rm -r test/wit
 mkdir test/wit/deps/golem-llm
@@ -317,16 +302,13 @@ cargo-binstall golem-cli@1.2.2-dev.11 --locked --force --no-confirm
 cargo-binstall wac-cli --locked --force --no-confirm
 cd test
 golem-cli --version
-golem-cli app clean
-golem-cli app build -b anthropic-debug
-golem-cli app clean
-golem-cli app build -b grok-debug
-golem-cli app clean
-golem-cli app build -b openai-debug
-golem-cli app clean
-golem-cli app build -b openrouter-debug
-golem-cli app clean
-golem-cli app build -b ollama-debug
+
+targets = array openai anthropic grok openrouter ollama
+
+for target in ${targets}
+    golem-cli app clean
+    golem-cli app build -b ${target}-debug
+end
 '''
 
 
