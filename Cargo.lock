@@ -458,6 +458,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "golem-web-search"
+version = "0.0.0"
+dependencies = [
+ "golem-rust",
+ "log",
+ "mime",
+ "nom",
+ "reqwest",
+ "thiserror",
+ "wasi-logger",
+ "wit-bindgen 0.40.0",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
