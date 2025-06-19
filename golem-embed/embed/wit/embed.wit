@@ -1,0 +1,5 @@
+package golem:embed-library@1.0.0;
+
+world embed-library {
+     export golem:embed/embed@1.0.0;
+}
