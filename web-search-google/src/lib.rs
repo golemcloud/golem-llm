@@ -9,6 +9,10 @@ wit_bindgen::generate!({
 pub mod client;
 pub mod conversions;
 
+// Re-export the generated types for external use
+pub use crate::golem::web_search::types;
+pub use crate::exports::golem::web_search::web_search;
+
 #[macro_export]
 macro_rules! export_web_search_google {
     () => {

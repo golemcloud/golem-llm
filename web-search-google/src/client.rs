@@ -167,7 +167,9 @@ impl GuestSearchSession for GoogleWebSearchClient {
     }
 
     fn next_page(&self) -> Result<Vec<SearchResult>, SearchError> {
-        let rt = tokio::runtime::Runtime::new()
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
             .map_err(|e| SearchError::BackendError(format!("Failed to create runtime: {}", e)))?;
 
         rt.block_on(async {
