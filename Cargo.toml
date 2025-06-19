@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 
+
 members = [
     "llm",
     "llm-anthropic",
@@ -8,6 +9,7 @@ members = [
     "llm-ollama",
     "llm-openai",
     "llm-openrouter",
+    "llm-bedrock"
 ]
 
 [profile.release]
