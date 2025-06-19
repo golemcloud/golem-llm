@@ -1,0 +1,6 @@
+package golem:graph-janusgraph@1.0.0;
+
+world graph-library {
+  include golem:graph/graph-library@1.0.0;
+  
+}

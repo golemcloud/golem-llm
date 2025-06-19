@@ -8,6 +8,10 @@ members = [
     "llm-ollama",
     "llm-openai",
     "llm-openrouter",
+    "graph",
+    "graph-neo4j",
+    "graph-arangodb",
+    "graph-janusgraph"
 ]
 
 [profile.release]

@@ -1,0 +1,5 @@
+package golem:graph-library@1.0.0;
+
+world graph-library {
+   export golem:graph/graph@1.0.0;
+}
