@@ -1,0 +1,15 @@
+package test:web-search;
+
+// See https://component-model.bytecodealliance.org/design/wit.html for more details about the WIT syntax
+
+interface test-web-search-api {
+  test1: func() -> string;
+  test2: func() -> string;
+  test3: func() -> string;
+  test4: func() -> string;
+}
+
+world test-web-search {
+  import golem:web-search/web-search@1.0.0;
+  export test-web-search-api;
+}
