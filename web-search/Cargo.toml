@@ -1,0 +1,17 @@
+[package]
+name = "golem-web-search"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["durability"]
+durability = ["golem-rust/durability"]
+[dependencies]
+async-trait = { workspace = true }
+golem-rust = { workspace = true }
+http = { workspace = true }
+log = { workspace = true }
+reqwest = { workspace = true }
+serde_json = { workspace = true }
+url = { workspace = true }
+wit-bindgen = { workspace = true }
