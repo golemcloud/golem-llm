@@ -1,0 +1,55 @@
+# Schema for IDEA:
+# $schema: https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+# Schema for vscode-yaml
+# yaml-language-server: $schema=https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+
+# See https://learn.golem.cloud/docs/app-manifest#field-reference for field reference
+
+components:
+  test:websearch:
+    profiles:
+      # DEBUG PROFILES
+      google-debug:
+        build:
+          - command: cargo component build --no-default-features --features google
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_websearch.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/web_search_google.wasm ../../target/wasm32-wasip1/debug/test_websearch.wasm -o ../../target/wasm32-wasip1/debug/test_google_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_websearch.wasm
+              - ../../../target/wasm32-wasip1/debug/web_search_google.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_google_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_google_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_google_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      # RELEASE PROFILES
+      google-release:
+        build:
+          - command: cargo component build --release --no-default-features --features google
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_websearch.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/web_search_google.wasm ../../target/wasm32-wasip1/release/test_websearch.wasm -o ../../target/wasm32-wasip1/release/test_google_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_websearch.wasm
+              - ../../../target/wasm32-wasip1/release/web_search_google.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_google_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_google_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_google_release.wasm
+        clean:
+          - src/bindings.rs 
