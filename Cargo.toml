@@ -9,7 +9,11 @@ members = [
     "llm-openai",
     "llm-openrouter",
     "web-search",
-    "web-search-google",
+    "websearch-google",
+    "websearch-bing",
+    "websearch-brave",
+    "websearch-tavily",
+    "websearch-serper",
 ]
 
 [profile.release]
