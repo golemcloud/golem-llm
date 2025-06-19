@@ -1,0 +1,13 @@
+package golem:web-search-bing@1.0.0;
+
+interface types {
+  use golem:web-search@1.0.0/types.{search-params, search-result, search-metadata, search-error};
+}
+
+interface web-search {
+  use golem:web-search@1.0.0/web-search;
+}
+
+world web-search-bing-library {
+    export web-search;
+} 
