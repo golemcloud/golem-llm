@@ -8,6 +8,8 @@ members = [
     "llm-ollama",
     "llm-openai",
     "llm-openrouter",
+    "vector",
+    "vector-qdrant",
 ]
 
 [profile.release]

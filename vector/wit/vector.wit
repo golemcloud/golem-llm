@@ -1,0 +1,12 @@
+package golem:vector-library@1.0.0;
+
+world vector-library {
+    export golem:vector/types@1.0.0;
+    export golem:vector/collections@1.0.0;
+    export golem:vector/vectors@1.0.0;
+    export golem:vector/search@1.0.0;
+    export golem:vector/search-extended@1.0.0;
+    export golem:vector/analytics@1.0.0;
+    export golem:vector/namespaces@1.0.0;
+    export golem:vector/connection@1.0.0;
+}

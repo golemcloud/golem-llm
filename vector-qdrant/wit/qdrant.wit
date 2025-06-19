@@ -1,0 +1,5 @@
+package golem:vector-qdrant@1.0.0;
+
+world vector-library {
+    include golem:vector/vector-library@1.0.0;
+}

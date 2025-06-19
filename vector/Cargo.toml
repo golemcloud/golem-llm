@@ -1,0 +1,24 @@
+[package]
+name = "golem-vector"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://golem.cloud"
+repository = "https://github.com/golemcloud/golem-llm"
+description = "Experimental vector database interface for Golem"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["rlib"]
+
+[dependencies]
+golem-rust = { workspace = true }
+
+[package.metadata.component]
+package = "golem:vector-library"
+
+[package.metadata.component.target]
+path = "wit"
+
+[package.metadata.component.target.dependencies]
+"golem:vector" = { path = "wit/deps/golem-vector" }
