@@ -9,6 +9,7 @@ members = [
     "llm-openai",
     "llm-openrouter",
     "web-search",
+    "web-search-google",
 ]
 
 [profile.release]
@@ -24,9 +25,9 @@ reqwest = { git = "https://github.com/golemcloud/reqwest", branch = "update-may-
 ] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
-wit-bindgen-rt = { version = "0.40.0", features = ["bitflags"] }
+wit-bindgen-rt = { version = "0.41.0", features = ["bitflags"] }
 base64 = { version = "0.22.1" }
 async-trait = "0.1.80"
 http = "1.1.0"
 url = "2.5.2"
-wit-bindgen = "0.40.0"
+wit-bindgen = "0.41.0"
