@@ -102,12 +102,13 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: wasm32-wasip1
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install tools
         run: |
           set -e
-          cargo binstall --force --locked cargo-component@0.21.1
+          cargo binstall --force --locked cargo-component@0.20.0
           cargo binstall golem-cli@1.2.3 --locked --force --no-confirm
           cargo binstall wac-cli --locked --force --no-confirm
       - name: Start Ollama in Docker
@@ -137,6 +138,9 @@ jobs:
       - name: Build and test Ollama integration
         run: |
           set -e
+          # Build websearch-google component first (required dependency)
+          cargo make build-websearch-google
+          # Build ollama component
           cargo make build-ollama
           cd test
           golem-cli app build -b ollama-debug
