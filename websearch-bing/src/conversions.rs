@@ -1,5 +1,5 @@
-use crate::golem::web_search::types::{ImageResult, SearchResult};
 use crate::client::BingSearchItem;
+use crate::golem::web_search::types::{ImageResult, SearchResult};
 
 pub fn convert_bing_result(item: BingSearchItem) -> SearchResult {
     let mut images = None;
@@ -33,4 +33,4 @@ pub fn convert_bing_result(item: BingSearchItem) -> SearchResult {
         images,
         content_chunks: None,
     }
-} 
+}

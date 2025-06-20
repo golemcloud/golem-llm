@@ -27,7 +27,9 @@ mod passthrough_impl {
     impl<Impl: ExtendedGuest> Guest for DurableWebSearch<Impl> {
         type SearchSession = Impl::ExtendedSearchSession;
 
-        fn search_once(params: SearchParams) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
+        fn search_once(
+            params: SearchParams,
+        ) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
             Impl::search_once(params)
         }
 
@@ -46,7 +48,9 @@ mod durable_impl {
     impl<Impl: ExtendedGuest> Guest for DurableWebSearch<Impl> {
         type SearchSession = DurableSearchSession<<Impl as ExtendedGuest>::ExtendedSearchSession>;
 
-        fn search_once(params: SearchParams) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
+        fn search_once(
+            params: SearchParams,
+        ) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
             let durability = Durability::<SearchOnceResult, UnusedError>::new(
                 "golem_web_search",
                 "search_once",
@@ -64,7 +68,9 @@ mod durable_impl {
         }
 
         fn start_search(params: SearchParams) -> Result<SearchSession, SearchError> {
-            Ok(SearchSession::new(DurableSearchSession::new(Impl::unwrapped_search_session(params))))
+            Ok(SearchSession::new(DurableSearchSession::new(
+                Impl::unwrapped_search_session(params),
+            )))
         }
     }
 

@@ -1,5 +1,7 @@
 use crate::exports::golem::web_search::web_search::GuestSearchSession;
-use crate::golem::web_search::types::{SearchError, SearchMetadata, SearchParams, SearchResult, SafeSearchLevel};
+use crate::golem::web_search::types::{
+    SafeSearchLevel, SearchError, SearchMetadata, SearchParams, SearchResult,
+};
 use anyhow::Result;
 use reqwest::Client;
 use serde::Deserialize;
@@ -19,6 +21,7 @@ pub struct BraveWebSearchClient {
 
 #[derive(Debug, Clone)]
 struct ClientState {
+    #[allow(dead_code)]
     current_offset: u32,
     total_results: Option<u64>,
     search_time_ms: Option<f64>,
@@ -42,7 +45,9 @@ impl BraveWebSearchClient {
         }
     }
 
-    pub fn search_once(params: SearchParams) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
+    pub fn search_once(
+        params: SearchParams,
+    ) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
         let client = Self::new(params.clone());
         let results = client.next_page_durable()?;
         let metadata = client.get_metadata_durable();
@@ -79,7 +84,8 @@ impl BraveWebSearchClient {
 
     async fn perform_search(&self) -> Result<BraveSearchResponse, SearchError> {
         let url = self.build_search_url()?;
-        let response = self.client
+        let response = self
+            .client
             .get(url)
             .header("X-Subscription-Token", &self.api_key)
             .header("Accept", "application/json")
@@ -88,8 +94,14 @@ impl BraveWebSearchClient {
             .map_err(|e| SearchError::BackendError(format!("Request failed: {}", e)))?;
         if !response.status().is_success() {
             let status = response.status();
-            let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(SearchError::BackendError(format!("HTTP {}: {}", status, error_text)));
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            return Err(SearchError::BackendError(format!(
+                "HTTP {}: {}",
+                status, error_text
+            )));
         }
         let search_response: BraveSearchResponse = response
             .json()
@@ -111,10 +123,15 @@ impl GuestSearchSession for BraveWebSearchClient {
         rt.block_on(async {
             let response = self.perform_search().await?;
             let mut state = self.state.lock().unwrap();
-            state.total_results = response.web.as_ref().and_then(|w| w.total).map(|t| t as u64);
+            state.total_results = response
+                .web
+                .as_ref()
+                .and_then(|w| w.total)
+                .map(|t| t as u64);
             // Brave does not provide search_time_ms
-            let results = response.web
-                .and_then(|w| Some(w.results))
+            let results = response
+                .web
+                .map(|w| w.results)
                 .unwrap_or_default()
                 .into_iter()
                 .map(super::conversions::convert_brave_result)
@@ -128,7 +145,7 @@ impl GuestSearchSession for BraveWebSearchClient {
             query: self.params.query.clone(),
             total_results: state.total_results,
             search_time_ms: state.search_time_ms,
-            safe_search: self.params.safe_search.clone(),
+            safe_search: self.params.safe_search,
             language: self.params.language.clone(),
             region: self.params.region.clone(),
             next_page_token: None,
@@ -174,4 +191,4 @@ pub struct BraveSearchItem {
     pub sitelinks: Option<Vec<String>>,
     pub thumbnail: Option<String>,
     pub date_published: Option<String>,
-} 
+}

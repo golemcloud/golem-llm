@@ -1,5 +1,7 @@
 use crate::exports::golem::web_search::web_search::GuestSearchSession;
-use crate::golem::web_search::types::{SearchError, SearchMetadata, SearchParams, SearchResult, SafeSearchLevel, TimeRange};
+use crate::golem::web_search::types::{
+    SafeSearchLevel, SearchError, SearchMetadata, SearchParams, SearchResult, TimeRange,
+};
 use anyhow::Result;
 use reqwest::Client;
 use serde::Deserialize;
@@ -32,7 +34,7 @@ impl GoogleWebSearchClient {
             eprintln!("Warning: GOOGLE_API_KEY not set, using dummy key");
             "dummy_key".to_string()
         });
-        
+
         let search_engine_id = env::var("GOOGLE_SEARCH_ENGINE_ID").unwrap_or_else(|_| {
             eprintln!("Warning: GOOGLE_SEARCH_ENGINE_ID not set, using dummy ID");
             "dummy_id".to_string()
@@ -51,7 +53,9 @@ impl GoogleWebSearchClient {
         }
     }
 
-    pub fn search_once(params: SearchParams) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
+    pub fn search_once(
+        params: SearchParams,
+    ) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
         let client = Self::new(params.clone());
         let results = client.next_page_durable()?;
         let metadata = client.get_metadata_durable();
@@ -123,7 +127,11 @@ impl GoogleWebSearchClient {
 
         if let Some(exclude_domains) = &self.params.exclude_domains {
             if !exclude_domains.is_empty() {
-                let exclude_sites = exclude_domains.iter().map(|d| format!("-site:{}", d)).collect::<Vec<_>>().join(" ");
+                let exclude_sites = exclude_domains
+                    .iter()
+                    .map(|d| format!("-site:{}", d))
+                    .collect::<Vec<_>>()
+                    .join(" ");
                 let new_query = format!("{} {}", self.params.query, exclude_sites);
                 query_params.insert("q".to_string(), new_query);
             }
@@ -139,8 +147,9 @@ impl GoogleWebSearchClient {
 
     async fn perform_search(&self) -> Result<GoogleSearchResponse, SearchError> {
         let url = self.build_search_url()?;
-        
-        let response = self.client
+
+        let response = self
+            .client
             .get(url)
             .send()
             .await
@@ -148,8 +157,14 @@ impl GoogleWebSearchClient {
 
         if !response.status().is_success() {
             let status = response.status();
-            let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(SearchError::BackendError(format!("HTTP {}: {}", status, error_text)));
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            return Err(SearchError::BackendError(format!(
+                "HTTP {}: {}",
+                status, error_text
+            )));
         }
 
         let search_response: GoogleSearchResponse = response
@@ -180,7 +195,8 @@ impl GuestSearchSession for GoogleWebSearchClient {
                 state.search_time = Some(search_info.search_time);
                 state.current_page += 1;
             }
-            let results = response.items
+            let results = response
+                .items
                 .unwrap_or_default()
                 .into_iter()
                 .map(super::conversions::convert_google_result)
@@ -195,7 +211,7 @@ impl GuestSearchSession for GoogleWebSearchClient {
             query: self.params.query.clone(),
             total_results: state.total_results,
             search_time_ms: state.search_time,
-            safe_search: self.params.safe_search.clone(),
+            safe_search: self.params.safe_search,
             language: self.params.language.clone(),
             region: self.params.region.clone(),
             next_page_token: None,
@@ -278,4 +294,4 @@ pub struct SearchInformation {
 pub struct GoogleApiError {
     pub code: u32,
     pub message: String,
-} 
+}

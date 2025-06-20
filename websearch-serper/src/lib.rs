@@ -10,15 +10,15 @@ pub mod client;
 pub mod conversions;
 
 // Re-export the generated types for external use
-pub use crate::golem::web_search::types;
 pub use crate::exports::golem::web_search::web_search;
+pub use crate::golem::web_search::types;
 
 #[macro_export]
 macro_rules! export_web_search_serper {
     () => {
         const _: () => {
-            use crate::exports::golem::web_search::web_search::{Guest as WitGuest};
-            use crate::client::SerperWebSearchClient;
+            use $crate::exports::golem::web_search::web_search::{Guest as WitGuest};
+            use $crate::client::SerperWebSearchClient;
 
             /// The Serper web search provider for the Golem Web Search API
             pub struct SerperWebSearchProvider;
@@ -27,22 +27,22 @@ macro_rules! export_web_search_serper {
                 type SearchSession = SerperWebSearchClient;
 
                 fn search_once(
-                    params: crate::golem::web_search::types::SearchParams,
-                ) -> Result<(Vec<crate::golem::web_search::types::SearchResult>, Option<crate::golem::web_search::types::SearchMetadata>), crate::golem::web_search::types::SearchError> {
+                    params: $crate::golem::web_search::types::SearchParams,
+                ) -> Result<(Vec<$crate::golem::web_search::types::SearchResult>, Option<$crate::golem::web_search::types::SearchMetadata>), $crate::golem::web_search::types::SearchError> {
                     SerperWebSearchClient::search_once(params)
                 }
 
                 fn start_search(
-                    params: crate::golem::web_search::types::SearchParams,
-                ) -> Result<SerperWebSearchClient, crate::golem::web_search::types::SearchError> {
+                    params: $crate::golem::web_search::types::SearchParams,
+                ) -> Result<SerperWebSearchClient, $crate::golem::web_search::types::SearchError> {
                     Ok(SerperWebSearchClient::new(params))
                 }
             }
 
             #[allow(dead_code)]
             fn __export_serper_web_search_provider() {
-                export!(SerperWebSearchProvider with_types_in crate);
+                export!(SerperWebSearchProvider with_types_in $crate);
             }
         };
     };
-} 
+}

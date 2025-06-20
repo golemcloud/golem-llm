@@ -1,5 +1,5 @@
-use crate::golem::web_search::types::SearchResult;
 use crate::client::SerperSearchItem;
+use crate::golem::web_search::types::SearchResult;
 
 pub fn convert_serper_result(item: SerperSearchItem) -> SearchResult {
     SearchResult {
@@ -14,4 +14,4 @@ pub fn convert_serper_result(item: SerperSearchItem) -> SearchResult {
         images: None,
         content_chunks: None,
     }
-} 
+}

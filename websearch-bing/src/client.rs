@@ -1,5 +1,7 @@
 use crate::exports::golem::web_search::web_search::GuestSearchSession;
-use crate::golem::web_search::types::{SearchError, SearchMetadata, SearchParams, SearchResult, SafeSearchLevel, TimeRange};
+use crate::golem::web_search::types::{
+    SafeSearchLevel, SearchError, SearchMetadata, SearchParams, SearchResult, TimeRange,
+};
 use anyhow::Result;
 use reqwest::Client;
 use serde::Deserialize;
@@ -44,7 +46,9 @@ impl BingWebSearchClient {
         }
     }
 
-    pub fn search_once(params: SearchParams) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
+    pub fn search_once(
+        params: SearchParams,
+    ) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
         let client = Self::new(params.clone());
         let results = client.next_page_durable()?;
         let metadata = client.get_metadata_durable();
@@ -113,7 +117,11 @@ impl BingWebSearchClient {
 
         if let Some(exclude_domains) = &self.params.exclude_domains {
             if !exclude_domains.is_empty() {
-                let exclude_sites = exclude_domains.iter().map(|d| format!("-site:{}", d)).collect::<Vec<_>>().join(" ");
+                let exclude_sites = exclude_domains
+                    .iter()
+                    .map(|d| format!("-site:{}", d))
+                    .collect::<Vec<_>>()
+                    .join(" ");
                 let new_query = format!("{} {}", self.params.query, exclude_sites);
                 query_params.insert("q".to_string(), new_query);
             }
@@ -129,8 +137,9 @@ impl BingWebSearchClient {
 
     async fn perform_search(&self) -> Result<BingSearchResponse, SearchError> {
         let url = self.build_search_url()?;
-        
-        let response = self.client
+
+        let response = self
+            .client
             .get(url)
             .header("Ocp-Apim-Subscription-Key", &self.api_key)
             .send()
@@ -139,8 +148,14 @@ impl BingWebSearchClient {
 
         if !response.status().is_success() {
             let status = response.status();
-            let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(SearchError::BackendError(format!("HTTP {}: {}", status, error_text)));
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            return Err(SearchError::BackendError(format!(
+                "HTTP {}: {}",
+                status, error_text
+            )));
         }
 
         let search_response: BingSearchResponse = response
@@ -170,7 +185,8 @@ impl GuestSearchSession for BingWebSearchClient {
                 state.total_results = Some(web_pages.total_estimated_matches);
                 state.current_offset += web_pages.value.len() as u32;
             }
-            let results = response.web_pages
+            let results = response
+                .web_pages
                 .map(|wp| wp.value)
                 .unwrap_or_default()
                 .into_iter()
@@ -186,11 +202,11 @@ impl GuestSearchSession for BingWebSearchClient {
             query: self.params.query.clone(),
             total_results: state.total_results,
             search_time_ms: state.search_time_ms,
-            safe_search: self.params.safe_search.clone(),
+            safe_search: self.params.safe_search,
             language: self.params.language.clone(),
             region: self.params.region.clone(),
             next_page_token: None, // Bing doesn't provide explicit page tokens
-            rate_limits: None, // Rate limit info not available from Bing API response
+            rate_limits: None,     // Rate limit info not available from Bing API response
         })
     }
 }
@@ -252,4 +268,4 @@ pub struct BingImage {
 pub struct BingApiError {
     pub code: String,
     pub message: String,
-} 
+}

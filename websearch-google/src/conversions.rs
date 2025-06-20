@@ -1,5 +1,5 @@
-use crate::golem::web_search::types::{ImageResult, SearchResult};
 use crate::client::GoogleSearchItem;
+use crate::golem::web_search::types::{ImageResult, SearchResult};
 
 pub fn convert_google_result(item: GoogleSearchItem) -> SearchResult {
     let mut images = None;
@@ -39,4 +39,4 @@ pub fn convert_google_result(item: GoogleSearchItem) -> SearchResult {
         images,
         content_chunks: None,
     }
-} 
+}

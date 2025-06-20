@@ -11,7 +11,7 @@ wit_bindgen::generate!({
 macro_rules! export_web_search {
     ($provider:ty) => {
         const _: () => {
-            use crate::exports::golem::web_search::web_search::{Guest as WitGuest};
+            use $crate::exports::golem::web_search::web_search::{Guest as WitGuest};
 
             /// The service provider for the Golem Web Search API
             pub struct GolemWebSearchProvider;
@@ -20,8 +20,8 @@ macro_rules! export_web_search {
                 type SearchSession = <$provider as WitGuest>::SearchSession;
 
                 fn search_once(
-                    params: crate::golem::web_search::types::SearchParams,
-                ) -> Result<(Vec<crate::golem::web_search::types::SearchResult>, Option<crate::golem::web_search::types::SearchMetadata>), crate::golem::web_search::types::SearchError> {
+                    params: $crate::golem::web_search::types::SearchParams,
+                ) -> Result<(Vec<$crate::golem::web_search::types::SearchResult>, Option<$crate::golem::web_search::types::SearchMetadata>), $crate::golem::web_search::types::SearchError> {
                     <$provider as WitGuest>::search_once(params)
                 }
             }
@@ -32,4 +32,4 @@ macro_rules! export_web_search {
             }
         };
     };
-} 
+}

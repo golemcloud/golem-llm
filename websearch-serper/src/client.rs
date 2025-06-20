@@ -39,7 +39,9 @@ impl SerperWebSearchClient {
         }
     }
 
-    pub fn search_once(params: SearchParams) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
+    pub fn search_once(
+        params: SearchParams,
+    ) -> Result<(Vec<SearchResult>, Option<SearchMetadata>), SearchError> {
         let client = Self::new(params.clone());
         let results = client.next_page_durable()?;
         let metadata = client.get_metadata_durable();
@@ -54,7 +56,8 @@ impl SerperWebSearchClient {
 
     async fn perform_search(&self) -> Result<SerperSearchResponse, SearchError> {
         let body = self.build_search_body();
-        let response = self.client
+        let response = self
+            .client
             .post(SERPER_SEARCH_API_URL)
             .header("X-API-KEY", &self.api_key)
             .header("Content-Type", "application/json")
@@ -64,8 +67,14 @@ impl SerperWebSearchClient {
             .map_err(|e| SearchError::BackendError(format!("Request failed: {}", e)))?;
         if !response.status().is_success() {
             let status = response.status();
-            let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(SearchError::BackendError(format!("HTTP {}: {}", status, error_text)));
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            return Err(SearchError::BackendError(format!(
+                "HTTP {}: {}",
+                status, error_text
+            )));
         }
         let search_response: SerperSearchResponse = response
             .json()
@@ -89,7 +98,8 @@ impl GuestSearchSession for SerperWebSearchClient {
             let mut state = self.state.lock().unwrap();
             state.total_results = Some(response.organic.len() as u64);
             // No search_time_ms in Serper response
-            let results = response.organic
+            let results = response
+                .organic
                 .into_iter()
                 .map(super::conversions::convert_serper_result)
                 .collect();
@@ -102,7 +112,7 @@ impl GuestSearchSession for SerperWebSearchClient {
             query: self.params.query.clone(),
             total_results: state.total_results,
             search_time_ms: state.search_time_ms,
-            safe_search: self.params.safe_search.clone(),
+            safe_search: self.params.safe_search,
             language: self.params.language.clone(),
             region: self.params.region.clone(),
             next_page_token: None,
@@ -144,4 +154,4 @@ pub struct SerperSearchItem {
     pub title: String,
     pub link: String,
     pub snippet: String,
-} 
+}
