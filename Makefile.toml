@@ -343,7 +343,6 @@ install_crate = "cargo-binstall"
 script = '''
 cargo-binstall golem-cli@1.2.2-dev.11 --locked --force --no-confirm
 cargo-binstall wac-cli --locked --force --no-confirm
-cargo-binstall cargo-component@0.20.0 --locked --force --no-confirm
 # Ensure websearch-google component is built first
 cargo-component build -p web-search-google
 cd test
