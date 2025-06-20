@@ -62,6 +62,16 @@ install_crate = { crate_name = "cargo-component", version = "0.20.0" }
 command = "cargo-component"
 args = ["build", "-p", "golem-llm-openrouter", "--no-default-features"]
 
+[tasks.build-websearch-google]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "web-search-google"]
+
+[tasks.build-websearch-google-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "web-search-google", "--no-default-features"]
+
 [tasks.build]
 dependencies = [
     "build-anthropic",
@@ -69,6 +79,7 @@ dependencies = [
     "build-openai",
     "build-openrouter",
     "build-ollama",
+    "build-websearch-google",
 ]
 
 [tasks.build-portable]
@@ -78,6 +89,7 @@ dependencies = [
     "build-openai-portable",
     "build-openrouter-portable",
     "build-ollama-portable",
+    "build-websearch-google-portable",
 ]
 
 [tasks.build-all]
@@ -93,6 +105,7 @@ cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_gro
 cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter.wasm
 cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/debug/golem_llm_ollama.wasm
+cp target/wasm32-wasip1/debug/web_search_google.wasm components/debug/web_search_google.wasm
 
 cm_run_task clean
 cm_run_task build-portable
@@ -102,6 +115,7 @@ cp target/wasm32-wasip1/debug/golem_llm_grok.wasm components/debug/golem_llm_gro
 cp target/wasm32-wasip1/debug/golem_llm_openai.wasm components/debug/golem_llm_openai-portable.wasm
 cp target/wasm32-wasip1/debug/golem_llm_openrouter.wasm components/debug/golem_llm_openrouter-portable.wasm
 cp target/wasm32-wasip1/debug/golem_llm_ollama.wasm components/debug/golem_llm_ollama-portable.wasm
+cp target/wasm32-wasip1/debug/web_search_google.wasm components/debug/web_search_google-portable.wasm
 '''
 
 [tasks.release-build-ollama]
@@ -167,6 +181,16 @@ args = [
     "--no-default-features",
 ]
 
+[tasks.release-build-websearch-google]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "web-search-google", "--release"]
+
+[tasks.release-build-websearch-google-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "web-search-google", "--release", "--no-default-features"]
+
 [tasks.release-build]
 dependencies = [
     "release-build-anthropic",
@@ -174,6 +198,7 @@ dependencies = [
     "release-build-openai",
     "release-build-openrouter",
     "release-build-ollama",
+    "release-build-websearch-google",
 ]
 
 [tasks.release-build-portable]
@@ -183,6 +208,7 @@ dependencies = [
     "release-build-openai-portable",
     "release-build-openrouter-portable",
     "release-build-ollama-portable",
+    "release-build-websearch-google-portable",
 ]
 
 [tasks.release-build-all]
@@ -200,6 +226,7 @@ cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm
 cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai.wasm
 cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter.wasm
 cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/release/golem_llm_ollama.wasm
+cp target/wasm32-wasip1/release/web_search_google.wasm components/release/web_search_google.wasm
 
 cm_run_task clean
 cm_run_task release-build-portable
@@ -209,6 +236,7 @@ cp target/wasm32-wasip1/release/golem_llm_grok.wasm components/release/golem_llm
 cp target/wasm32-wasip1/release/golem_llm_openai.wasm components/release/golem_llm_openai-portable.wasm
 cp target/wasm32-wasip1/release/golem_llm_openrouter.wasm components/release/golem_llm_openrouter-portable.wasm
 cp target/wasm32-wasip1/release/golem_llm_ollama.wasm components/release/golem_llm_ollama-portable.wasm
+cp target/wasm32-wasip1/release/web_search_google.wasm components/release/web_search_google-portable.wasm
 '''
 
 [tasks.wit-update]
