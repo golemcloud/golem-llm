@@ -144,6 +144,21 @@ args = [
     "-Dwarnings",
 ]
 
+
+[tasks.build-test-components]
+dependencies = ["build"]
+description = "Builds all test components with golem-cli"
+install_crate = "cargo-binstall"
+script = '''
+cargo-binstall golem-cli@1.2.2-dev.11 --locked --force --no-confirm
+cargo-binstall wac-cli --locked --force --no-confirm
+cd test
+golem-cli --version
+golem-cli app clean
+golem-cli app build -b google-debug
+'''
+
+
 [tasks.set-version]
 description = "Sets the version in all Cargo.toml files to the value of the VERSION environment variable"
 condition = { env_set = ["VERSION"] }

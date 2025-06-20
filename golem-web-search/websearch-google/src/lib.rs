@@ -115,3 +115,6 @@ impl Guest for GoogleWebSearchComponent {
         )
     }
 }
+
+
+golem_web_search::export_web_search!(GoogleWebSearchComponent with_types_in golem_web_search);

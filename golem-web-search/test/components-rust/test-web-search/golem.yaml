@@ -18,7 +18,7 @@ components:
               - ../../common-rust
             targets:
               - ../../target/wasm32-wasip1/debug/test_web_search.wasm
-          - command: wac plug --plug ../../../../target/wasm32-wasip1/debug/golem_websearch_openai.wasm ../../target/wasm32-wasip1/debug/test_web_search.wasm -o ../../target/wasm32-wasip1/debug/test_google_plugged.wasm
+          - command: wac plug --plug ../../../../target/wasm32-wasip1/debug/golem_websearch_google.wasm ../../target/wasm32-wasip1/debug/test_web_search.wasm -o ../../target/wasm32-wasip1/debug/test_google_plugged.wasm
             sources:
               - ../../target/wasm32-wasip1/debug/test_web_search.wasm
               - ../../../../target/wasm32-wasip1/debug/test_web_search.wasm
@@ -58,6 +58,6 @@ components:
     defaultProfile: google-debug
 
 dependencies:
-  test:llm:
+  test:web-search:
     - target: test:helper
       type: wasm-rpc
