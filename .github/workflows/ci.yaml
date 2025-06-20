@@ -82,8 +82,10 @@ jobs:
           target: wasm32-wasip1
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
-      - name: Install cargo-component
-        run: cargo binstall --force --locked cargo-component@0.20.0
+      - name: Install tools
+        run: |
+          cargo binstall --force --locked cargo-component@0.20.0
+          cargo binstall --force --locked wit-deps-cli
       - name: Build all test components
         run: cargo make build-test-components
   ollama-integration-tests:
