@@ -52,4 +52,6 @@ components:
         componentWasm: ../../target/wasm32-wasip1/release/test_google_plugged.wasm
         linkedWasm: ../../golem-temp/components/test_google_release.wasm
         clean:
-          - src/bindings.rs 
+          - src/bindings.rs
+
+    defaultProfile: google-debug
