@@ -16,8 +16,8 @@ pub mod conversions;
 pub use crate::exports::golem::web_search::web_search;
 pub use crate::golem::web_search::types;
 
-use crate::exports::golem::web_search::web_search::{Guest, GuestSearchSession, SearchSession};
 use crate::client::GoogleWebSearchClient;
+use crate::exports::golem::web_search::web_search::{Guest, SearchSession};
 
 /// The Google web search provider for the Golem Web Search API
 pub struct GoogleWebSearchProvider;
@@ -27,7 +27,13 @@ impl Guest for GoogleWebSearchProvider {
 
     fn search_once(
         params: crate::golem::web_search::types::SearchParams,
-    ) -> Result<(Vec<crate::golem::web_search::types::SearchResult>, Option<crate::golem::web_search::types::SearchMetadata>), crate::golem::web_search::types::SearchError> {
+    ) -> Result<
+        (
+            Vec<crate::golem::web_search::types::SearchResult>,
+            Option<crate::golem::web_search::types::SearchMetadata>,
+        ),
+        crate::golem::web_search::types::SearchError,
+    > {
         GoogleWebSearchClient::search_once(params)
     }
 
