@@ -113,6 +113,7 @@ jobs:
           cargo binstall --force --locked cargo-component@0.20.0
           cargo binstall golem-cli@1.2.3 --locked --force --no-confirm
           cargo binstall wac-cli --locked --force --no-confirm
+          cargo binstall wit-deps-cli --locked --force --no-confirm
       - name: Start Ollama in Docker
         run: |
           set -e
@@ -142,6 +143,8 @@ jobs:
           set -e
           # Clean any cached builds to avoid WASI version conflicts
           cargo clean
+          # Synchronize WIT dependencies to ensure consistent WASI interface versions
+          cargo make wit
           # Build websearch-google component first (required dependency)
           cargo make build-websearch-google
           # Build ollama component

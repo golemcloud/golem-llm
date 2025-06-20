@@ -10,7 +10,7 @@ templates:
     profiles:
       debug:
         build:
-        - command: cargo component build
+        - command: cargo-component build
           sources:
           - src
           - wit-generated
@@ -25,7 +25,7 @@ templates:
         - src/bindings.rs
       release:
         build:
-        - command: cargo component build --release
+        - command: cargo-component build --release
           sources:
           - src
           - wit-generated

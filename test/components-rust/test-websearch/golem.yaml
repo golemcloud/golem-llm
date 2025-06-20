@@ -11,7 +11,7 @@ components:
       # DEBUG PROFILES
       google-debug:
         build:
-          - command: cargo component build --no-default-features --features google
+          - command: cargo-component build --no-default-features --features google
             sources:
               - src
               - wit-generated
@@ -34,7 +34,7 @@ components:
       # RELEASE PROFILES
       google-release:
         build:
-          - command: cargo component build --release --no-default-features --features google
+          - command: cargo-component build --release --no-default-features --features google
             sources:
               - src
               - wit-generated
