@@ -275,7 +275,7 @@ mod _rt {
     extern crate alloc as alloc_crate;
 }
 #[cfg(target_arch = "wasm32")]
-#[link_section = "component-type:wit-bindgen:0.36.0:golem:web-search-google@1.0.0:web-search-library:encoded world"]
+#[link_section = "component-type:wit-bindgen:0.36.0:golem:web-search-serper@1.0.0:web-search-library:encoded world"]
 #[doc(hidden)]
 pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1422] = *b"\
 \0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x85\x0a\x01A\x02\x01\
@@ -305,7 +305,7 @@ k\x05\x01@\x01\x04self\x0b\0\x0f\x04\0#[method]search-session.get-metadata\x01\x
 \x01j\x01\x09\x01\x07\x01@\x01\x06params\x01\0\x11\x04\0\x0cstart-search\x01\x12\
 \x01o\x02\x0c\x0f\x01j\x01\x13\x01\x07\x01@\x01\x06params\x01\0\x14\x04\0\x0bsea\
 rch-once\x01\x15\x04\0!golem:web-search/web-search@1.0.0\x05\x05\x04\00golem:web\
--search-google/web-search-library@1.0.0\x04\0\x0b\x18\x01\0\x12web-search-librar\
+-search-serper/web-search-library@1.0.0\x04\0\x0b\x18\x01\0\x12web-search-librar\
 y\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.220.1\x10\
 wit-bindgen-rust\x060.36.0";
 #[inline(never)]

@@ -275,10 +275,10 @@ mod _rt {
     extern crate alloc as alloc_crate;
 }
 #[cfg(target_arch = "wasm32")]
-#[link_section = "component-type:wit-bindgen:0.36.0:golem:web-search-google@1.0.0:web-search-library:encoded world"]
+#[link_section = "component-type:wit-bindgen:0.36.0:golem:web-search-brave@1.0.0:web-search-library:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1422] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x85\x0a\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1421] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x84\x0a\x01A\x02\x01\
 A\x08\x01B\x1c\x01ks\x01r\x02\x03urls\x0bdescription\0\x04\0\x0cimage-result\x03\
 \0\x01\x01ku\x01p\x02\x01k\x04\x01ps\x01k\x06\x01r\x0a\x05titles\x03urls\x07snip\
 pets\x0bdisplay-url\0\x06source\0\x05score\x03\x0chtml-snippet\0\x0edate-publish\
@@ -304,9 +304,9 @@ s\x03\0\0\x02\x03\x02\x01\x02\x04\0\x0dsearch-result\x03\0\x02\x02\x03\x02\x01\x
 k\x05\x01@\x01\x04self\x0b\0\x0f\x04\0#[method]search-session.get-metadata\x01\x10\
 \x01j\x01\x09\x01\x07\x01@\x01\x06params\x01\0\x11\x04\0\x0cstart-search\x01\x12\
 \x01o\x02\x0c\x0f\x01j\x01\x13\x01\x07\x01@\x01\x06params\x01\0\x14\x04\0\x0bsea\
-rch-once\x01\x15\x04\0!golem:web-search/web-search@1.0.0\x05\x05\x04\00golem:web\
--search-google/web-search-library@1.0.0\x04\0\x0b\x18\x01\0\x12web-search-librar\
-y\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.220.1\x10\
+rch-once\x01\x15\x04\0!golem:web-search/web-search@1.0.0\x05\x05\x04\0/golem:web\
+-search-brave/web-search-library@1.0.0\x04\0\x0b\x18\x01\0\x12web-search-library\
+\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.220.1\x10\
 wit-bindgen-rust\x060.36.0";
 #[inline(never)]
 #[doc(hidden)]

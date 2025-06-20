@@ -1,0 +1,4 @@
+["golem:web-search"]
+path = "../../wit/golem-web-search"
+sha256 = "d7d8e4cc2b81ad878f8f157dabd26cc547c47d5540593766b55f421e54b5d713"
+sha512 = "dc23050706f13b364b81e64282bc34cc66ebdebb4329f9208eb763f5df1f196aa1d5637e0ce48a80a01f33a9d3e7226629cb16750c27923b2c05cd1f852faf7f"

@@ -1,13 +1,5 @@
 package golem:web-search-brave@1.0.0;
 
-interface types {
-  use golem:web-search@1.0.0/types.{search-params, search-result, search-metadata, search-error};
-}
-
-interface web-search {
-  use golem:web-search@1.0.0/web-search;
-}
-
-world web-search-brave-library {
-    export web-search;
+world web-search-library {
+    include golem:web-search/web-search-library@1.0.0;
 } 

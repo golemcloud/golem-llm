@@ -1,5 +1,5 @@
 use crate::exports::golem::web_search::web_search::GuestSearchSession;
-use crate::golem::web_search::types::{SearchError, SearchMetadata, SearchParams, SearchResult, SafeSearchLevel, TimeRange};
+use crate::golem::web_search::types::{SearchError, SearchMetadata, SearchParams, SearchResult, SafeSearchLevel};
 use anyhow::Result;
 use reqwest::Client;
 use serde::Deserialize;

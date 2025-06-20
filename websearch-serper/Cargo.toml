@@ -19,4 +19,19 @@ crate-type = ["cdylib"]
 
 [features]
 default = []
-durability = ["golem-rust/durability"] 
+durability = ["golem-rust/durability"]
+
+[package.metadata.component]
+package = "golem:web-search-serper"
+
+[package.metadata.component.bindings]
+generate_unused_types = true
+
+[package.metadata.component.bindings.with]
+"golem:web-search/web-search@1.0.0" = "golem_web_search::golem::web_search::web_search"
+
+[package.metadata.component.target]
+path = "wit"
+
+[package.metadata.component.target.dependencies]
+"golem:web-search" = { path = "wit/deps/golem-web-search" } 

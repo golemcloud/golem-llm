@@ -189,6 +189,8 @@ impl GuestSearchSession for BingWebSearchClient {
             safe_search: self.params.safe_search.clone(),
             language: self.params.language.clone(),
             region: self.params.region.clone(),
+            next_page_token: None, // Bing doesn't provide explicit page tokens
+            rate_limits: None, // Rate limit info not available from Bing API response
         })
     }
 }
