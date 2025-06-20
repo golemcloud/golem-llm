@@ -54,10 +54,11 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: wasm32-wasip1
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install cargo-component
-        run: cargo binstall --force --locked cargo-component@0.21.1
+        run: cargo binstall --force --locked cargo-component@0.20.0
       - name: Build all
         run: cargo make build-all
   build-test-components:
@@ -78,10 +79,11 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: wasm32-wasip1
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install cargo-component
-        run: cargo binstall --force --locked cargo-component@0.21.1
+        run: cargo binstall --force --locked cargo-component@0.20.0
       - name: Build all test components
         run: cargo make build-test-components
   ollama-integration-tests:
@@ -138,6 +140,8 @@ jobs:
       - name: Build and test Ollama integration
         run: |
           set -e
+          # Clean any cached builds to avoid WASI version conflicts
+          cargo clean
           # Build websearch-google component first (required dependency)
           cargo make build-websearch-google
           # Build ollama component
@@ -178,10 +182,11 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: wasm32-wasip1
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install cargo-component
-        run: cargo binstall --force --locked cargo-component@0.21.1
+        run: cargo binstall --force --locked cargo-component@0.20.0
       - name: Build all components in release
         run: cargo make release-build-all
       - name: Login GH CLI
