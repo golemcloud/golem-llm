@@ -258,43 +258,43 @@ dependencies = ["wit-update"]
 #    "llm-openrouter/wit/deps/golem-llm/golem-llm.wit",
 #] } }
 
-script_runner = "@duckscript"
-script = """
-rm -r llm/wit/deps
-mkdir llm/wit/deps/golem-llm
-cp wit/golem-llm.wit llm/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm/wit/deps
-rm -r llm-anthropic/wit/deps
-mkdir llm-anthropic/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-anthropic/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-anthropic/wit/deps
-rm -r llm-grok/wit/deps
-mkdir llm-grok/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-grok/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-grok/wit/deps
-rm -r llm-openai/wit/deps
-mkdir llm-openai/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-openai/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-openai/wit/deps
-rm -r llm-openrouter/wit/deps
-mkdir llm-openrouter/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-openrouter/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-openrouter/wit/deps
-rm -r llm-ollama/wit/deps
-mkdir llm-ollama/wit/deps/golem-llm
-cp wit/golem-llm.wit llm-ollama/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io llm-ollama/wit/deps
+script = '''
+rm -rf llm/wit/deps
+mkdir -p llm/wit/deps/golem-llm
+cp wit/golem-llm/golem-llm.wit llm/wit/deps/golem-llm/golem-llm.wit
+cp -r "wit/deps/wasi:io" llm/wit/deps/
+rm -rf llm-anthropic/wit/deps
+mkdir -p llm-anthropic/wit/deps/golem-llm
+cp wit/golem-llm/golem-llm.wit llm-anthropic/wit/deps/golem-llm/golem-llm.wit
+cp -r "wit/deps/wasi:io" llm-anthropic/wit/deps/
+rm -rf llm-grok/wit/deps
+mkdir -p llm-grok/wit/deps/golem-llm
+cp wit/golem-llm/golem-llm.wit llm-grok/wit/deps/golem-llm/golem-llm.wit
+cp -r "wit/deps/wasi:io" llm-grok/wit/deps/
+rm -rf llm-openai/wit/deps
+mkdir -p llm-openai/wit/deps/golem-llm
+cp wit/golem-llm/golem-llm.wit llm-openai/wit/deps/golem-llm/golem-llm.wit
+cp -r "wit/deps/wasi:io" llm-openai/wit/deps/
+rm -rf llm-openrouter/wit/deps
+mkdir -p llm-openrouter/wit/deps/golem-llm
+cp wit/golem-llm/golem-llm.wit llm-openrouter/wit/deps/golem-llm/golem-llm.wit
+cp -r "wit/deps/wasi:io" llm-openrouter/wit/deps/
+rm -rf llm-ollama/wit/deps
+mkdir -p llm-ollama/wit/deps/golem-llm
+cp wit/golem-llm/golem-llm.wit llm-ollama/wit/deps/golem-llm/golem-llm.wit
+cp -r "wit/deps/wasi:io" llm-ollama/wit/deps/
 
-
-rm -r test/wit
-mkdir test/wit/deps/golem-llm
-mkdir test/wit/deps/io
-cp wit/golem-llm.wit test/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io/error.wit test/wit/deps/io/error.wit
-cp wit/deps/wasi:io/poll.wit test/wit/deps/io/poll.wit
-cp wit/deps/wasi:io/streams.wit test/wit/deps/io/streams.wit
-cp wit/deps/wasi:io/world.wit test/wit/deps/io/world.wit
-"""
+rm -rf test/wit
+mkdir -p test/wit/deps/golem-llm
+mkdir -p test/wit/deps/golem-web-search
+mkdir -p test/wit/deps/io
+cp wit/golem-llm/golem-llm.wit test/wit/deps/golem-llm/golem-llm.wit
+cp wit/golem-web-search/golem-web-search.wit test/wit/deps/golem-web-search/golem-web-search.wit
+cp "wit/deps/wasi:io/error.wit" test/wit/deps/io/error.wit
+cp "wit/deps/wasi:io/poll.wit" test/wit/deps/io/poll.wit
+cp "wit/deps/wasi:io/streams.wit" test/wit/deps/io/streams.wit
+cp "wit/deps/wasi:io/world.wit" test/wit/deps/io/world.wit
+'''
 
 [tasks.check]
 description = "Runs rustfmt and clippy checks without applying any fix"
@@ -343,7 +343,7 @@ install_crate = "cargo-binstall"
 script = '''
 cargo-binstall golem-cli@1.2.3 --locked --force --no-confirm
 cargo-binstall wac-cli --locked --force --no-confirm
-cargo-binstall cargo-component@0.20.0 --locked --force --no-confirm
+# Skip cargo-component install as it's already available via earlier build task
 # Ensure websearch-google component is built first
 cargo-component build -p web-search-google
 cd test
