@@ -54,6 +54,7 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: wasm32-wasip1
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install cargo-component
@@ -78,10 +79,13 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: wasm32-wasip1
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
-      - name: Install cargo-component
-        run: cargo binstall --force --locked cargo-component@0.21.1
+      - name: Install tools
+        run: |
+          cargo binstall --force --locked cargo-component@0.21.1
+          cargo binstall --force --locked wit-deps-cli
       - name: Build all test components
         run: cargo make build-test-components
   ollama-integration-tests:
@@ -102,6 +106,7 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: wasm32-wasip1
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install tools
@@ -110,6 +115,7 @@ jobs:
           cargo binstall --force --locked cargo-component@0.21.1
           cargo binstall golem-cli@1.2.3 --locked --force --no-confirm
           cargo binstall wac-cli --locked --force --no-confirm
+          cargo binstall wit-deps-cli --locked --force --no-confirm
       - name: Start Ollama in Docker
         run: |
           set -e
@@ -137,6 +143,13 @@ jobs:
       - name: Build and test Ollama integration
         run: |
           set -e
+          # Clean any cached builds to avoid WASI version conflicts
+          cargo clean
+          # Synchronize WIT dependencies to ensure consistent WASI interface versions
+          cargo make wit
+          # Build websearch-google component first (required dependency)
+          cargo make build-websearch-google
+          # Build ollama component
           cargo make build-ollama
           cd test
           golem-cli app build -b ollama-debug
@@ -174,6 +187,7 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: wasm32-wasip1
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install cargo-component

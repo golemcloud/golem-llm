@@ -15,7 +15,7 @@ components:
             targetPath: /data/cat.png
             permissions: read-only
         build:
-          - command: cargo component build --no-default-features --features openai
+          - command: cargo-component build --no-default-features --features openai
             sources:
               - src
               - wit-generated
@@ -41,7 +41,7 @@ components:
             targetPath: /data/cat.png
             permissions: read-only
         build:
-          - command: cargo component build --no-default-features --features anthropic
+          - command: cargo-component build --no-default-features --features anthropic
             sources:
               - src
               - wit-generated
@@ -67,7 +67,7 @@ components:
             targetPath: /data/cat.png
             permissions: read-only
         build:
-          - command: cargo component build --no-default-features --features grok
+          - command: cargo-component build --no-default-features --features grok
             sources:
               - src
               - wit-generated
@@ -93,7 +93,7 @@ components:
             targetPath: /data/cat.png
             permissions: read-only
         build:
-          - command: cargo component build --no-default-features --features openrouter
+          - command: cargo-component build --no-default-features --features openrouter
             sources:
               - src
               - wit-generated
@@ -119,7 +119,7 @@ components:
           targetPath: /data/cat.png
           permissions: read-only
         build:
-          - command: cargo component build --no-default-features --features ollama
+          - command: cargo-component build --no-default-features --features ollama
             sources:
               - src
               - wit-generated
@@ -146,7 +146,7 @@ components:
             targetPath: /data/cat.png
             permissions: read-only
         build:
-          - command: cargo component build --release --no-default-features --features openai
+          - command: cargo-component build --release --no-default-features --features openai
             sources:
               - src
               - wit-generated
@@ -172,7 +172,7 @@ components:
             targetPath: /data/cat.png
             permissions: read-only
         build:
-          - command: cargo component build --release --no-default-features --features anthropic
+          - command: cargo-component build --release --no-default-features --features anthropic
             sources:
               - src
               - wit-generated
@@ -198,7 +198,7 @@ components:
             targetPath: /data/cat.png
             permissions: read-only
         build:
-          - command: cargo component build --release --no-default-features --features grok
+          - command: cargo-component build --release --no-default-features --features grok
             sources:
               - src
               - wit-generated
@@ -224,7 +224,7 @@ components:
             targetPath: /data/cat.png
             permissions: read-only
         build:
-          - command: cargo component build --release --no-default-features --features openrouter
+          - command: cargo-component build --release --no-default-features --features openrouter
             sources:
               - src
               - wit-generated
@@ -250,7 +250,7 @@ components:
           targetPath: /data/cat.png
           permissions: read-only
         build:
-          - command: cargo component build --release --no-default-features --features ollama
+          - command: cargo-component build --release --no-default-features --features ollama
             sources:
               - src
               - wit-generated
