@@ -1,34 +1,38 @@
 #[allow(static_mut_refs)]
 mod bindings;
 
-use golem_rust::atomically;
 use crate::bindings::exports::test::llm_exports::test_llm_api::*;
 use crate::bindings::golem::llm::llm;
 use crate::bindings::golem::llm::llm::StreamEvent;
 use crate::bindings::test::helper_client::test_helper_client::TestHelperApi;
+use golem_rust::atomically;
 
 struct Component;
 
 #[cfg(feature = "openai")]
 const MODEL: &'static str = "gpt-3.5-turbo";
+#[cfg(feature = "bedrock")]
+const MODEL: &'static str = "anthropic.claude-3-5-sonnet-20240620-v1:0";
 #[cfg(feature = "anthropic")]
 const MODEL: &'static str = "claude-3-7-sonnet-20250219";
 #[cfg(feature = "grok")]
 const MODEL: &'static str = "grok-3-beta";
 #[cfg(feature = "openrouter")]
 const MODEL: &'static str = "openrouter/auto";
-#[cfg(feature = "ollama")]  
+#[cfg(feature = "ollama")]
 const MODEL: &'static str = "qwen3:1.7b";
 
 #[cfg(feature = "openai")]
 const IMAGE_MODEL: &'static str = "gpt-4o-mini";
+#[cfg(feature = "bedrock")]
+const IMAGE_MODEL: &'static str = "anthropic.claude-3-5-sonnet-20240620-v1:0";
 #[cfg(feature = "anthropic")]
 const IMAGE_MODEL: &'static str = "claude-3-7-sonnet-20250219";
 #[cfg(feature = "grok")]
 const IMAGE_MODEL: &'static str = "grok-2-vision-latest";
 #[cfg(feature = "openrouter")]
 const IMAGE_MODEL: &'static str = "openrouter/auto";
-#[cfg(feature = "ollama")]  
+#[cfg(feature = "ollama")]
 const IMAGE_MODEL: &'static str = "gemma3:4b";
 
 impl Guest for Component {
@@ -67,9 +71,14 @@ impl Guest for Component {
                         .map(|content| match content {
                             llm::ContentPart::Text(txt) => txt,
                             llm::ContentPart::Image(image_ref) => match image_ref {
-                                llm::ImageReference::Url(url_data) => format!("[IMAGE URL: {}]", url_data.url),
-                                llm::ImageReference::Inline(inline_data) => format!("[INLINE IMAGE: {} bytes, mime: {}]", inline_data.data.len(), inline_data.mime_type),
-                            }
+                                llm::ImageReference::Url(url_data) =>
+                                    format!("[IMAGE URL: {}]", url_data.url),
+                                llm::ImageReference::Inline(inline_data) => format!(
+                                    "[INLINE IMAGE: {} bytes, mime: {}]",
+                                    inline_data.data.len(),
+                                    inline_data.mime_type
+                                ),
+                            },
                         })
                         .collect::<Vec<_>>()
                         .join(", ")
@@ -154,7 +163,7 @@ impl Guest for Component {
                 vec![]
             }
         };
-        
+
         if !tool_request.is_empty() {
             let mut calls = Vec::new();
             for call in tool_request {
@@ -385,9 +394,14 @@ impl Guest for Component {
                         .map(|content| match content {
                             llm::ContentPart::Text(txt) => txt,
                             llm::ContentPart::Image(image_ref) => match image_ref {
-                                llm::ImageReference::Url(url_data) => format!("[IMAGE URL: {}]", url_data.url),
-                                llm::ImageReference::Inline(inline_data) => format!("[INLINE IMAGE: {} bytes, mime: {}]", inline_data.data.len(), inline_data.mime_type),
-                            }
+                                llm::ImageReference::Url(url_data) =>
+                                    format!("[IMAGE URL: {}]", url_data.url),
+                                llm::ImageReference::Inline(inline_data) => format!(
+                                    "[INLINE IMAGE: {} bytes, mime: {}]",
+                                    inline_data.data.len(),
+                                    inline_data.mime_type
+                                ),
+                            },
                         })
                         .collect::<Vec<_>>()
                         .join(", ")
@@ -407,7 +421,7 @@ impl Guest for Component {
         }
     }
 
-    /// test6 simulates a crash during a streaming LLM response, but only first time. 
+    /// test6 simulates a crash during a streaming LLM response, but only first time.
     /// after the automatic recovery it will continue and finish the request successfully.
     fn test6() -> String {
         let config = llm::Config {
@@ -456,12 +470,20 @@ impl Guest for Component {
                                 }
                                 llm::ContentPart::Image(image_ref) => match image_ref {
                                     llm::ImageReference::Url(url_data) => {
-                                        result.push_str(&format!("IMAGE URL: {} ({:?})\n", url_data.url, url_data.detail));
+                                        result.push_str(&format!(
+                                            "IMAGE URL: {} ({:?})\n",
+                                            url_data.url, url_data.detail
+                                        ));
                                     }
                                     llm::ImageReference::Inline(inline_data) => {
-                                        result.push_str(&format!("INLINE IMAGE: {} bytes, mime: {}, detail: {:?}\n", inline_data.data.len(), inline_data.mime_type, inline_data.detail));
+                                        result.push_str(&format!(
+                                            "INLINE IMAGE: {} bytes, mime: {}, detail: {:?}\n",
+                                            inline_data.data.len(),
+                                            inline_data.mime_type,
+                                            inline_data.detail
+                                        ));
                                     }
-                                }
+                                },
                             }
                         }
                     }
@@ -528,7 +550,10 @@ impl Guest for Component {
                 role: llm::Role::User,
                 name: None,
                 content: vec![
-                    llm::ContentPart::Text("Please describe this cat image in detail. What breed might it be?".to_string()),
+                    llm::ContentPart::Text(
+                        "Please describe this cat image in detail. What breed might it be?"
+                            .to_string(),
+                    ),
                     llm::ContentPart::Image(llm::ImageReference::Inline(llm::ImageSource {
                         data: buffer,
                         mime_type: "image/png".to_string(),
@@ -549,9 +574,14 @@ impl Guest for Component {
                         .map(|content| match content {
                             llm::ContentPart::Text(txt) => txt,
                             llm::ContentPart::Image(image_ref) => match image_ref {
-                                llm::ImageReference::Url(url_data) => format!("[IMAGE URL: {}]", url_data.url),
-                                llm::ImageReference::Inline(inline_data) => format!("[INLINE IMAGE: {} bytes, mime: {}]", inline_data.data.len(), inline_data.mime_type),
-                            }
+                                llm::ImageReference::Url(url_data) =>
+                                    format!("[IMAGE URL: {}]", url_data.url),
+                                llm::ImageReference::Inline(inline_data) => format!(
+                                    "[INLINE IMAGE: {} bytes, mime: {}]",
+                                    inline_data.data.len(),
+                                    inline_data.mime_type
+                                ),
+                            },
                         })
                         .collect::<Vec<_>>()
                         .join(", ")

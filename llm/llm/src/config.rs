@@ -21,3 +21,16 @@ pub fn with_config_key<R>(
         }
     }
 }
+
+pub fn get_config_key(key: impl AsRef<OsStr>) -> Result<String, Error> {
+    let key_str = key.as_ref().to_string_lossy().to_string();
+    std::env::var(key).map_err(|_| Error {
+        code: ErrorCode::InternalError,
+        message: format!("Missing config key: {key_str}"),
+        provider_error_json: None,
+    })
+}
+
+pub fn get_config_key_or_none(key: impl AsRef<OsStr>) -> Option<String> {
+    std::env::var(key).ok()
+}
