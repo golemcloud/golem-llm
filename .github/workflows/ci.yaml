@@ -137,7 +137,7 @@ jobs:
       - name: Build and test Ollama integration
         run: |
           set -e
-          cargo make build-ollama
+          cargo make --cwd llm build-ollama
           cd test
           golem-cli app build -b ollama-debug
           golem-cli app deploy -b ollama-debug
