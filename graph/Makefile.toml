@@ -1,0 +1,154 @@
+[config]
+default_to_workspace = false
+skip_core_tasks = true
+
+[tasks.build]
+run_task = { name = [
+    "build-arangodb",
+    "build-janusgraph",
+    "build-neo4j",
+] }
+
+[tasks.build-portable]
+run_task = { name = [
+    "build-arangodb-portable",
+    "build-janusgraph-portable",
+    "build-neo4j-portable",
+] }
+
+[tasks.release-build]
+run_task = { name = [
+    "release-build-arangodb",
+    "release-build-janusgraph",
+    "release-build-neo4j",
+] }
+
+[tasks.release-build-portable]
+run_task = { name = [
+    "release-build-arangodb-portable",
+    "release-build-janusgraph-portable",
+    "release-build-neo4j-portable",
+] }
+
+[tasks.build-arangodb]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-arangodb"]
+
+[tasks.build-arangodb-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-arangodb", "--no-default-features"]
+
+
+[tasks.build-janusgraph]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-janusgraph"]
+
+[tasks.build-janusgraph-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-janusgraph", "--no-default-features"]
+
+
+[tasks.build-neo4j]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-neo4j"]
+
+[tasks.build-neo4j-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-neo4j", "--no-default-features"]
+
+
+[tasks.release-build-arangodb]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-arangodb", "--release"]
+
+[tasks.release-build-arangodb-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-arangodb", "--release", "--no-default-features"]
+
+
+[tasks.release-build-janusgraph]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-janusgraph", "--release"]
+
+[tasks.release-build-janusgraph-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = [
+    "build",
+    "-p",
+    "golem-graph-janusgraph",
+    "--release",
+    "--no-default-features",
+]
+
+
+[tasks.release-build-neo4j]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-neo4j", "--release"]
+
+[tasks.release-build-neo4j-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-graph-neo4j", "--release", "--no-default-features"]
+
+[tasks.wit-update]
+install_crate = { crate_name = "wit-deps-cli" }
+command = "wit-deps"
+args = ["update"]
+
+[tasks.wit]
+dependencies = ["wit-update"]
+
+script_runner = "@duckscript"
+script = """
+modules = array graph arangodb janusgraph neo4j
+
+for module in ${modules}
+    rm -r ${module}/wit/deps
+    mkdir ${module}/wit/deps/golem-graph
+    cp wit/golem-graph.wit ${module}/wit/deps/golem-graph/golem-graph.wit
+    cp wit/deps/wasi:io ${module}/wit/deps
+
+    echo "Copied WIT for module graph::${module}"
+end
+
+# Copy WIT files for integration tests for graph
+rm -r ../test-graph/wit
+mkdir ../test-graph/wit/deps/golem-graph
+mkdir ../test-graph/wit/deps/io
+cp wit/golem-graph.wit ../test-graph/wit/deps/golem-graph/golem-graph.wit
+cp wit/deps/wasi:io/error.wit ../test-graph/wit/deps/io/error.wit
+cp wit/deps/wasi:io/poll.wit ../test-graph/wit/deps/io/poll.wit
+cp wit/deps/wasi:io/streams.wit ../test-graph/wit/deps/io/streams.wit
+cp wit/deps/wasi:io/world.wit ../test-graph/wit/deps/io/world.wit
+
+echo "Copied WIT for module test-graph"
+"""
+
+[tasks.build-test-components]
+dependencies = ["build"]
+install_crate = "cargo-binstall"
+description = "Builds graph test components with golem-cli"
+script = '''
+cargo-binstall golem-cli@1.2.2-dev.11 --locked --no-confirm
+cargo-binstall wac-cli --locked --no-confirm
+cd ../test-graph
+
+golem-cli --version
+golem-cli app clean
+golem-cli app build -b arangodb-debug
+golem-cli app clean
+golem-cli app build -b janusgraph-debug
+golem-cli app clean
+golem-cli app build -b neo4j-debug
+'''

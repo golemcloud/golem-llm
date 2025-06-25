@@ -1,0 +1,56 @@
+[package]
+name = "golem-graph-janusgraph"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://golem.cloud"
+repository = "https://github.com/golemcloud/golem-llm"
+description = "WebAssembly component for working with JanusGraph APIs, with special support for Golem Cloud"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[features]
+default = ["durability"]
+durability = ["golem-rust/durability", "golem-graph/durability"]
+
+[dependencies]
+golem-graph = {workspace = true }
+
+golem-rust = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wit-bindgen-rt = { workspace = true }
+base64 = { workspace = true }
+reqwest = { workspace = true}
+uuid = "1.17.0"
+futures = "0.3"
+dotenvy = "0.15.7"
+
+[package.metadata.component]
+package = "golem:graph-janusgraph"
+
+[package.metadata.component.bindings]
+generate_unused_types = true
+
+[package.metadata.component.bindings.with]
+"golem:graph/errors@1.0.0" = "golem_graph::golem::graph::errors"
+"golem:graph/types@1.0.0" = "golem_graph::golem::graph::types"
+"golem:graph/connection@1.0.0" = "golem_graph::golem::graph::connection"
+"golem:graph/transactions@1.0.0" = "golem_graph::golem::graph::transactions"
+"golem:graph/traversal@1.0.0" = "golem_graph::golem::graph::traversal"
+"golem:graph/schema@1.0.0" = "golem_graph::golem::graph::schema"
+"golem:graph/query@1.0.0" = "golem_graph::golem::graph::query"
+
+
+[package.metadata.component.target]
+path = "wit"
+
+[package.metadata.component.target.dependencies]
+"golem:graph" = { path = "wit/deps/golem-graph" }
+"wasi:io" = { path = "wit/deps/wasi:io"} 
+
+[dev-dependencies]
+uuid = { version = "1.8.0", features = ["v4"] } 

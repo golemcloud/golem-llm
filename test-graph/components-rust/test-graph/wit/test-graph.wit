@@ -1,0 +1,24 @@
+package test:graph;
+
+// See https://component-model.bytecodealliance.org/design/wit.html for more details about the WIT syntax
+
+interface test-graph-api {
+  test1: func() -> string;
+  test2: func() -> string;
+  test3: func() -> string;
+  test4: func() -> string;
+  test5: func() -> string;
+  test6: func() -> string;
+  test7: func() -> string;
+}
+
+world test-graph {
+  import golem:graph/types@1.0.0;
+  import golem:graph/errors@1.0.0;
+  import golem:graph/connection@1.0.0;
+  import golem:graph/transactions@1.0.0;
+  import golem:graph/schema@1.0.0;
+  import golem:graph/query@1.0.0;
+  import golem:graph/traversal@1.0.0;
+  export test-graph-api;
+}

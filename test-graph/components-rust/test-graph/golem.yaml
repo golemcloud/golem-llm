@@ -1,0 +1,194 @@
+# Schema for IDEA:
+# $schema: https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+# Schema for vscode-yaml
+# yaml-language-server: $schema=https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+
+# See https://learn.golem.cloud/docs/app-manifest#field-reference for field reference
+
+components:
+  test:graph:
+    profiles:
+      # DEBUG PROFILES
+      neo4j-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        # Uncomment and set the environment variables for local Neo4j debug   
+        # env:
+        #   NEO4J_HOST: localhost
+        #   NEO4J_USER: neo4j
+        #   NEO4J_PASSWORD: password
+        #   NEO4J_PORT: "7474"
+        #   NEO4J_DATABASE: neo4j
+        build:
+          - command: cargo component build --no-default-features --features neo4j
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_graph.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_graph_neo4j.wasm ../../target/wasm32-wasip1/debug/test_graph.wasm -o ../../target/wasm32-wasip1/debug/test_neo4j_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_graph.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_graph_neo4j.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_neo4j_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_neo4j_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_neo4j_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      arangodb-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        # Uncomment and set the environment variables for local ArangoDB debug
+        env:
+          ARANGODB_HOST: localhost
+          ARANGODB_USER: root
+          ARANGODB_PASSWORD: test
+          ARANGODB_PORT: "8529"
+          ARANGODB_DATABASE: _system
+        build:
+          - command: cargo component build --no-default-features --features arangodb
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_graph.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_graph_arangodb.wasm ../../target/wasm32-wasip1/debug/test_graph.wasm -o ../../target/wasm32-wasip1/debug/test_arangodb_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_graph.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_graph_arangodb.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_arangodb_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_arangodb_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_arangodb_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      janusgraph-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        # Uncomment and set the environment variables for local JanusGraph debug
+        # env:
+        #   JANUSGRAPH_HOST: localhost
+        #   JANUSGRAPH_PORT: "8182"
+        #   JANUSGRAPH_USER: ""
+        #   JANUSGRAPH_PASSWORD: ""
+        build:
+          - command: cargo component build --no-default-features --features janusgraph
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_graph.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_graph_janusgraph.wasm ../../target/wasm32-wasip1/debug/test_graph.wasm -o ../../target/wasm32-wasip1/debug/test_janusgraph_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_graph.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_graph_janusgraph.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_janusgraph_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_janusgraph_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_janusgraph_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      # RELEASE PROFILES
+      neo4j-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features neo4j
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_graph.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_graph_neo4j.wasm ../../target/wasm32-wasip1/release/test_graph.wasm -o ../../target/wasm32-wasip1/release/test_neo4j_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_graph.wasm
+              - ../../../target/wasm32-wasip1/release/golem_graph_neo4j.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_neo4j_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_neo4j_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_neo4j_release.wasm
+        clean:
+          - src/bindings.rs
+
+      arangodb-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features arangodb
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_graph.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_graph_arangodb.wasm ../../target/wasm32-wasip1/release/test_graph.wasm -o ../../target/wasm32-wasip1/release/test_arangodb_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_graph.wasm
+              - ../../../target/wasm32-wasip1/release/golem_graph_arangodb.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_arangodb_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_arangodb_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_arangodb_release.wasm
+        clean:
+          - src/bindings.rs
+
+      janusgraph-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features janusgraph
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_graph.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_graph_janusgraph.wasm ../../target/wasm32-wasip1/release/test_graph.wasm -o ../../target/wasm32-wasip1/release/test_janusgraph_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_graph.wasm
+              - ../../../target/wasm32-wasip1/release/golem_graph_janusgraph.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_janusgraph_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_janusgraph_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_janusgraph_release.wasm
+        clean:
+          - src/bindings.rs
+
+    defaultProfile: neo4j-debug
+
+dependencies:
+  test:graph:
+    - target: test:helper
+      type: wasm-rpc
