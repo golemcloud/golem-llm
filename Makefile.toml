@@ -137,7 +137,7 @@ script = '''
 
 is_portable = eq ${1} "--portable"
 
-targets = array llm_openai llm_anthropic llm_grok llm_openrouter llm_ollama
+targets = array llm_openai llm_anthropic llm_grok llm_openrouter llm_ollama embed_openai embed_cohere embed_hugging_face embed_voyageai
 for target in ${targets}
     if is_portable
         cp target/wasm32-wasip1/debug/golem_${target}.wasm components/debug/golem_${target}-portable.wasm
@@ -153,7 +153,7 @@ script = '''
 
 is_portable = eq ${1} "--portable"
 
-targets = array llm_openai llm_anthropic llm_grok llm_openrouter llm_ollama
+targets = array llm_openai llm_anthropic llm_grok llm_openrouter llm_ollama embed_openai embed_cohere embed_hugging_face embed_voyageai
 for target in ${targets}
     if is_portable
         cp target/wasm32-wasip1/release/golem_${target}.wasm components/release/golem_${target}-portable.wasm

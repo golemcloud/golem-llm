@@ -124,7 +124,7 @@ dependencies = ["wit-update"]
 
 script_runner = "@duckscript"
 script = """
-modules = array embed embed-openai embed-cohere embed-hugging-face embed-voyageai
+modules = array embed openai cohere hugging-face voyageai
 
 for module in ${modules}
     rm -r ${module}/wit/deps
