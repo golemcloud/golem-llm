@@ -8,11 +8,11 @@ members = [
     "llm/ollama",
     "llm/openai",
     "llm/openrouter",
-    "golem-embed/embed",
-    "golem-embed/embed-cohere",
-    "golem-embed/embed-hugging-face",
-    "golem-embed/embed-openai", 
-    "golem-embed/embed-voyageai",
+    "embed/embed",
+    "embed/cohere",
+    "embed/hugging-face",
+    "embed/openai", 
+    "embed/voyageai",
 ]
 
 [profile.release]
