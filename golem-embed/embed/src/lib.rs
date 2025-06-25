@@ -25,7 +25,7 @@ impl LoggingState {
         if !self.logging_initialized {
             let _ = wasi_logger::Logger::install();
             let max_level: log::LevelFilter =
-                log::LevelFilter::from_str(&std::env::var("GOLEM_LLM_LOG").unwrap_or_default())
+                log::LevelFilter::from_str(&std::env::var("GOLEM_EMBED_LOG").unwrap_or_default())
                     .unwrap_or(log::LevelFilter::Info);
             log::set_max_level(max_level);
             self.logging_initialized = true;

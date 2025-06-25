@@ -5,7 +5,7 @@ edition = "2021"
 license = "Apache-2.0"
 homepage = "https://golem.cloud"
 repository = "https://github.com/golemcloud/golem-llm"
-description = "WebAssembly component for working with Ollama APIs, with special support for Golem Cloud"
+description = "WebAssembly component for working with Hugging face embeding APIs, with special support for Golem Cloud"
 
 
 [lib]
