@@ -57,7 +57,7 @@ jobs:
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install cargo-component
-        run: cargo binstall --force --locked cargo-component@0.21.1
+        run: cargo binstall --force --locked cargo-component@0.20.0
       - name: Build all
         run: cargo make build-all
   build-test-components:
@@ -81,7 +81,7 @@ jobs:
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install cargo-component
-        run: cargo binstall --force --locked cargo-component@0.21.1
+        run: cargo binstall --force --locked cargo-component@0.20.0
       - name: Build all test components
         run: cargo make build-test-components
   ollama-integration-tests:
@@ -107,7 +107,7 @@ jobs:
       - name: Install tools
         run: |
           set -e
-          cargo binstall --force --locked cargo-component@0.21.1
+          cargo binstall --force --locked cargo-component@0.20.0
           cargo binstall golem-cli@1.2.3 --locked --force --no-confirm
           cargo binstall wac-cli --locked --force --no-confirm
       - name: Start Ollama in Docker
@@ -177,7 +177,7 @@ jobs:
       - uses: davidB/rust-cargo-make@v1
       - uses: cargo-bins/cargo-binstall@main
       - name: Install cargo-component
-        run: cargo binstall --force --locked cargo-component@0.21.1
+        run: cargo binstall --force --locked cargo-component@0.20.0
       - name: Build all components in release
         run: cargo make release-build-all
       - name: Login GH CLI
