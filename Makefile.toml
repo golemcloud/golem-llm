@@ -93,16 +93,6 @@ script_runner = "@duckscript"
 script = '''
 domains = array llm web-search
 
-# since it depends on build artifacts
-if is_empty ${1}
-    for domain in ${domains}
-        exec cargo make --cwd ${domain} build
-    end
-else
-    exec cargo make --cwd ${1} build
-end
-
-
 # if there is no domain passed run for every domain
 if is_empty ${1}
     for domain in ${domains}
