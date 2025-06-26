@@ -1,0 +1,177 @@
+# Schema for IDEA:
+# $schema: https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+# Schema for vscode-yaml
+# yaml-language-server: $schema=https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+
+# See https://learn.golem.cloud/docs/app-manifest#field-reference for field reference
+
+components:
+  test:web-search:
+    profiles:
+      # DEBUG PROFILES
+      google-debug:
+        build:
+          - command: cargo component build --no-default-features --features google
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_web_search.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_websearch_google.wasm ../../target/wasm32-wasip1/debug/test_web_search.wasm -o ../../target/wasm32-wasip1/debug/test_google_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_web_search.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_websearch_google.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_google_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_google_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_google_debug.wasm
+        clean:
+          - src/bindings.rs
+          
+      # BRAVE DEBUG PROFILE
+      brave-debug:
+        build:
+          - command: cargo component build --no-default-features --features brave
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_web_search.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_websearch_brave.wasm ../../target/wasm32-wasip1/debug/test_web_search.wasm -o ../../target/wasm32-wasip1/debug/test_brave_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_web_search.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_websearch_brave.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_brave_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_brave_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_brave_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      # BRAVE RELEASE PROFILE
+      brave-release:
+        build:
+          - command: cargo component build --release --no-default-features --features brave
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_web_search.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_websearch_brave.wasm ../../target/wasm32-wasip1/release/test_web_search.wasm -o ../../target/wasm32-wasip1/release/test_brave_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_web_search.wasm
+              - ../../../target/wasm32-wasip1/release/golem_websearch_brave.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_brave_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_brave_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_brave_release.wasm
+        clean:
+          - src/bindings.rs
+
+      # TAVILY DEBUG PROFILE
+      tavily-debug:
+        build:
+          - command: cargo component build --no-default-features --features tavily
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_web_search.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_websearch_tavily.wasm ../../target/wasm32-wasip1/debug/test_web_search.wasm -o ../../target/wasm32-wasip1/debug/test_tavily_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_web_search.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_websearch_tavily.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_tavily_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_tavily_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_tavily_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      # TAVILY RELEASE PROFILE
+      tavily-release:
+        build:
+          - command: cargo component build --release --no-default-features --features tavily
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_web_search.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_websearch_tavily.wasm ../../target/wasm32-wasip1/release/test_web_search.wasm -o ../../target/wasm32-wasip1/release/test_tavily_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_web_search.wasm
+              - ../../../target/wasm32-wasip1/release/golem_websearch_tavily.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_tavily_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_tavily_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_tavily_release.wasm
+        clean:
+          - src/bindings.rs
+
+      # SERPER DEBUG PROFILE
+      serper-debug:
+        build:
+          - command: cargo component build --no-default-features --features serper
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_web_search.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_websearch_serper.wasm ../../target/wasm32-wasip1/debug/test_web_search.wasm -o ../../target/wasm32-wasip1/debug/test_serper_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_web_search.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_websearch_serper.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_serper_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_serper_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_serper_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      # SERPER RELEASE PROFILE
+      serper-release:
+        build:
+          - command: cargo component build --release --no-default-features --features serper
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_web_search.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_websearch_serper.wasm ../../target/wasm32-wasip1/release/test_web_search.wasm -o ../../target/wasm32-wasip1/release/test_serper_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_web_search.wasm
+              - ../../../target/wasm32-wasip1/release/golem_websearch_serper.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_serper_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_serper_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_serper_release.wasm
+        clean:
+          - src/bindings.rs
+
+    defaultProfile: google-debug
+
+dependencies:
+  test:web-search:
+    - target: test:helper
+      type: wasm-rpc

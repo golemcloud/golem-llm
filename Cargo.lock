@@ -458,6 +458,76 @@ dependencies = [
 ]
 
 [[package]]
+name = "golem-web-search"
+version = "0.0.0"
+dependencies = [
+ "golem-rust",
+ "log",
+ "mime",
+ "nom",
+ "reqwest",
+ "thiserror",
+ "wasi-logger",
+ "wit-bindgen 0.40.0",
+]
+
+[[package]]
+name = "golem-websearch-brave"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "golem-rust",
+ "golem-web-search",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "wit-bindgen-rt 0.40.0",
+]
+
+[[package]]
+name = "golem-websearch-google"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "golem-rust",
+ "golem-web-search",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "wit-bindgen-rt 0.40.0",
+]
+
+[[package]]
+name = "golem-websearch-serper"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "golem-rust",
+ "golem-web-search",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "wit-bindgen-rt 0.40.0",
+]
+
+[[package]]
+name = "golem-websearch-tavily"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "golem-rust",
+ "golem-web-search",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "wit-bindgen-rt 0.40.0",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

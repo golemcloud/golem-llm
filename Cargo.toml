@@ -8,6 +8,11 @@ members = [
     "llm/ollama",
     "llm/openai",
     "llm/openrouter",
+    "web-search/web-search",
+    "web-search/brave",
+    "web-search/google",
+    "web-search/serper",
+    "web-search/tavily",
 ]
 
 [profile.release]

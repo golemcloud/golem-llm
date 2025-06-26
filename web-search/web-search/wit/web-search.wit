@@ -1,0 +1,5 @@
+package golem:web-search-library@1.0.0;
+
+world web-search-library {
+    export golem:web-search/web-search@1.0.0;
+}
