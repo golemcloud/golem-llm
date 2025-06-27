@@ -1,0 +1,226 @@
+# Schema for IDEA:
+# $schema: https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+# Schema for vscode-yaml
+# yaml-language-server: $schema=https://schema.golem.cloud/app/golem/1.1.1/golem.schema.json
+
+# See https://learn.golem.cloud/docs/app-manifest#field-reference for field reference
+
+components:
+  test:embed: 
+    profiles:
+      # DEBUG PROFILES
+      openai-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --no-default-features --features openai
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - target/wasm32-wasip1/debug/test_embed.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_embed_openai.wasm ../../target/wasm32-wasip1/debug/test_embed.wasm -o ../../target/wasm32-wasip1/debug/test_openai_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_embed.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_embed_openai.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_openai_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_openai_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_openai_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      cohere-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --no-default-features --features cohere
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - target/wasm32-wasip1/debug/test_embed.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_embed_cohere.wasm ../../target/wasm32-wasip1/debug/test_embed.wasm -o ../../target/wasm32-wasip1/debug/test_cohere_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_embed.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_embed_cohere.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_cohere_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_cohere_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_cohere_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      hugging-face-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --no-default-features --features hugging-face
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - target/wasm32-wasip1/debug/test_embed.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_embed_hugging_face.wasm ../../target/wasm32-wasip1/debug/test_embed.wasm -o ../../target/wasm32-wasip1/debug/test_hugging_face_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_embed.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_embed_hugging_face.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_hugging_face_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_hugging_face_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_hugging_face_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      voyageai-debug:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --no-default-features --features voyageai
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - target/wasm32-wasip1/debug/test_embed.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_embed_voyageai.wasm ../../target/wasm32-wasip1/debug/test_embed.wasm -o ../../target/wasm32-wasip1/debug/test_voyageai_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_embed.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_embed_voyageai.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_voyageai_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_voyageai_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_voyageai_debug.wasm
+        clean:
+          - src/bindings.rs
+
+      # RELEASE PROFILES
+      openai-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features openai
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_embed_openai.wasm ../../target/wasm32-wasip1/release/test_embed.wasm -o ../../target/wasm32-wasip1/release/test_openai_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+              - ../../../target/wasm32-wasip1/release/golem_embed_openai.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_openai_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_openai_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_openai_release.wasm
+        clean:
+          - src/bindings.rs
+
+      cohere-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features cohere
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_embed_cohere.wasm ../../target/wasm32-wasip1/release/test_embed.wasm -o ../../target/wasm32-wasip1/release/test_cohere_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+              - ../../../target/wasm32-wasip1/release/golem_embed_cohere.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_cohere_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_cohere_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_cohere_release.wasm
+        clean:
+          - src/bindings.rs
+
+      hugging-face-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features hugging-face
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_embed_hugging_face.wasm ../../target/wasm32-wasip1/release/test_embed.wasm -o ../../target/wasm32-wasip1/release/test_hugging_face_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+              - ../../../target/wasm32-wasip1/release/golem_embed_hugging_face.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_hugging_face_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_hugging_face_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_hugging_face_release.wasm
+        clean:
+          - src/bindings.rs
+
+      voyageai-release:
+        files:
+          - sourcePath: ../../data/cat.png
+            targetPath: /data/cat.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features voyageai
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_embed_voyageai.wasm ../../target/wasm32-wasip1/release/test_embed.wasm -o ../../target/wasm32-wasip1/release/test_voyageai_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_embed.wasm
+              - ../../../target/wasm32-wasip1/release/golem_embed_voyageai.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_voyageai_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_voyageai_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_voyageai_release.wasm
+        clean:
+          - src/bindings.rs
+
+    defaultProfile: openai-debug
+
+dependencies:
+  test:embed:
+    - target: test:helper
+      type: wasm-rpc

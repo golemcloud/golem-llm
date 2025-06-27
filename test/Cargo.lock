@@ -864,6 +864,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "test_embed"
+version = "0.0.0"
+dependencies = [
+ "golem-rust",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "wit-bindgen-rt 0.40.0",
+]
+
+[[package]]
 name = "test_helper"
 version = "0.0.0"
 dependencies = [

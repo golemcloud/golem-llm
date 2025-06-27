@@ -126,7 +126,7 @@ fn try_parse_line(
             return Ok(None);
         }
 
-        trace!("Parsed NDJSON line: {}", line);
+        trace!("Parsed NDJSON line: {line}");
 
         // Create a MessageEvent with the JSON line as data
         let event = MessageEvent {
