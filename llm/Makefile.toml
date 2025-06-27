@@ -175,14 +175,14 @@ for module in ${modules}
 end
 
 # Copy WIT files for integration tests
-rm -r ../test/wit
-mkdir ../test/wit/deps/golem-llm
-mkdir ../test/wit/deps/io
-cp wit/golem-llm.wit ../test/wit/deps/golem-llm/golem-llm.wit
-cp wit/deps/wasi:io/error.wit ../test/wit/deps/io/error.wit
-cp wit/deps/wasi:io/poll.wit ../test/wit/deps/io/poll.wit
-cp wit/deps/wasi:io/streams.wit ../test/wit/deps/io/streams.wit
-cp wit/deps/wasi:io/world.wit ../test/wit/deps/io/world.wit
+rm -r ../test/llm/wit
+mkdir ../test/llm/wit/deps/golem-llm
+mkdir ../test/llm/wit/deps/io
+cp wit/golem-llm.wit ../test/llm/wit/deps/golem-llm/golem-llm.wit
+cp wit/deps/wasi:io/error.wit ../test/llm/wit/deps/io/error.wit
+cp wit/deps/wasi:io/poll.wit ../test/llm/wit/deps/io/poll.wit
+cp wit/deps/wasi:io/streams.wit ../test/llm/wit/deps/io/streams.wit
+cp wit/deps/wasi:io/world.wit ../test/llm/wit/deps/io/world.wit
 
 echo "Copied WIT for module test"
 """
@@ -192,9 +192,9 @@ dependencies = ["build"]
 install_crate = "cargo-binstall"
 description = "Builds llm test components with golem-cli"
 script = '''
-cargo-binstall golem-cli@1.2.2-dev.11 --locked --no-confirm
+cargo-binstall golem-cli@1.2.5 --locked --no-confirm
 cargo-binstall wac-cli --locked --no-confirm
-cd ../test
+cd ../test/llm
 
 golem-cli --version
 golem-cli app clean

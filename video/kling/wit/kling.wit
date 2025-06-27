@@ -1,0 +1,5 @@
+package golem:video-kling@1.0.0;
+
+world video-library {
+  include golem:video/video-library@1.0.0;
+} 

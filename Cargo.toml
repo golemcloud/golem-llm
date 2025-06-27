@@ -8,6 +8,11 @@ members = [
     "llm/ollama",
     "llm/openai",
     "llm/openrouter",
+    "video/video",
+    "video/veo",
+    "video/stability",
+    "video/kling",
+    "video/runway",
 ]
 
 [profile.release]

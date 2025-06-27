@@ -1,0 +1,222 @@
+# Schema for IDEA:
+# $schema: https://schema.golem.cloud/app/golem/1.2.2.1/golem.schema.json
+# Schema for vscode-yaml
+# yaml-language-server: $schema=https://schema.golem.cloud/app/golem/1.2.2.1/golem.schema.json
+
+# See https://learn.golem.cloud/docs/app-manifest#field-reference for field reference
+# For creating APIs see https://learn.golem.cloud/invoke/making-custom-apis
+
+components:
+  test:video:
+    profiles:
+      # DEBUG PROFILES
+      stability:
+        files:
+          - sourcePath: ../../data/old.png
+            targetPath: /data/old.png
+            permissions: read-only
+        build:
+          - command: cargo component build --no-default-features --features stability
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_video.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_video_stability.wasm ../../target/wasm32-wasip1/debug/test_video.wasm -o ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_video.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_video_stability.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_video_stability.wasm
+        clean:
+          - src/bindings.rs
+      runway:
+        files:
+          - sourcePath: ../../data/old.png
+            targetPath: /data/old.png
+            permissions: read-only
+        build:
+          - command: cargo component build --no-default-features --features runway
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_video.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_video_runway.wasm ../../target/wasm32-wasip1/debug/test_video.wasm -o ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_video.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_video_runway.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_video_runway_debug.wasm
+        clean:
+          - src/bindings.rs
+      kling:
+        files:
+          - sourcePath: ../../data/old.png
+            targetPath: /data/old.png
+            permissions: read-only
+        build:
+          - command: cargo component build --no-default-features --features kling
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_video.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_video_kling.wasm ../../target/wasm32-wasip1/debug/test_video.wasm -o ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_video.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_video_kling.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_video_kling_debug.wasm
+        clean:
+          - src/bindings.rs
+      veo:
+        files:
+          - sourcePath: ../../data/old.png
+            targetPath: /data/old.png
+            permissions: read-only
+        build:
+          - command: cargo component build --no-default-features --features veo
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_video.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/debug/golem_video_veo.wasm ../../target/wasm32-wasip1/debug/test_video.wasm -o ../../target/wasm32-wasip1/debug/test_video_plugged.wasm  
+            sources:
+              - ../../target/wasm32-wasip1/debug/test_video.wasm
+              - ../../../target/wasm32-wasip1/debug/golem_video_veo.wasm
+            targets:
+              - ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+        sourceWit: wit  
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/debug/test_video_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_video_veo_debug.wasm
+        clean:
+          - src/bindings.rs
+      # RELEASE PROFILES    
+      stability-release: 
+        files: 
+          - sourcePath: ../../data/old.png
+            targetPath: /data/old.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features stability
+            sources: 
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_video.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_video_stability.wasm ../../target/wasm32-wasip1/release/test_video.wasm -o ../../target/wasm32-wasip1/release/test_video_plugged.wasm  
+            sources:
+              - ../../target/wasm32-wasip1/release/test_video.wasm
+              - ../../../target/wasm32-wasip1/release/golem_video_stability.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_video_stability_release.wasm
+        clean:
+          - src/bindings.rs
+      runway-release:
+        files:
+          - sourcePath: ../../data/old.png
+            targetPath: /data/old.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features runway  
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_video.wasm  
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_video_runway.wasm ../../target/wasm32-wasip1/release/test_video.wasm -o ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_video.wasm
+              - ../../../target/wasm32-wasip1/release/golem_video_runway.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_video_plugged.wasm  
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_video_runway_release.wasm
+        clean:
+          - src/bindings.rs
+      kling-release:
+        files:
+          - sourcePath: ../../data/old.png
+            targetPath: /data/old.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features kling 
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_video.wasm
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_video_kling.wasm ../../target/wasm32-wasip1/release/test_video.wasm -o ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_video.wasm
+              - ../../../target/wasm32-wasip1/release/golem_video_kling.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_video_kling_release.wasm
+        clean:
+          - src/bindings.rs
+      veo-release:
+        files:
+          - sourcePath: ../../data/old.png
+            targetPath: /data/old.png
+            permissions: read-only
+        build:
+          - command: cargo component build --release --no-default-features --features veo
+            sources:
+              - src
+              - wit-generated
+              - ../../common-rust
+            targets:
+              - ../../target/wasm32-wasip1/release/test_video.wasm    
+          - command: wac plug --plug ../../../target/wasm32-wasip1/release/golem_video_veo.wasm ../../target/wasm32-wasip1/release/test_video.wasm -o ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+            sources:
+              - ../../target/wasm32-wasip1/release/test_video.wasm
+              - ../../../target/wasm32-wasip1/release/golem_video_veo.wasm
+            targets:
+              - ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: ../../target/wasm32-wasip1/release/test_video_plugged.wasm
+        linkedWasm: ../../golem-temp/components/test_video_veo_release.wasm
+        clean:
+          - src/bindings.rs
+    defaultProfile: stability
+
+# Example for adding dependencies for Worker to Worker communication:
+# See https://learn.golem.cloud/docs/app-manifest#fields_dependencies for more information
+#
+#dependencies:
+#  test:video:
+#  - target: <target component name to be called>
+#    type: wasm-rpc

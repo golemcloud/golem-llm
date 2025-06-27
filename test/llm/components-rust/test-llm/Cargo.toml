@@ -1,0 +1,50 @@
+[package]
+name = "test_llm"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+required-features = []
+
+[features]
+default = ["openai"]
+anthropic = []
+grok = []
+openai = []
+openrouter = []
+ollama = []
+
+[dependencies]
+# To use common shared libs, use the following:
+# common-lib = { path = "../../common-rust/common-lib" }
+
+golem-rust = { workspace = true }
+log = { version = "0.4.27" }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wit-bindgen-rt = { workspace = true }
+
+[package.metadata.component.target]
+path = "wit-generated"
+
+[package.metadata.component.bindings.with]
+"wasi:io/poll@0.2.0" = "golem_rust::wasm_rpc::wasi::io::poll"
+"wasi:clocks/wall-clock@0.2.0" = "golem_rust::wasm_rpc::wasi::clocks::wall_clock"
+"golem:rpc/types@0.2.0" = "golem_rust::wasm_rpc::golem_rpc_0_2_x::types"
+
+[package.metadata.component.target.dependencies]
+"golem:llm" = { path = "wit-generated/deps/golem-llm" }
+"wasi:io" = { path = "wit-generated/deps/io" }
+"wasi:clocks" = { path = "wit-generated/deps/clocks" }
+"golem:rpc" = { path = "wit-generated/deps/golem-rpc" }
+"test:helper-client" = { path = "wit-generated/deps/test_helper-client" }
+"test:llm-exports" = { path = "wit-generated/deps/test_llm-exports" }
+
+[package.metadata.component.bindings]
+# See https://github.com/bytecodealliance/cargo-component/blob/main/src/metadata.rs#L62
+
+# derives = ["serde::Serialize", "serde::Deserialize"]
+# generate_unused_types = true

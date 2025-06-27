@@ -1,0 +1,164 @@
+
+[config]
+default_to_workspace = false
+skip_core_tasks = true
+
+[tasks.build]
+run_task = { name = [
+    "build-veo",
+    "build-stability",
+    "build-kling",
+    "build-runway",
+] }
+
+[tasks.build-portable]
+run_task = { name = [
+    "build-veo-portable",
+    "build-stability-portable",
+    "build-kling-portable",
+    "build-runway-portable",
+] }
+
+[tasks.release-build]
+run_task = { name = [
+    "release-build-veo",
+    "release-build-stability",
+    "release-build-kling",
+    "release-build-runway",
+] }
+
+[tasks.release-build-portable]
+run_task = { name = [
+    "release-build-veo-portable",
+    "release-build-stability-portable",
+    "release-build-kling-portable",
+    "release-build-runway-portable",
+] }
+
+[tasks.build-veo]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-veo"]
+
+[tasks.build-veo-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-veo", "--no-default-features"]
+
+[tasks.build-stability]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-stability"]
+
+[tasks.build-stability-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-stability", "--no-default-features"]
+
+[tasks.build-kling]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-kling"]
+
+[tasks.build-kling-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-kling", "--no-default-features"]
+
+[tasks.build-runway]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-runway"]
+
+[tasks.build-runway-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-runway", "--no-default-features"]
+
+[tasks.release-build-veo]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-veo", "--release"]
+
+[tasks.release-build-veo-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-veo", "--release", "--no-default-features"]
+
+[tasks.release-build-stability]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-stability", "--release"]
+
+[tasks.release-build-stability-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-stability", "--release", "--no-default-features"]
+
+[tasks.release-build-kling]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-kling", "--release"]
+
+[tasks.release-build-kling-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-kling", "--release", "--no-default-features"]
+
+[tasks.release-build-runway]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-runway", "--release"]
+
+[tasks.release-build-runway-portable]
+install_crate = { crate_name = "cargo-component", version = "0.20.0" }
+command = "cargo-component"
+args = ["build", "-p", "golem-video-runway", "--release", "--no-default-features"]
+
+[tasks.wit-update]
+install_crate = { crate_name = "wit-deps-cli" }
+command = "wit-deps"
+args = ["update"]
+
+[tasks.wit]
+dependencies = ["wit-update"]
+
+script_runner = "@duckscript"
+script = """
+modules = array video video-veo video-stability video-kling video-runway
+
+for module in ${modules}
+    rm -r ${module}/wit/deps
+    mkdir ${module}/wit/deps/golem-video
+    cp wit/golem-video.wit ${module}/wit/deps/golem-video/golem-video.wit
+
+    echo "Copied WIT for module video::${module}"
+end
+
+# Copy WIT files for integration tests
+rm -r ../test/video/wit
+mkdir ../test/video/wit/deps/golem-video
+cp wit/golem-video.wit ../test/video/wit/deps/golem-video/golem-video.wit
+
+echo "Copied WIT for module video"
+"""
+
+[tasks.build-test-components]
+dependencies = ["build"]
+install_crate = "cargo-binstall"
+description = "Builds video test components with golem-cli"
+script = '''
+cargo-binstall golem-cli@1.2.5 --locked --no-confirm
+cargo-binstall wac-cli --locked --no-confirm
+cd ../test/video
+
+golem-cli --version
+golem-cli app clean
+golem-cli app build -b veo-debug
+golem-cli app clean
+golem-cli app build -b stability-debug
+golem-cli app clean
+golem-cli app build -b kling-debug
+golem-cli app clean
+golem-cli app build -b runway-debug
+'''

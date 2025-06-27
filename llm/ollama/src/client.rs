@@ -335,7 +335,7 @@ pub fn image_to_base64(source: &str) -> Result<String, Box<dyn std::error::Error
 pub fn from_reqwest_error(context: &str, err: reqwest::Error) -> Error {
     Error {
         code: ErrorCode::InternalError,
-        message: format!("{}: {}", context, err),
+        message: format!("{context}: {err}"),
         provider_error_json: None,
     }
 }
