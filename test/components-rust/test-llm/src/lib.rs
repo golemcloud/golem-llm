@@ -19,6 +19,8 @@ const MODEL: &'static str = "grok-3-beta";
 const MODEL: &'static str = "openrouter/auto";
 #[cfg(feature = "ollama")]  
 const MODEL: &'static str = "qwen3:1.7b";
+#[cfg(feature = "bedrock")]
+const MODEL: &'static str = "amazon.nova-lite-v1:0";
 
 #[cfg(feature = "openai")]
 const IMAGE_MODEL: &'static str = "gpt-4o-mini";
@@ -30,6 +32,8 @@ const IMAGE_MODEL: &'static str = "grok-2-vision-latest";
 const IMAGE_MODEL: &'static str = "openrouter/auto";
 #[cfg(feature = "ollama")]  
 const IMAGE_MODEL: &'static str = "gemma3:4b";
+#[cfg(feature = "bedrock")]
+const IMAGE_MODEL: &'static str = "amazon.nova-lite-v1:0";
 
 impl Guest for Component {
     /// test1 demonstrates a simple, non-streaming text question-answer interaction with the LLM.

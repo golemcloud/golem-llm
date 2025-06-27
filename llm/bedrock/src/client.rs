@@ -1,18 +1,16 @@
 use golem_llm::error::{error_code_from_status, from_event_source_error, from_reqwest_error};
 use golem_llm::event_source::EventSource;
 use golem_llm::golem::llm::llm::{Error, ErrorCode};
+use hmac::{Hmac, Mac};
 use log::trace;
 use reqwest::{Client, Method, Response};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use std::fmt::Debug;
-use std::collections::HashMap;
-use chrono::Utc;
-use hmac::{Hmac, Mac};
-use sha2::{Sha256, Digest};
-
-type HmacSha256 = Hmac<Sha256>;
+use std::time::{SystemTime, UNIX_EPOCH};
+use time::OffsetDateTime;
 
 /// AWS Bedrock client for creating model responses
 pub struct BedrockClient {
@@ -24,9 +22,7 @@ pub struct BedrockClient {
 
 impl BedrockClient {
     pub fn new(access_key_id: String, secret_access_key: String, region: String) -> Self {
-        let client = Client::builder()
-            .build()
-            .expect("Failed to initialize HTTP client");
+        let client = Client::new();
         Self {
             access_key_id,
             secret_access_key,
@@ -35,168 +31,219 @@ impl BedrockClient {
         }
     }
 
-    pub fn converse(&self, model_id: &str, request: ConverseRequest) -> Result<ConverseResponse, Error> {
+    pub fn converse(
+        &self,
+        model_id: &str,
+        request: ConverseRequest,
+    ) -> Result<ConverseResponse, Error> {
         trace!("Sending request to Bedrock API: {request:?}");
+        let url = format!(
+            "https://bedrock-runtime.{}.amazonaws.com/model/{}/converse",
+            self.region, model_id
+        );
 
-        let body = serde_json::to_string(&request)
-            .map_err(|err| Error {
-                code: ErrorCode::InvalidRequest,
-                message: format!("Failed to serialize request: {err}"),
-                provider_error_json: None,
-            })?;
+        let body = serde_json::to_string(&request).map_err(|err| Error {
+            code: ErrorCode::InternalError,
+            message: "Failed to serialize request".to_string(),
+            provider_error_json: Some(err.to_string()),
+        })?;
 
-        let headers = self.sign_request(&body, model_id, false)?;
-        let url = format!("https://bedrock-runtime.{}.amazonaws.com/model/{}/converse", self.region, model_id);
+        let host = format!("bedrock-runtime.{}.amazonaws.com", self.region);
+        let headers = generate_sigv4_headers(
+            &self.access_key_id,
+            &self.secret_access_key,
+            &self.region,
+            "bedrock",
+            "POST",
+            &format!("/model/{}/converse", model_id),
+            &host,
+            &body,
+        )
+        .map_err(|err| Error {
+            code: ErrorCode::InternalError,
+            message: "Failed to sign headers".to_string(),
+            provider_error_json: Some(err.to_string()),
+        })?;
 
-        let mut request_builder = self.client.request(Method::POST, url);
+        let mut request_builder = self.client.request(Method::POST, &url);
+        request_builder = request_builder.header("content-type", "application/json");
         for (key, value) in headers {
             request_builder = request_builder.header(key, value);
         }
 
-        let response: Response = request_builder
-            .body(body)
-            .send()
-            .map_err(|err| from_reqwest_error("Request failed", err))?;
+        let response: Response = request_builder.body(body).send().map_err(|err| {
+            trace!("HTTP request failed with error: {:?}", err);
+            from_reqwest_error("Request failed", err)
+        })?;
+
+        trace!("Received response from Bedrock API: {:?}", response);
 
         parse_response(response)
     }
 
-    pub fn converse_stream(&self, model_id: &str, request: ConverseRequest) -> Result<EventSource, Error> {
+    pub fn converse_stream(
+        &self,
+        model_id: &str,
+        request: ConverseRequest,
+    ) -> Result<EventSource, Error> {
         trace!("Sending streaming request to Bedrock API: {request:?}");
+        let url = format!(
+            "https://bedrock-runtime.{}.amazonaws.com/model/{}/converse-stream",
+            self.region, model_id
+        );
 
-        let body = serde_json::to_string(&request)
-            .map_err(|err| Error {
-                code: ErrorCode::InvalidRequest,
-                message: format!("Failed to serialize request: {err}"),
-                provider_error_json: None,
-            })?;
+        let body = serde_json::to_string(&request).map_err(|err| Error {
+            code: ErrorCode::InternalError,
+            message: "Failed to serialize request".to_string(),
+            provider_error_json: Some(err.to_string()),
+        })?;
 
-        let headers = self.sign_request(&body, model_id, true)?;
-        let url = format!("https://bedrock-runtime.{}.amazonaws.com/model/{}/converse-stream", self.region, model_id);
+        let host = format!("bedrock-runtime.{}.amazonaws.com", self.region);
+        let headers = generate_sigv4_headers(
+            &self.access_key_id,
+            &self.secret_access_key,
+            &self.region,
+            "bedrock",
+            "POST",
+            &format!("/model/{}/converse-stream", model_id),
+            &host,
+            &body,
+        )
+        .map_err(|err| Error {
+            code: ErrorCode::InternalError,
+            message: "Failed to sign headers".to_string(),
+            provider_error_json: Some(err.to_string()),
+        })?;
 
-        let mut request_builder = self.client.request(Method::POST, url);
+        let mut request_builder = self.client.request(Method::POST, &url);
+        request_builder = request_builder.header("content-type", "application/json");
         for (key, value) in headers {
             request_builder = request_builder.header(key, value);
         }
 
-        let response: Response = request_builder
-            .body(body)
-            .send()
-            .map_err(|err| from_reqwest_error("Request failed", err))?;
+        trace!("Sending streaming HTTP request to Bedrock...");
+        let response: Response = request_builder.body(body).send().map_err(|err| {
+            trace!("HTTP request failed with error: {:?}", err);
+            from_reqwest_error("Request failed", err)
+        })?;
 
         trace!("Initializing SSE stream");
 
         EventSource::new(response)
             .map_err(|err| from_event_source_error("Failed to create SSE stream", err))
     }
+}
 
-    fn sign_request(&self, body: &str, model_id: &str, is_stream: bool) -> Result<HashMap<String, String>, Error> {
-        let now = Utc::now();
-        let amz_date = now.format("%Y%m%dT%H%M%SZ").to_string();
-        let date_stamp = now.format("%Y%m%d").to_string();
-        
-        let service = "bedrock";
-        let endpoint = if is_stream { "converse-stream" } else { "converse" };
-        let canonical_uri = format!("/model/{}/{}", model_id, endpoint);
-        
-        let canonical_headers = format!(
-            "host:bedrock-runtime.{}.amazonaws.com\nx-amz-date:{}\n",
-            self.region, amz_date
-        );
-        let signed_headers = "host;x-amz-date";
-        
-        let payload_hash = hex::encode(Sha256::digest(body.as_bytes()));
-        
-        let canonical_request = format!(
-            "POST\n{}\n\n{}\n{}\n{}",
-            canonical_uri, canonical_headers, signed_headers, payload_hash
-        );
-        
-        let algorithm = "AWS4-HMAC-SHA256";
-        let credential_scope = format!("{}/{}/{}/aws4_request", date_stamp, self.region, service);
-        let string_to_sign = format!(
-            "{}\n{}\n{}\n{}",
-            algorithm,
-            amz_date,
-            credential_scope,
-            hex::encode(Sha256::digest(canonical_request.as_bytes()))
-        );
-        
-        let signing_key = self.get_signature_key(&date_stamp, service)?;
-        let signature = hex::encode(
-            HmacSha256::new_from_slice(&signing_key)
-                .map_err(|_| Error {
-                    code: ErrorCode::InternalError,
-                    message: "Failed to create HMAC".to_string(),
-                    provider_error_json: None,
-                })?
-                .chain_update(string_to_sign.as_bytes())
-                .finalize()
-                .into_bytes()
-        );
-        
-        let authorization_header = format!(
-            "{} Credential={}/{}, SignedHeaders={}, Signature={}",
-            algorithm, self.access_key_id, credential_scope, signed_headers, signature
-        );
-        
-        let mut headers = HashMap::new();
-        headers.insert("Authorization".to_string(), authorization_header);
-        headers.insert("X-Amz-Date".to_string(), amz_date);
-        headers.insert("Host".to_string(), format!("bedrock-runtime.{}.amazonaws.com", self.region));
-        headers.insert("Content-Type".to_string(), "application/json".to_string());
-        
-        Ok(headers)
-    }
-    
-    fn get_signature_key(&self, date_stamp: &str, service: &str) -> Result<Vec<u8>, Error> {
-        let k_date = HmacSha256::new_from_slice(format!("AWS4{}", self.secret_access_key).as_bytes())
-            .map_err(|_| Error {
-                code: ErrorCode::InternalError,
-                message: "Failed to create HMAC for date".to_string(),
-                provider_error_json: None,
-            })?
-            .chain_update(date_stamp.as_bytes())
-            .finalize()
-            .into_bytes();
-            
-        let k_region = HmacSha256::new_from_slice(&k_date)
-            .map_err(|_| Error {
-                code: ErrorCode::InternalError,
-                message: "Failed to create HMAC for region".to_string(),
-                provider_error_json: None,
-            })?
-            .chain_update(self.region.as_bytes())
-            .finalize()
-            .into_bytes();
-            
-        let k_service = HmacSha256::new_from_slice(&k_region)
-            .map_err(|_| Error {
-                code: ErrorCode::InternalError,
-                message: "Failed to create HMAC for service".to_string(),
-                provider_error_json: None,
-            })?
-            .chain_update(service.as_bytes())
-            .finalize()
-            .into_bytes();
-            
-        let k_signing = HmacSha256::new_from_slice(&k_service)
-            .map_err(|_| Error {
-                code: ErrorCode::InternalError,
-                message: "Failed to create HMAC for signing".to_string(),
-                provider_error_json: None,
-            })?
-            .chain_update(b"aws4_request")
-            .finalize()
-            .into_bytes();
-            
-        Ok(k_signing.to_vec())
-    }
+pub fn generate_sigv4_headers(
+    access_key: &str,
+    secret_key: &str,
+    region: &str,
+    service: &str,
+    method: &str,
+    uri: &str,
+    host: &str,
+    body: &str,
+) -> Result<Vec<(String, String)>, Box<dyn std::error::Error>> {
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    let timestamp = OffsetDateTime::from_unix_timestamp(now.as_secs() as i64).unwrap();
+
+    let date_str = format!(
+        "{:04}{:02}{:02}",
+        timestamp.year(),
+        timestamp.month() as u8,
+        timestamp.day()
+    );
+    let datetime_str = format!(
+        "{:04}{:02}{:02}T{:02}{:02}{:02}Z",
+        timestamp.year(),
+        timestamp.month() as u8,
+        timestamp.day(),
+        timestamp.hour(),
+        timestamp.minute(),
+        timestamp.second()
+    );
+
+    // Create canonical request
+    let path = if uri.starts_with('/') { uri } else { "/" };
+    let query = "";
+
+    // Create canonical headers
+    let mut headers: Vec<(String, String)> = vec![
+        ("host".to_string(), host.to_string()),
+        ("x-amz-date".to_string(), datetime_str.clone()),
+    ];
+    headers.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let canonical_headers = headers
+        .iter()
+        .map(|(k, v)| format!("{}:{}", k, v))
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
+
+    let signed_headers = headers
+        .iter()
+        .map(|(k, _)| k.as_str())
+        .collect::<Vec<_>>()
+        .join(";");
+
+    // Hash payload
+    let payload_hash = format!("{:x}", Sha256::digest(body.as_bytes()));
+
+    let canonical_request = format!(
+        "{}\n{}\n{}\n{}\n{}\n{}",
+        method, path, query, canonical_headers, signed_headers, payload_hash
+    );
+
+    // Create string to sign
+    let credential_scope = format!("{}/{}/{}/aws4_request", date_str, region, service);
+    let string_to_sign = format!(
+        "AWS4-HMAC-SHA256\n{}\n{}\n{:x}",
+        datetime_str,
+        credential_scope,
+        Sha256::digest(canonical_request.as_bytes())
+    );
+
+    // Calculate signature
+    type HmacSha256 = Hmac<Sha256>;
+
+    let mut mac = HmacSha256::new_from_slice(format!("AWS4{}", secret_key).as_bytes())?;
+    mac.update(date_str.as_bytes());
+    let date_key = mac.finalize().into_bytes();
+
+    let mut mac = HmacSha256::new_from_slice(&date_key)?;
+    mac.update(region.as_bytes());
+    let region_key = mac.finalize().into_bytes();
+
+    let mut mac = HmacSha256::new_from_slice(&region_key)?;
+    mac.update(service.as_bytes());
+    let service_key = mac.finalize().into_bytes();
+
+    let mut mac = HmacSha256::new_from_slice(&service_key)?;
+    mac.update(b"aws4_request");
+    let signing_key = mac.finalize().into_bytes();
+
+    let mut mac = HmacSha256::new_from_slice(&signing_key)?;
+    mac.update(string_to_sign.as_bytes());
+    let signature = format!("{:x}", mac.finalize().into_bytes());
+
+    // Create authorization header
+    let auth_header = format!(
+        "AWS4-HMAC-SHA256 Credential={}/{}, SignedHeaders={}, Signature={}",
+        access_key, credential_scope, signed_headers, signature
+    );
+
+    let mut result_headers = vec![
+        ("authorization".to_string(), auth_header),
+        ("x-amz-date".to_string(), datetime_str),
+    ];
+
+    Ok(result_headers)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConverseRequest {
-    #[serde(rename = "modelId")]
+    #[serde(skip_serializing, rename = "modelId")]
     pub model_id: String,
     pub messages: Vec<Message>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -207,7 +254,10 @@ pub struct ConverseRequest {
     pub tool_config: Option<ToolConfig>,
     #[serde(rename = "guardrailConfig", skip_serializing_if = "Option::is_none")]
     pub guardrail_config: Option<GuardrailConfig>,
-    #[serde(rename = "additionalModelRequestFields", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "additionalModelRequestFields",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub additional_model_request_fields: Option<Value>,
 }
 
@@ -231,7 +281,7 @@ pub enum ContentBlock {
     #[serde(rename = "text")]
     Text { text: String },
     #[serde(rename = "image")]
-    Image { 
+    Image {
         #[serde(rename = "format")]
         format: ImageFormat,
         #[serde(rename = "source")]
@@ -278,7 +328,7 @@ pub enum ToolResultContentBlock {
     #[serde(rename = "text")]
     Text { text: String },
     #[serde(rename = "image")]
-    Image { 
+    Image {
         #[serde(rename = "format")]
         format: ImageFormat,
         #[serde(rename = "source")]
@@ -440,16 +490,17 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
 
         Ok(body)
     } else {
-        let error_body = response
-            .json::<ErrorResponse>()
+        let body = response
+            .text()
             .map_err(|err| from_reqwest_error("Failed to receive error response body", err))?;
-
-        trace!("Received {status} response from Bedrock API: {error_body:?}");
+        trace!("Received {status} response from Bedrock API: {body:?}");
 
         Err(Error {
             code: error_code_from_status(status),
-            message: format!("Request failed with {status}: {}", error_body.message),
-            provider_error_json: Some(serde_json::to_string(&error_body).unwrap()),
+            message: format!("Request failed with {status}: {}", body),
+            provider_error_json: Some(body),
         })
     }
 }
+
+        

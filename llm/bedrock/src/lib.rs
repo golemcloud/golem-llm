@@ -7,10 +7,11 @@ use crate::conversions::{
     tool_results_to_messages,
 };
 use golem_llm::chat_stream::{LlmChatStream, LlmChatStreamState};
+use golem_llm::config::with_config_keys;
 use golem_llm::durability::{DurableLLM, ExtendedGuest};
 use golem_llm::event_source::EventSource;
 use golem_llm::golem::llm::llm::{
-    ChatEvent, ChatStream, Config, ContentPart, Error, ErrorCode, Guest, Message, ResponseMetadata,
+    ChatEvent, ChatStream, Config, ContentPart, Error, Guest, Message, ResponseMetadata,
     Role, StreamDelta, StreamEvent, ToolCall, ToolResult,
 };
 use golem_llm::LOGGING_STATE;
@@ -81,7 +82,7 @@ impl LlmChatStreamState for BedrockChatStream {
 
     fn decode_message(&self, raw: &str) -> Result<Option<StreamEvent>, String> {
         trace!("Received raw stream event: {raw}");
-        
+
         let json: Value = serde_json::from_str(raw)
             .map_err(|err| format!("Failed to deserialize stream event: {err}"))?;
 
@@ -120,7 +121,9 @@ impl LlmChatStreamState for BedrockChatStream {
 
         if let Some(metadata) = json.get("metadata") {
             if let Some(usage) = metadata.get("usage") {
-                if let Ok(bedrock_usage) = serde_json::from_value::<crate::client::Usage>(usage.clone()) {
+                if let Ok(bedrock_usage) =
+                    serde_json::from_value::<crate::client::Usage>(usage.clone())
+                {
                     self.response_metadata.borrow_mut().usage = Some(convert_usage(bedrock_usage));
                 }
             }
@@ -137,7 +140,8 @@ impl LlmChatStreamState for BedrockChatStream {
                     "content_filtered" => crate::client::StopReason::ContentFiltered,
                     _ => crate::client::StopReason::EndTurn,
                 };
-                self.response_metadata.borrow_mut().finish_reason = Some(stop_reason_to_finish_reason(stop_reason));
+                self.response_metadata.borrow_mut().finish_reason =
+                    Some(stop_reason_to_finish_reason(stop_reason));
             }
 
             let response_metadata = self.response_metadata.borrow().clone();
@@ -154,27 +158,6 @@ impl BedrockComponent {
     const ACCESS_KEY_ID_ENV_VAR: &'static str = "AWS_ACCESS_KEY_ID";
     const SECRET_ACCESS_KEY_ENV_VAR: &'static str = "AWS_SECRET_ACCESS_KEY";
     const REGION_ENV_VAR: &'static str = "AWS_REGION";
-
-    fn get_client() -> Result<BedrockClient, Error> {
-        let access_key_id = std::env::var(Self::ACCESS_KEY_ID_ENV_VAR)
-            .map_err(|_| Error {
-                code: ErrorCode::AuthenticationFailed,
-                message: format!("Missing environment variable: {}", Self::ACCESS_KEY_ID_ENV_VAR),
-                provider_error_json: None,
-            })?;
-
-        let secret_access_key = std::env::var(Self::SECRET_ACCESS_KEY_ENV_VAR)
-            .map_err(|_| Error {
-                code: ErrorCode::AuthenticationFailed,
-                message: format!("Missing environment variable: {}", Self::SECRET_ACCESS_KEY_ENV_VAR),
-                provider_error_json: None,
-            })?;
-
-        let region = std::env::var(Self::REGION_ENV_VAR)
-            .unwrap_or_else(|_| "us-east-1".to_string());
-
-        Ok(BedrockClient::new(access_key_id, secret_access_key, region))
-    }
 
     fn request(client: BedrockClient, model_id: &str, request: ConverseRequest) -> ChatEvent {
         match client.converse(model_id, request) {
@@ -200,16 +183,26 @@ impl Guest for BedrockComponent {
 
     fn send(messages: Vec<Message>, config: Config) -> ChatEvent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
-        
-        let client = match Self::get_client() {
-            Ok(client) => client,
-            Err(err) => return ChatEvent::Error(err),
-        };
+        with_config_keys(
+            &[
+                Self::ACCESS_KEY_ID_ENV_VAR,
+                Self::SECRET_ACCESS_KEY_ENV_VAR,
+                Self::REGION_ENV_VAR,
+            ],
+            ChatEvent::Error,
+            |bedrock_api_keys| {
+                let client = BedrockClient::new(
+                    bedrock_api_keys[Self::ACCESS_KEY_ID_ENV_VAR].clone(),
+                    bedrock_api_keys[Self::SECRET_ACCESS_KEY_ENV_VAR].clone(),
+                    bedrock_api_keys[Self::REGION_ENV_VAR].clone(),
+                );
 
-        match messages_to_request(messages, config.clone()) {
-            Ok(request) => Self::request(client, &config.model, request),
-            Err(err) => ChatEvent::Error(err),
-        }
+                match messages_to_request(messages, config.clone()) {
+                    Ok(request) => Self::request(client, &config.model, request),
+                    Err(err) => ChatEvent::Error(err),
+                }
+            },
+        )
     }
 
     fn continue_(
@@ -219,18 +212,31 @@ impl Guest for BedrockComponent {
     ) -> ChatEvent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
-        let client = match Self::get_client() {
-            Ok(client) => client,
-            Err(err) => return ChatEvent::Error(err),
-        };
+        with_config_keys(
+            &[
+                Self::ACCESS_KEY_ID_ENV_VAR,
+                Self::SECRET_ACCESS_KEY_ENV_VAR,
+                Self::REGION_ENV_VAR,
+            ],
+            ChatEvent::Error,
+            |bedrock_api_keys| {
+                let client = BedrockClient::new(
+                    bedrock_api_keys[Self::ACCESS_KEY_ID_ENV_VAR].clone(),
+                    bedrock_api_keys[Self::SECRET_ACCESS_KEY_ENV_VAR].clone(),
+                    bedrock_api_keys[Self::REGION_ENV_VAR].clone(),
+                );
 
-        match messages_to_request(messages, config.clone()) {
-            Ok(mut request) => {
-                request.messages.extend(tool_results_to_messages(tool_results));
-                Self::request(client, &config.model, request)
-            }
-            Err(err) => ChatEvent::Error(err),
-        }
+                match messages_to_request(messages, config.clone()) {
+                    Ok(mut request) => {
+                        request
+                            .messages
+                            .extend(tool_results_to_messages(tool_results));
+                        Self::request(client, &config.model, request)
+                    }
+                    Err(err) => ChatEvent::Error(err),
+                }
+            },
+        )
     }
 
     fn stream(messages: Vec<Message>, config: Config) -> ChatStream {
@@ -245,15 +251,26 @@ impl ExtendedGuest for BedrockComponent {
     ) -> LlmChatStream<BedrockChatStream> {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
-        let client = match Self::get_client() {
-            Ok(client) => client,
-            Err(err) => return BedrockChatStream::failed(err),
-        };
+        with_config_keys(
+            &[
+                Self::ACCESS_KEY_ID_ENV_VAR,
+                Self::SECRET_ACCESS_KEY_ENV_VAR,
+                Self::REGION_ENV_VAR,
+            ],
+            BedrockChatStream::failed,
+            |bedrock_api_keys| {
+                let client = BedrockClient::new(
+                    bedrock_api_keys[Self::ACCESS_KEY_ID_ENV_VAR].clone(),
+                    bedrock_api_keys[Self::SECRET_ACCESS_KEY_ENV_VAR].clone(),
+                    bedrock_api_keys[Self::REGION_ENV_VAR].clone(),
+                );
 
-        match messages_to_request(messages, config.clone()) {
-            Ok(request) => Self::streaming_request(client, &config.model, request),
-            Err(err) => BedrockChatStream::failed(err),
-        }
+                match messages_to_request(messages, config.clone()) {
+                    Ok(request) => Self::streaming_request(client, &config.model, request),
+                    Err(err) => BedrockChatStream::failed(err),
+                }
+            },
+        )
     }
 
     fn retry_prompt(original_messages: &[Message], partial_result: &[StreamDelta]) -> Vec<Message> {

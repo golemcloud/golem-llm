@@ -230,6 +230,8 @@ golem-cli --version
 golem-cli app clean
 golem-cli app build -b anthropic-debug
 golem-cli app clean
+golem-cli app build -b bedrock-debug
+golem-cli app clean
 golem-cli app build -b grok-debug
 golem-cli app clean
 golem-cli app build -b openai-debug
