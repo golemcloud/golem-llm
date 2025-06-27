@@ -38,7 +38,7 @@ impl EmbeddingsApi {
             .json(&request)
             .send()
             .map_err(|err| from_reqwest_error("Request failed", err))?;
-        trace!("Recived response: {:#?}", response);
+        trace!("Recived response: {response:#?}");
         parse_response::<EmbeddingResponse>(response)
     }
 
@@ -51,7 +51,7 @@ impl EmbeddingsApi {
             .json(&request)
             .send()
             .map_err(|err| from_reqwest_error("Request failed", err))?;
-        trace!("Recived response: {:#?}", response);
+        trace!("Recived response: {response:#?}");
         parse_response::<RerankResponse>(response)
     }
 }
@@ -70,7 +70,7 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
             trace!("Error parsing response: {error:?}");
             Err(Error {
                 code: error_code_from_status(status),
-                message: format!("Failed to decode response body: {}", response_text),
+                message: format!("Failed to decode response body: {response_text}"),
                 provider_error_json: Some(error.to_string()),
             })
         }

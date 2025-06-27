@@ -60,7 +60,7 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
             trace!("Error parsing response: {error:?}");
             Err(Error {
                 code: error_code_from_status(status),
-                message: format!("Failed to decode response body: {}", response_text),
+                message: format!("Failed to decode response body: {response_text}"),
                 provider_error_json: Some(error.to_string()),
             })
         }
@@ -123,7 +123,7 @@ impl EmbeddingVector {
             EmbeddingVector::Base64(base64_str) => {
                 let bytes = general_purpose::STANDARD
                     .decode(base64_str)
-                    .map_err(|e| format!("Failed to decode base64: {}", e))?;
+                    .map_err(|e| format!("Failed to decode base64: {e}"))?;
 
                 if bytes.len() % 4 != 0 {
                     return Err("Invalid base64 data: length not divisible by 4".to_string());
