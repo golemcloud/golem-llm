@@ -1,0 +1,13 @@
+package test:video;
+
+// See https://component-model.bytecodealliance.org/design/wit.html for more details about the WIT syntax
+
+interface test-video-api {
+  test1: func() -> string;
+  test2: func() -> string;
+}
+
+world test-video {
+  import golem:video/video@1.0.0;
+  export test-video-api;
+}

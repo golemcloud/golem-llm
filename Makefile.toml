@@ -13,7 +13,7 @@ args = ["test"]
 [tasks.build]
 script_runner = "@duckscript"
 script = '''
-domains = array llm
+domains = array llm video
 
 # if there is no domain passed run for every domain
 if is_empty ${1}
@@ -28,7 +28,7 @@ end
 [tasks.release-build]
 script_runner = "@duckscript"
 script = '''
-domains = array llm
+domains = array llm video
 
 # if there is no domain passed run for every domain
 if is_empty ${1}
@@ -44,7 +44,7 @@ end
 script_runner = "@duckscript"
 script = '''
 #!/bin/bash
-domains = array llm
+domains = array llm video
 
 # if there is no domain passed run for every domain
 if is_empty ${1}
@@ -60,7 +60,7 @@ end
 script_runner = "@duckscript"
 script = '''
 #!/bin/bash
-domains = array llm
+domains = array llm video
 
 # if there is no domain passed run for every domain
 if is_empty ${1}
@@ -75,7 +75,7 @@ end
 [tasks.wit]
 script_runner = "@duckscript"
 script = '''
-domains = array llm
+domains = array llm video
 
 # if there is no domain passed run for every domain
 if is_empty ${1}
@@ -91,7 +91,7 @@ end
 description = "Builds all test components with golem-cli"
 script_runner = "@duckscript"
 script = '''
-domains = array llm
+domains = array llm video
 
 # if there is no domain passed run for every domain
 if is_empty ${1}
@@ -135,16 +135,6 @@ cm_run_task copy-release-artifacts --portable
 script_runner = "@duckscript"
 script = '''
 
-is_portable = eq ${1} "--portable"
-
-targets = array llm_openai llm_anthropic llm_grok llm_openrouter llm_ollama
-for target in ${targets}
-    if is_portable
-        cp target/wasm32-wasip1/debug/golem_${target}.wasm components/debug/golem_${target}-portable.wasm
-    else
-        cp target/wasm32-wasip1/debug/golem_${target}.wasm components/debug/golem_${target}.wasm
-    end
-end
 '''
 
 [tasks.copy-release-artifacts]
@@ -153,7 +143,7 @@ script = '''
 
 is_portable = eq ${1} "--portable"
 
-targets = array llm_openai llm_anthropic llm_grok llm_openrouter llm_ollama
+targets = array llm_anthropic llm_grok llm_openai llm_openrouter llm_ollama video_veo video_stability video_kling video_runway
 for target in ${targets}
     if is_portable
         cp target/wasm32-wasip1/release/golem_${target}.wasm components/release/golem_${target}-portable.wasm

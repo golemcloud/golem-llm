@@ -1,0 +1,49 @@
+[package]
+name = "golem-video-veo"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://golem.cloud"
+repository = "https://github.com/golemcloud/golem-llm"
+description = "WebAssembly component for working with Google Veo video APIs, with special support for Golem Cloud"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[features]
+default = ["durability"]
+durability = ["golem-rust/durability", "golem-video/durability"]
+
+[dependencies]
+golem-video = { path = "../video", version = "0.0.0", default-features = false }
+
+golem-rust = { workspace = true }
+log = { workspace = true }
+reqwest =  { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wit-bindgen-rt = { workspace = true }
+base64 = { workspace = true }
+urlencoding = "2.1"
+
+# GCP authentication dependencies
+rsa = "0.9"
+pkcs8 = "0.10"
+sha2 = "0.10"
+data-encoding = "2.4"
+
+[package.metadata.component]
+package = "golem:video-veo"
+
+[package.metadata.component.bindings]
+generate_unused_types = true
+
+[package.metadata.component.bindings.with]
+"golem:video/video@1.0.0" = "golem_video::golem::video::video"
+
+[package.metadata.component.target]
+path = "wit"
+
+[package.metadata.component.target.dependencies]
+"golem:video" = { path = "wit/deps/golem-video" } 

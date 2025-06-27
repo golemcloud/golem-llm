@@ -1,0 +1,102 @@
+package golem:video@1.0.0;
+
+interface video {
+  /// Errors that may occur during video generation
+  variant video-error {
+    invalid-input(string),
+    unsupported-feature(string),
+    quota-exceeded,
+    generation-failed(string),
+    cancelled,
+    internal-error(string),
+  }
+
+  /// Input modalities supported
+  variant media-input {
+    text(string),
+    image(reference-image),
+  }
+
+  record reference-image {
+    data: media-data,
+    prompt: option<string>,
+  }
+
+  variant media-data {
+    url(string),
+    bytes(list<u8>),
+  }
+
+  /// Generation configuration
+  record generation-config {
+    negative-prompt: option<string>,
+    seed: option<u64>,
+    scheduler: option<string>,
+    guidance-scale: option<f32>,
+    aspect-ratio: option<aspect-ratio>,
+    duration-seconds: option<f32>,
+    resolution: option<resolution>,
+    model: option<string>,
+    enable-audio: option<bool>,
+    enhance-prompt: option<bool>,
+    provider-options: list<kv>,
+  }
+
+  enum aspect-ratio {
+    square,
+    portrait,
+    landscape,
+    cinema,
+  }
+
+  enum resolution {
+    sd,
+    hd,
+    fhd,
+    uhd,
+  }
+
+  record kv {
+    key: string,
+    value: string,
+  }
+
+  /// Generated video with metadata
+  record video {
+    uri: option<string>,
+    base64-bytes: option<list<u8>>,
+    mime-type: string,
+    width: option<u32>,
+    height: option<u32>,
+    fps: option<f32>,
+    duration-seconds: option<f32>,
+  }
+
+  /// Job status
+  variant job-status {
+    pending,
+    running,
+    succeeded,
+    failed(string),
+  }
+
+  /// Generation result
+  record video-result {
+    status: job-status,
+    videos: option<list<video>>,
+    metadata: option<list<kv>>,
+  }
+
+  /// Submit generation task
+  generate: func(input: media-input, config: generation-config) -> result<string, video-error>;
+
+  /// Poll status and get result if ready
+  poll: func(job-id: string) -> result<video-result, video-error>;
+
+  /// Cancel a job if it's running
+  cancel: func(job-id: string) -> result<string, video-error>;
+}
+
+world video-library {
+  export video;
+}
