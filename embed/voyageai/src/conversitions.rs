@@ -154,8 +154,8 @@ mod tests {
 
         let request = create_embedding_request(inputs.clone(), config.clone());
         match &request {
-            Ok(request) => print!("{:?}", request),
-            Err(err) => println!("{:?}", err),
+            Ok(_request) => {},
+            Err(_err) => {},
         };
         assert!(request.is_ok());
     }
@@ -181,8 +181,8 @@ mod tests {
 
         let request = create_rerank_request(query, documents, config);
         match &request {
-            Ok(request) => print!("{:?}", &request),
-            Err(err) => println!("{:?}", err),
+            Ok(_request) => {},
+            Err(_err) => {},
         };
         assert!(request.is_ok());
     }
