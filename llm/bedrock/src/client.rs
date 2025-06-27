@@ -66,7 +66,6 @@ impl BedrockClient {
         })?;
 
         let mut request_builder = self.client.request(Method::POST, &url);
-        request_builder = request_builder.header("content-type", "application/json");
         for (key, value) in headers {
             request_builder = request_builder.header(key, value);
         }
@@ -116,7 +115,6 @@ impl BedrockClient {
         })?;
 
         let mut request_builder = self.client.request(Method::POST, &url);
-        request_builder = request_builder.header("content-type", "application/json");
         for (key, value) in headers {
             request_builder = request_builder.header(key, value);
         }
@@ -144,6 +142,8 @@ pub fn generate_sigv4_headers(
     host: &str,
     body: &str,
 ) -> Result<Vec<(String, String)>, Box<dyn std::error::Error>> {
+    use std::collections::BTreeMap;
+    
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     let timestamp = OffsetDateTime::from_unix_timestamp(now.as_secs() as i64).unwrap();
 
@@ -163,48 +163,60 @@ pub fn generate_sigv4_headers(
         timestamp.second()
     );
 
-    // Create canonical request
-    let path = if uri.starts_with('/') { uri } else { "/" };
-    let query = "";
+    let (canonical_uri, canonical_query_string) = if let Some(query_pos) = uri.find('?') {
+        let path = &uri[..query_pos];
+        let query = &uri[query_pos + 1..];
+        
+        let encoded_path = if path.contains(':') {
+            path.replace(':', "%3A")
+        } else {
+            path.to_string()
+        };
+        
+        let mut query_params: Vec<&str> = query.split('&').collect();
+        query_params.sort();
+        (encoded_path, query_params.join("&"))
+    } else {
+        let encoded_path = if uri.contains(':') {
+            uri.replace(':', "%3A")
+        } else {
+            uri.to_string()
+        };
+        (encoded_path, String::new())
+    };
 
-    // Create canonical headers
-    let mut headers: Vec<(String, String)> = vec![
-        ("host".to_string(), host.to_string()),
-        ("x-amz-date".to_string(), datetime_str.clone()),
-    ];
-    headers.sort_by(|a, b| a.0.cmp(&b.0));
+    let mut headers = BTreeMap::new();
+    headers.insert("content-type", "application/x-amz-json-1.0");
+    headers.insert("host", host);
+    headers.insert("x-amz-date", &datetime_str);
 
     let canonical_headers = headers
         .iter()
-        .map(|(k, v)| format!("{}:{}", k, v))
+        .map(|(k, v)| format!("{}:{}", k.to_lowercase().trim(), v.trim()))
         .collect::<Vec<_>>()
         .join("\n")
         + "\n";
 
     let signed_headers = headers
-        .iter()
-        .map(|(k, _)| k.as_str())
+        .keys()
+        .map(|k| k.to_lowercase())
         .collect::<Vec<_>>()
         .join(";");
 
-    // Hash payload
     let payload_hash = format!("{:x}", Sha256::digest(body.as_bytes()));
 
     let canonical_request = format!(
         "{}\n{}\n{}\n{}\n{}\n{}",
-        method, path, query, canonical_headers, signed_headers, payload_hash
+        method, canonical_uri, canonical_query_string, canonical_headers, signed_headers, payload_hash
     );
 
-    // Create string to sign
     let credential_scope = format!("{}/{}/{}/aws4_request", date_str, region, service);
+    let canonical_request_hash = format!("{:x}", Sha256::digest(canonical_request.as_bytes()));
     let string_to_sign = format!(
-        "AWS4-HMAC-SHA256\n{}\n{}\n{:x}",
-        datetime_str,
-        credential_scope,
-        Sha256::digest(canonical_request.as_bytes())
+        "AWS4-HMAC-SHA256\n{}\n{}\n{}",
+        datetime_str, credential_scope, canonical_request_hash
     );
 
-    // Calculate signature
     type HmacSha256 = Hmac<Sha256>;
 
     let mut mac = HmacSha256::new_from_slice(format!("AWS4{}", secret_key).as_bytes())?;
@@ -227,15 +239,15 @@ pub fn generate_sigv4_headers(
     mac.update(string_to_sign.as_bytes());
     let signature = format!("{:x}", mac.finalize().into_bytes());
 
-    // Create authorization header
     let auth_header = format!(
         "AWS4-HMAC-SHA256 Credential={}/{}, SignedHeaders={}, Signature={}",
         access_key, credential_scope, signed_headers, signature
     );
 
-    let mut result_headers = vec![
+    let result_headers = vec![
         ("authorization".to_string(), auth_header),
         ("x-amz-date".to_string(), datetime_str),
+        ("content-type".to_string(), "application/x-amz-json-1.0".to_string()),
     ];
 
     Ok(result_headers)
@@ -373,20 +385,17 @@ pub struct ToolConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum Tool {
+pub struct Tool {
     #[serde(rename = "toolSpec")]
-    ToolSpec {
-        name: String,
-        description: String,
-        #[serde(rename = "inputSchema")]
-        input_schema: ToolInputSchema,
-    },
+    pub tool_spec: ToolSpec,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ToolInputSchema {
-    pub json: Value,
+pub struct ToolSpec {
+    pub name: String,
+    pub description: String,
+    #[serde(rename = "inputSchema")]
+    pub input_schema: Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -406,16 +415,7 @@ pub struct GuardrailConfig {
     pub guardrail_identifier: String,
     #[serde(rename = "guardrailVersion")]
     pub guardrail_version: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trace: Option<GuardrailTrace>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum GuardrailTrace {
-    #[serde(rename = "enabled")]
-    Enabled,
-    #[serde(rename = "disabled")]
-    Disabled,
+    pub trace: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -503,4 +503,128 @@ fn parse_response<T: DeserializeOwned + Debug>(response: Response) -> Result<T, 
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_sigv4_headers_basic() {
+        let access_key = "AKIAIOSFODNN7EXAMPLE";
+        let secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+        let region = "us-east-1";
+        let service = "bedrock";
+        let method = "POST";
+        let uri = "/model/anthropic.claude-3-sonnet-20240229-v1:0/converse";
+        let host = "bedrock-runtime.us-east-1.amazonaws.com";
+        let body = r#"{"messages":[{"role":"user","content":[{"type":"text","text":"Hello"}]}]}"#;
+
+        let result = generate_sigv4_headers(
+            access_key,
+            secret_key,
+            region,
+            service,
+            method,
+            uri,
+            host,
+            body,
+        );
+
+        assert!(result.is_ok());
+        let headers = result.unwrap();
         
+        let header_map: std::collections::HashMap<String, String> = headers.into_iter().collect();
+        
+        assert!(header_map.contains_key("authorization"));
+        assert!(header_map.contains_key("x-amz-date"));
+        assert!(header_map.contains_key("content-type"));
+        
+        let auth_header = &header_map["authorization"];
+        assert!(auth_header.starts_with("AWS4-HMAC-SHA256 Credential="));
+        assert!(auth_header.contains("SignedHeaders="));
+        assert!(auth_header.contains("Signature="));
+        
+        assert_eq!(header_map["content-type"], "application/x-amz-json-1.0");
+        
+        let date_header = &header_map["x-amz-date"];
+        assert!(date_header.ends_with('Z'));
+        assert!(date_header.contains('T'));
+    }
+
+    #[test]
+    fn test_canonical_headers_ordering() {
+        let access_key = "AKIAIOSFODNN7EXAMPLE";
+        let secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+        let region = "us-east-1";
+        let service = "bedrock";
+        let method = "POST";
+        let uri = "/model/test/converse";
+        let host = "bedrock-runtime.us-east-1.amazonaws.com";
+        let body = "{}";
+
+        let result = generate_sigv4_headers(
+            access_key,
+            secret_key,
+            region,
+            service,
+            method,
+            uri,
+            host,
+            body,
+        );
+
+        assert!(result.is_ok());
+        let headers = result.unwrap();
+        let header_map: std::collections::HashMap<String, String> = headers.into_iter().collect();
+        
+        let auth_header = &header_map["authorization"];
+        
+        assert!(auth_header.contains("SignedHeaders=content-type;host;x-amz-date"));
+    }
+
+    #[test]
+    fn test_bedrock_client_integration() {
+        let client = BedrockClient::new(
+            "AKIAIOSFODNN7EXAMPLE".to_string(),
+            "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY".to_string(),
+            "us-east-1".to_string(),
+        );
+
+        let request = ConverseRequest {
+            model_id: "anthropic.claude-3-sonnet-20240229-v1:0".to_string(),
+            messages: vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "Hello, how are you?".to_string(),
+                }],
+            }],
+            system: None,
+            inference_config: None,
+            tool_config: None,
+            guardrail_config: None,
+            additional_model_request_fields: None,
+        };
+
+    
+        let body = serde_json::to_string(&request).expect("Failed to serialize request");
+        let host = format!("bedrock-runtime.{}.amazonaws.com", client.region);
+        
+        let headers_result = generate_sigv4_headers(
+            &client.access_key_id,
+            &client.secret_access_key,
+            &client.region,
+            "bedrock",
+            "POST",
+            "/model/anthropic.claude-3-sonnet-20240229-v1:0/converse",
+            &host,
+            &body,
+        );
+
+        assert!(headers_result.is_ok());
+        let headers = headers_result.unwrap();
+        
+        let header_names: Vec<&str> = headers.iter().map(|(k, _)| k.as_str()).collect();
+        assert!(header_names.contains(&"authorization"));
+        assert!(header_names.contains(&"x-amz-date"));
+        assert!(header_names.contains(&"content-type"));
+    }
+}

@@ -1,7 +1,7 @@
 use crate::client::{
     ContentBlock, ConverseRequest, ConverseResponse, ImageFormat, ImageSource as ClientImageSource,
     InferenceConfig, Message as ClientMessage, Role as ClientRole, StopReason, SystemContentBlock,
-    Tool, ToolChoice, ToolConfig, ToolInputSchema, ToolResultContentBlock, ToolResultStatus,
+    Tool, ToolChoice, ToolConfig, ToolSpec, ToolResultContentBlock, ToolResultStatus,
 };
 use base64::{engine::general_purpose, Engine as _};
 use golem_llm::golem::llm::llm::{
@@ -287,10 +287,12 @@ fn message_to_system_content(message: &Message) -> Vec<SystemContentBlock> {
 
 fn tool_definition_to_tool(tool: &ToolDefinition) -> Result<Tool, Error> {
     match serde_json::from_str(&tool.parameters_schema) {
-        Ok(json_schema) => Ok(Tool::ToolSpec {
-            name: tool.name.clone(),
-            description: tool.description.clone().unwrap_or_default(),
-            input_schema: ToolInputSchema { json: json_schema },
+        Ok(json_schema) => Ok(Tool {
+            tool_spec: ToolSpec {
+                name: tool.name.clone(),
+                description: tool.description.clone().unwrap_or_default(),
+                input_schema: json_schema,
+            },
         }),
         Err(error) => Err(Error {
             code: ErrorCode::InternalError,

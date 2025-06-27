@@ -28,6 +28,7 @@ base64 = { workspace = true }
 hmac = "0.12"
 sha2 = "0.10"
 time = { version = "0.3", features = ["formatting"] }
+percent-encoding = "2.3"
 
 [package.metadata.component]
 package = "golem:llm-bedrock"

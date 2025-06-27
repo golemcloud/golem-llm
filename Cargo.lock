@@ -427,6 +427,7 @@ dependencies = [
  "golem-rust",
  "hmac",
  "log",
+ "percent-encoding",
  "reqwest",
  "serde",
  "serde_json",
