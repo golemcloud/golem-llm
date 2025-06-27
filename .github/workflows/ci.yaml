@@ -108,7 +108,7 @@ jobs:
         run: |
           set -e
           cargo binstall --force --locked cargo-component@0.21.1
-          cargo binstall golem-cli@1.2.3 --locked --force --no-confirm
+          cargo binstall golem-cli@1.2.5 --locked --force --no-confirm
           cargo binstall wac-cli --locked --force --no-confirm
       - name: Start Ollama in Docker
         run: |
@@ -127,7 +127,7 @@ jobs:
         run: |
           set -e
           echo "Installing Golem server"
-          sudo curl -L https://github.com/golemcloud/golem-cli/releases/download/v1.2.3/golem-x86_64-unknown-linux-gnu -o ./golem
+          sudo curl -L https://github.com/golemcloud/golem-cli/releases/download/v1.2.5/golem-x86_64-unknown-linux-gnu -o ./golem
           sudo chmod +x ./golem
           sudo mv ./golem /usr/local/bin/golem
           golem --version
