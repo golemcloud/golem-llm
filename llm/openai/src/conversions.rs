@@ -138,7 +138,7 @@ pub fn content_part_to_inner_input_item(content_part: ContentPart) -> InnerInput
             ImageReference::Inline(image_source) => {
                 let base64_data = general_purpose::STANDARD.encode(&image_source.data);
                 let mime_type = &image_source.mime_type; // This is already a string
-                let data_url = format!("data:{};base64,{}", mime_type, base64_data);
+                let data_url = format!("data:{mime_type};base64,{base64_data}");
 
                 InnerInputItem::ImageInput {
                     image_url: data_url,

@@ -228,7 +228,7 @@ fn log_unsupported_options(config: &GenerationConfig, options: &HashMap<String, 
             key.as_str(),
             "model" | "person_generation" | "sample_count" | "storage_uri"
         ) {
-            log::warn!("Provider option '{}' is not supported by Veo API", key);
+            log::warn!("Provider option '{key}' is not supported by Veo API");
         }
     }
 }
@@ -293,7 +293,6 @@ pub fn cancel_video_generation(
 ) -> Result<String, VideoError> {
     // Veo API does not support cancellation according to requirements
     Err(VideoError::UnsupportedFeature(format!(
-        "Cancellation is not supported by Veo API for operation {}",
-        operation_name
+        "Cancellation is not supported by Veo API for operation {operation_name}"
     )))
 }

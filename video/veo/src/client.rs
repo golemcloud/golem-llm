@@ -32,7 +32,7 @@ impl VeoApi {
 
     fn get_auth_header(&self) -> Result<String, VideoError> {
         let token = generate_access_token(&self.client_email, &self.private_key, SCOPE)?;
-        Ok(format!("Bearer {}", token))
+        Ok(format!("Bearer {token}"))
     }
 
     pub fn generate_text_to_video(
@@ -92,7 +92,7 @@ impl VeoApi {
     }
 
     pub fn poll_generation(&self, operation_name: &str) -> Result<PollResponse, VideoError> {
-        trace!("Polling Veo API for operation: {}", operation_name);
+        trace!("Polling Veo API for operation: {operation_name}");
 
         let auth_header = self.get_auth_header()?;
 
@@ -111,19 +111,17 @@ impl VeoApi {
                 operation_name
             );
             return Err(VideoError::InternalError(format!(
-                "Invalid operation name format: {}",
-                operation_name
+                "Invalid operation name format: {operation_name}"
             )));
         }
 
         let base_path = parts[0]; // projects/.../locations/.../publishers/google/models/MODEL_ID
         let fetch_url = format!(
-            "https://us-central1-aiplatform.googleapis.com/v1/{}:fetchPredictOperation",
-            base_path
+            "https://us-central1-aiplatform.googleapis.com/v1/{base_path}:fetchPredictOperation"
         );
 
-        trace!("Constructed fetch URL: {}", fetch_url);
-        trace!("Poll request payload: {:?}", poll_request);
+        trace!("Constructed fetch URL: {fetch_url}");
+        trace!("Poll request payload: {poll_request:?}");
 
         let response: Response = self
             .client
@@ -135,7 +133,7 @@ impl VeoApi {
             .map_err(|err| from_reqwest_error("Poll request failed", err))?;
 
         let status = response.status();
-        trace!("Received response with status: {}", status);
+        trace!("Received response with status: {status}");
 
         if status.is_success() {
             // Get the raw response text first for debugging
@@ -143,28 +141,22 @@ impl VeoApi {
                 .text()
                 .map_err(|err| from_reqwest_error("Failed to read response text", err))?;
 
-            trace!("Raw response JSON: {}", response_text);
+            trace!("Raw response JSON: {response_text}");
 
             // Try to parse the JSON
             let operation_response: OperationResponse = serde_json::from_str(&response_text)
                 .map_err(|err| {
-                    trace!("JSON parsing failed with error: {}", err);
-                    trace!("Failed to parse this JSON: {}", response_text);
-                    VideoError::InternalError(format!(
-                        "Failed to parse operation response: {}",
-                        err
-                    ))
+                    trace!("JSON parsing failed with error: {err}");
+                    trace!("Failed to parse this JSON: {response_text}");
+                    VideoError::InternalError(format!("Failed to parse operation response: {err}"))
                 })?;
 
-            trace!(
-                "Successfully parsed OperationResponse: {:?}",
-                operation_response
-            );
+            trace!("Successfully parsed OperationResponse: {operation_response:?}");
 
             // When the operation is still processing, the API may not include the 'done' field
             // If 'done' is missing, we treat it as false (still processing)
             let is_done = operation_response.done.unwrap_or(false);
-            trace!("Operation done status: {}", is_done);
+            trace!("Operation done status: {is_done}");
 
             if !is_done {
                 trace!("Operation still processing, returning Processing status");
@@ -174,7 +166,7 @@ impl VeoApi {
             trace!("Operation completed, checking for response data");
 
             if let Some(response) = operation_response.response {
-                trace!("Found response data: {:?}", response);
+                trace!("Found response data: {response:?}");
 
                 if let Some(videos) = response.videos {
                     trace!("Found {} videos in response", videos.len());
@@ -183,7 +175,7 @@ impl VeoApi {
                         .into_iter()
                         .enumerate()
                         .map(|(index, video)| {
-                            trace!("Processing video {}: {:?}", index, video);
+                            trace!("Processing video {index}: {video:?}");
 
                             if let Some(base64_data) = video.bytes_base64_encoded {
                                 trace!(
@@ -198,10 +190,9 @@ impl VeoApi {
                                     &base64_data,
                                 )
                                 .map_err(|e| {
-                                    trace!("Failed to decode base64 for video {}: {}", index, e);
+                                    trace!("Failed to decode base64 for video {index}: {e}");
                                     VideoError::InternalError(format!(
-                                        "Failed to decode base64 video data: {}",
-                                        e
+                                        "Failed to decode base64 video data: {e}"
                                     ))
                                 })?;
 
@@ -220,7 +211,7 @@ impl VeoApi {
                                     mime_type,
                                 })
                             } else {
-                                trace!("Video {} has no base64 encoded data", index);
+                                trace!("Video {index} has no base64 encoded data");
                                 Err(VideoError::InternalError(
                                     "No base64 encoded video data in response".to_string(),
                                 ))
@@ -234,7 +225,7 @@ impl VeoApi {
                             Ok(PollResponse::Complete(videos))
                         }
                         Err(e) => {
-                            trace!("Failed to process videos: {:?}", e);
+                            trace!("Failed to process videos: {e:?}");
                             Err(e)
                         }
                     }
@@ -255,11 +246,7 @@ impl VeoApi {
                 .text()
                 .map_err(|err| from_reqwest_error("Failed to read error response", err))?;
 
-            trace!(
-                "Request failed with status {}, error body: {}",
-                status,
-                error_body
-            );
+            trace!("Request failed with status {status}, error body: {error_body}");
             Err(video_error_from_status(status, error_body))
         }
     }
@@ -375,7 +362,7 @@ fn parse_response<T: serde::de::DeserializeOwned>(response: Response) -> Result<
             .text()
             .map_err(|err| from_reqwest_error("Failed to receive error response body", err))?;
 
-        let error_message = format!("Request failed with {}: {}", status, error_body);
+        let error_message = format!("Request failed with {status}: {error_body}");
         Err(video_error_from_status(status, error_message))
     }
 }

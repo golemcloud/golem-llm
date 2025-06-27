@@ -40,7 +40,7 @@ impl StabilityApi {
             .header("authorization", format!("Bearer {}", &self.api_key))
             .header(
                 "content-type",
-                format!("multipart/form-data; boundary={}", boundary),
+                format!("multipart/form-data; boundary={boundary}"),
             )
             .body(body)
             .send()
@@ -50,13 +50,13 @@ impl StabilityApi {
     }
 
     pub fn poll_generation(&self, generation_id: &str) -> Result<PollResponse, VideoError> {
-        trace!("Polling generation status for ID: {}", generation_id);
+        trace!("Polling generation status for ID: {generation_id}");
 
         let response: Response = self
             .client
             .request(
                 Method::GET,
-                format!("{BASE_URL}/v2beta/image-to-video/result/{}", generation_id),
+                format!("{BASE_URL}/v2beta/image-to-video/result/{generation_id}"),
             )
             .header("authorization", format!("Bearer {}", &self.api_key))
             .send()
@@ -146,7 +146,7 @@ fn build_multipart_body(request: &ImageToVideoRequest, boundary: &str) -> Vec<u8
     let mut body = Vec::new();
 
     // Add image field
-    body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
+    body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
     body.extend_from_slice(
         b"Content-Disposition: form-data; name=\"image\"; filename=\"image.png\"\r\n",
     );
@@ -156,21 +156,21 @@ fn build_multipart_body(request: &ImageToVideoRequest, boundary: &str) -> Vec<u8
 
     // Add optional fields
     if let Some(seed) = request.seed {
-        body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
+        body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
         body.extend_from_slice(b"Content-Disposition: form-data; name=\"seed\"\r\n\r\n");
         body.extend_from_slice(seed.to_string().as_bytes());
         body.extend_from_slice(b"\r\n");
     }
 
     if let Some(cfg_scale) = request.cfg_scale {
-        body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
+        body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
         body.extend_from_slice(b"Content-Disposition: form-data; name=\"cfg_scale\"\r\n\r\n");
         body.extend_from_slice(cfg_scale.to_string().as_bytes());
         body.extend_from_slice(b"\r\n");
     }
 
     if let Some(motion_bucket_id) = request.motion_bucket_id {
-        body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
+        body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
         body.extend_from_slice(
             b"Content-Disposition: form-data; name=\"motion_bucket_id\"\r\n\r\n",
         );
@@ -179,7 +179,7 @@ fn build_multipart_body(request: &ImageToVideoRequest, boundary: &str) -> Vec<u8
     }
 
     // Close boundary
-    body.extend_from_slice(format!("--{}--\r\n", boundary).as_bytes());
+    body.extend_from_slice(format!("--{boundary}--\r\n").as_bytes());
 
     body
 }
@@ -199,7 +199,7 @@ fn parse_response<T: serde::de::DeserializeOwned>(response: Response) -> Result<
             if let Ok(error_response) = serde_json::from_str::<ErrorResponse>(&error_body) {
                 error_response.error.message
             } else {
-                format!("Request failed with {}: {}", status, error_body)
+                format!("Request failed with {status}: {error_body}")
             };
 
         Err(video_error_from_status(status, error_message))

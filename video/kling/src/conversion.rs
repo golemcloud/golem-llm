@@ -159,7 +159,7 @@ fn log_unsupported_options(config: &GenerationConfig, options: &HashMap<String, 
     // Log unused provider options
     for key in options.keys() {
         if !matches!(key.as_str(), "model" | "mode") {
-            log::warn!("Provider option '{}' is not supported by Kling API", key);
+            log::warn!("Provider option '{key}' is not supported by Kling API");
         }
     }
 }
@@ -244,7 +244,6 @@ fn parse_duration_string(duration_str: &str) -> Option<f32> {
 pub fn cancel_video_generation(_client: &KlingApi, task_id: String) -> Result<String, VideoError> {
     // Kling API does not support cancellation according to requirements
     Err(VideoError::UnsupportedFeature(format!(
-        "Cancellation is not supported by Kling API for task {}",
-        task_id
+        "Cancellation is not supported by Kling API for task {task_id}"
     )))
 }

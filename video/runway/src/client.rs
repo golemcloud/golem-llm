@@ -42,11 +42,11 @@ impl RunwayApi {
     }
 
     pub fn poll_generation(&self, task_id: &str) -> Result<PollResponse, VideoError> {
-        trace!("Polling generation status for ID: {}", task_id);
+        trace!("Polling generation status for ID: {task_id}");
 
         let response: Response = self
             .client
-            .request(Method::GET, format!("{BASE_URL}/v1/tasks/{}", task_id))
+            .request(Method::GET, format!("{BASE_URL}/v1/tasks/{task_id}"))
             .header("Authorization", format!("Bearer {}", &self.api_key))
             .header("X-Runway-Version", API_VERSION)
             .send()
@@ -99,11 +99,11 @@ impl RunwayApi {
     }
 
     pub fn cancel_task(&self, task_id: &str) -> Result<(), VideoError> {
-        trace!("Canceling task: {}", task_id);
+        trace!("Canceling task: {task_id}");
 
         let response: Response = self
             .client
-            .request(Method::DELETE, format!("{BASE_URL}/v1/tasks/{}", task_id))
+            .request(Method::DELETE, format!("{BASE_URL}/v1/tasks/{task_id}"))
             .header("Authorization", format!("Bearer {}", &self.api_key))
             .header("X-Runway-Version", API_VERSION)
             .send()
@@ -122,7 +122,7 @@ impl RunwayApi {
     }
 
     fn download_video(&self, url: &str) -> Result<Vec<u8>, VideoError> {
-        trace!("Downloading video from URL: {}", url);
+        trace!("Downloading video from URL: {url}");
 
         let response: Response = self
             .client
@@ -207,7 +207,7 @@ fn parse_response<T: serde::de::DeserializeOwned>(response: Response) -> Result<
             .text()
             .map_err(|err| from_reqwest_error("Failed to receive error response body", err))?;
 
-        let error_message = format!("Request failed with {}: {}", status, error_body);
+        let error_message = format!("Request failed with {status}: {error_body}");
         Err(video_error_from_status(status, error_message))
     }
 }

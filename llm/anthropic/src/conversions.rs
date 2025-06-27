@@ -130,7 +130,7 @@ pub fn process_response(response: MessagesResponse) -> ChatEvent {
                         Err(e) => {
                             return ChatEvent::Error(Error {
                                 code: ErrorCode::InvalidRequest,
-                                message: format!("Failed to decode base64 image data: {}", e),
+                                message: format!("Failed to decode base64 image data: {e}"),
                                 provider_error_json: None,
                             });
                         }

@@ -184,7 +184,7 @@ fn convert_content_parts(contents: Vec<ContentPart>) -> crate::client::Content {
                     let media_type = &image_source.mime_type; // This is already a string
                     result.push(crate::client::ContentPart::ImageInput {
                         image_url: crate::client::ImageUrl {
-                            url: format!("data:{};base64,{}", media_type, base64_data),
+                            url: format!("data:{media_type};base64,{base64_data}"),
                             detail: image_source.detail.map(|d| d.into()),
                         },
                     });

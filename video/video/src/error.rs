@@ -49,6 +49,6 @@ pub fn video_error_from_status(status: StatusCode, message: impl AsRef<str>) -> 
     } else if status == StatusCode::NOT_IMPLEMENTED || status == StatusCode::METHOD_NOT_ALLOWED {
         VideoError::UnsupportedFeature(msg)
     } else {
-        VideoError::InternalError(format!("HTTP {}: {}", status, msg))
+        VideoError::InternalError(format!("HTTP {status}: {msg}"))
     }
 }

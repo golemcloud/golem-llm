@@ -56,9 +56,9 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Utf8(err) => f.write_fmt(format_args!("UTF8 error: {}", err)),
-            Self::Parser(err) => f.write_fmt(format_args!("Parse error: {}", err)),
-            Self::Transport(err) => f.write_fmt(format_args!("Transport error: {}", err)),
+            Self::Utf8(err) => f.write_fmt(format_args!("UTF8 error: {err}")),
+            Self::Parser(err) => f.write_fmt(format_args!("Parse error: {err}")),
+            Self::Transport(err) => f.write_fmt(format_args!("Transport error: {err}")),
         }
     }
 }

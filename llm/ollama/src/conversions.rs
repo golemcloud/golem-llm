@@ -214,7 +214,7 @@ pub fn process_response(response: CompletionsResponse) -> ChatEvent {
         };
 
         ChatEvent::Message(CompleteResponse {
-            id: format!("ollama-{}", timestamp),
+            id: format!("ollama-{timestamp}"),
             content,
             tool_calls,
             metadata,

@@ -20,7 +20,7 @@ pub fn generate_access_token(
     private_key_pem: &str,
     scope: &str,
 ) -> Result<String, VideoError> {
-    trace!("Generating GCP access token for client: {}", client_email);
+    trace!("Generating GCP access token for client: {client_email}");
 
     // Step 1: Generate JWT
     let jwt = generate_jwt(client_email, private_key_pem, scope)?;
@@ -40,12 +40,12 @@ fn generate_jwt(
 
     // Parse the private key
     let private_key = RsaPrivateKey::from_pkcs8_pem(&processed_key)
-        .map_err(|e| internal_error(format!("Failed to parse private key: {}", e)))?;
+        .map_err(|e| internal_error(format!("Failed to parse private key: {e}")))?;
 
     // Get current time
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_err(|e| internal_error(format!("Failed to get current time: {}", e)))?
+        .map_err(|e| internal_error(format!("Failed to get current time: {e}")))?
         .as_secs();
 
     // Create JWT header
@@ -66,16 +66,16 @@ fn generate_jwt(
     // Encode header and payload
     let encoded_header = BASE64URL_NOPAD.encode(
         &serde_json::to_vec(&header)
-            .map_err(|e| internal_error(format!("Failed to serialize header: {}", e)))?,
+            .map_err(|e| internal_error(format!("Failed to serialize header: {e}")))?,
     );
 
     let encoded_payload = BASE64URL_NOPAD.encode(
         &serde_json::to_vec(&payload)
-            .map_err(|e| internal_error(format!("Failed to serialize payload: {}", e)))?,
+            .map_err(|e| internal_error(format!("Failed to serialize payload: {e}")))?,
     );
 
     // Create signing input
-    let signing_input = format!("{}.{}", encoded_header, encoded_payload);
+    let signing_input = format!("{encoded_header}.{encoded_payload}");
 
     // Hash the signing input
     let mut hasher = Sha256::new();
@@ -92,12 +92,12 @@ fn generate_jwt(
     let padding = Pkcs1v15Sign::new_unprefixed();
     let signature = private_key
         .sign(padding, &digest_info)
-        .map_err(|e| internal_error(format!("Failed to sign JWT: {}", e)))?;
+        .map_err(|e| internal_error(format!("Failed to sign JWT: {e}")))?;
 
     let encoded_signature = BASE64URL_NOPAD.encode(&signature);
 
     // Assemble final JWT
-    let jwt = format!("{}.{}", signing_input, encoded_signature);
+    let jwt = format!("{signing_input}.{encoded_signature}");
 
     debug!("Generated JWT token for GCP authentication");
     Ok(jwt)
@@ -109,13 +109,10 @@ fn exchange_jwt_for_token(jwt: &str) -> Result<String, VideoError> {
 
     let client = Client::builder()
         .build()
-        .map_err(|e| internal_error(format!("Failed to create HTTP client: {}", e)))?;
+        .map_err(|e| internal_error(format!("Failed to create HTTP client: {e}")))?;
 
     // Prepare request body
-    let body = format!(
-        "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion={}",
-        jwt
-    );
+    let body = format!("grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion={jwt}");
 
     // Make request to Google's token endpoint
     let response = client
@@ -123,24 +120,23 @@ fn exchange_jwt_for_token(jwt: &str) -> Result<String, VideoError> {
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
-        .map_err(|e| internal_error(format!("Failed to request access token: {}", e)))?;
+        .map_err(|e| internal_error(format!("Failed to request access token: {e}")))?;
 
     let status = response.status();
 
     if !status.is_success() {
         let error_body = response
             .text()
-            .map_err(|e| internal_error(format!("Failed to read error response: {}", e)))?;
+            .map_err(|e| internal_error(format!("Failed to read error response: {e}")))?;
         return Err(internal_error(format!(
-            "Token exchange failed with status {}: {}",
-            status, error_body
+            "Token exchange failed with status {status}: {error_body}"
         )));
     }
 
     // Parse response
     let response_body: serde_json::Value = response
         .json()
-        .map_err(|e| internal_error(format!("Failed to parse token response: {}", e)))?;
+        .map_err(|e| internal_error(format!("Failed to parse token response: {e}")))?;
 
     // Extract access token
     let access_token = response_body

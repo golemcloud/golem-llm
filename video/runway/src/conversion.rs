@@ -21,7 +21,7 @@ pub fn media_input_to_request(
                     // Convert bytes to data URI
                     use base64::Engine;
                     let base64_data = base64::engine::general_purpose::STANDARD.encode(&bytes);
-                    format!("data:image/png;base64,{}", base64_data)
+                    format!("data:image/png;base64,{base64_data}")
                 }
             };
 
@@ -131,8 +131,7 @@ fn determine_ratio(
             AspectRatio::Portrait => Ok("768:1280".to_string()),
             AspectRatio::Square | AspectRatio::Cinema => {
                 log::warn!(
-                    "Aspect ratio {:?} not supported by gen3a_turbo, using landscape",
-                    target_aspect
+                    "Aspect ratio {target_aspect:?} not supported by gen3a_turbo, using landscape"
                 );
                 Ok("1280:768".to_string())
             }
@@ -195,5 +194,5 @@ pub fn poll_video_generation(
 
 pub fn cancel_video_generation(client: &RunwayApi, task_id: String) -> Result<String, VideoError> {
     client.cancel_task(&task_id)?;
-    Ok(format!("Task {} canceled successfully", task_id))
+    Ok(format!("Task {task_id} canceled successfully"))
 }

@@ -138,7 +138,7 @@ jobs:
         run: |
           set -e
           cargo make --cwd llm build-ollama
-          cd test
+          cd test/llm
           golem-cli app build -b ollama-debug
           golem-cli app deploy -b ollama-debug
           golem-cli worker new -e GOLEM_OLLAMA_BASE_URL=http://localhost:11434 test:llm/ollama-1

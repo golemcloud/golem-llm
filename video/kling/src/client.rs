@@ -28,10 +28,9 @@ impl KlingApi {
     }
 
     fn get_auth_header(&self) -> Result<String, VideoError> {
-        let token = generate_jwt_token(&self.access_key, &self.secret_key).map_err(|e| {
-            VideoError::InternalError(format!("JWT token generation failed: {}", e))
-        })?;
-        Ok(format!("Bearer {}", token))
+        let token = generate_jwt_token(&self.access_key, &self.secret_key)
+            .map_err(|e| VideoError::InternalError(format!("JWT token generation failed: {e}")))?;
+        Ok(format!("Bearer {token}"))
     }
 
     pub fn generate_text_to_video(
@@ -75,7 +74,7 @@ impl KlingApi {
     }
 
     pub fn poll_generation(&self, task_id: &str) -> Result<PollResponse, VideoError> {
-        trace!("Polling generation status for ID: {}", task_id);
+        trace!("Polling generation status for ID: {task_id}");
 
         let auth_header = self.get_auth_header()?;
 
@@ -83,7 +82,7 @@ impl KlingApi {
             .client
             .request(
                 Method::GET,
-                format!("{BASE_URL}/v1/videos/text2video/{}", task_id),
+                format!("{BASE_URL}/v1/videos/text2video/{task_id}"),
             )
             .header("Authorization", auth_header)
             .send()
@@ -154,7 +153,7 @@ impl KlingApi {
     }
 
     fn download_video(&self, url: &str) -> Result<Vec<u8>, VideoError> {
-        trace!("Downloading video from URL: {}", url);
+        trace!("Downloading video from URL: {url}");
 
         let response: Response = self
             .client
@@ -299,7 +298,7 @@ fn parse_response<T: serde::de::DeserializeOwned>(response: Response) -> Result<
             .text()
             .map_err(|err| from_reqwest_error("Failed to receive error response body", err))?;
 
-        let error_message = format!("Request failed with {}: {}", status, error_body);
+        let error_message = format!("Request failed with {status}: {error_body}");
         Err(video_error_from_status(status, error_message))
     }
 }
