@@ -1,0 +1,6 @@
+package golem:search-typesense;
+
+world typesense-provider {
+    import golem:search/core@1.0.0;
+    export golem:search/core@1.0.0;
+}

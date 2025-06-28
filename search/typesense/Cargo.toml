@@ -1,0 +1,42 @@
+[package]
+name = "golem-search-typesense"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://golem.cloud"
+repository = "https://github.com/golemcloud/golem-llm"
+description = "WebAssembly component for working with Typesense APIs, with special support for Golem Cloud"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[features]
+default = ["durability"]
+durability = ["golem-rust/durability", "golem-search/durability"]
+
+[dependencies]
+golem-search = { path = "../search" }
+golem-rust = "1.6.0"
+log = "0.4.27"
+reqwest = { git = "https://github.com/golemcloud/reqwest", branch = "update-may-2025", features = ["json", "blocking"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+wit-bindgen-rt = { version = "0.40.0", features = ["bitflags"] }
+urlencoding = "2.1"
+
+[package.metadata.component]
+package = "golem:search-typesense"
+
+[package.metadata.component.bindings]
+generate_unused_types = true
+
+[package.metadata.component.bindings.with]
+"golem:search/core@1.0.0" = "golem_search::golem::search::core"
+
+[package.metadata.component.target]
+path = "wit"
+
+[package.metadata.component.target.dependencies]
+"golem:search" = { path = "wit/deps/golem-search" }
+"wasi:io" = { path = "wit/deps/wasi:io" }

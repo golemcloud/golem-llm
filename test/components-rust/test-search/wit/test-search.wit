@@ -1,0 +1,15 @@
+package test:search;
+
+world test-search {
+    import golem:search/core@1.0.0;
+    export test:search/test@1.0.0;
+}
+
+interface test {
+    test-basic-search: func() -> result<string, string>;
+    test-index-operations: func() -> result<string, string>;
+    test-document-operations: func() -> result<string, string>;
+    test-schema-operations: func() -> result<string, string>;
+    test-streaming-search: func() -> result<string, string>;
+    test-facets-and-filters: func() -> result<string, string>;
+}
