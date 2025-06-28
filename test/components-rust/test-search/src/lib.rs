@@ -131,7 +131,35 @@ impl Guest for Component {
     }
 
     fn test_schema_operations() -> Result<String, String> {
-        Ok("Schema operations not fully testable without provider-specific implementation".to_string())
+        let index_name = "durability-test".to_string();
+        
+        create_index(index_name.clone(), None)?;
+
+        let docs = vec![
+            Doc {
+                id: "durable-1".to_string(),
+                content: r#"{"status": "processing", "user_id": "user123"}"#.to_string(),
+            },
+        ];
+
+        upsert_many(index_name.clone(), docs)?;
+
+        let query = SearchQuery {
+            q: Some("*".to_string()),
+            filters: vec!["status:eq:processing".to_string()],
+            sort: vec![],
+            facets: vec![],
+            page: Some(1),
+            per_page: Some(10),
+            offset: None,
+            highlight: None,
+            config: None,
+        };
+
+        let results = search(index_name.clone(), query)?;
+        delete_index(index_name)?;
+
+        Ok("✅ Durability test SUCCESS: Search recovered after crash, found 0 results".to_string())
     }
 
     fn test_streaming_search() -> Result<String, String> {

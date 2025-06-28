@@ -9,7 +9,7 @@ where
     match env::var(key) {
         Ok(value) if !value.is_empty() => func(value),
         _ => {
-            let error = SearchError::Internal(format!("Missing or empty environment variable: {}", key));
+            let error = SearchError::Internal(format!("Missing env var: {}", key));
             R::from(error_fn(error))
         }
     }
