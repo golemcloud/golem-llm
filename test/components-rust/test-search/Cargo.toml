@@ -1,0 +1,28 @@
+[package]
+name = "test-search"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = { workspace = true }
+serde_json = { workspace = true }
+
+[package.metadata.component]
+package = "test:search"
+
+[package.metadata.component.bindings]
+generate_unused_types = true
+
+[package.metadata.component.bindings.with]
+"golem:search/core@1.0.0" = "bindings::golem::search::core"
+
+[package.metadata.component.target]
+path = "wit"
+
+[package.metadata.component.target.dependencies]
+"golem:search" = { path = "wit/deps/golem-search" }
