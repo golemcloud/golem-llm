@@ -114,7 +114,7 @@ impl SearchStreamState for MeilisearchStream {
 struct MeilisearchComponent;
 
 impl MeilisearchComponent {
-    const HOST_VAR: &'static str = "MEILISEARCH_HOST";
+    const HOST_VAR: &'static str = "SEARCH_PROVIDER_ENDPOINT";
     const API_KEY_VAR: &'static str = "MEILISEARCH_API_KEY";
 }
 

@@ -121,9 +121,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     
                     if let Some(schema) = schema {
                         let mapping = schema_to_mapping(&schema);
@@ -140,9 +139,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     client.delete_index(&name)
                 })
             })
@@ -153,9 +151,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     client.list_indexes()
                 })
             })
@@ -166,9 +163,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     let es_doc = doc_to_es_doc(doc)?;
                     client.index_document(&index, &es_doc.id, es_doc.content)
                 })
@@ -180,9 +176,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     let es_docs: Result<Vec<_>, _> = docs.into_iter().map(doc_to_es_doc).collect();
                     client.bulk_index(&index, es_docs?)
                 })
@@ -194,9 +189,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     client.delete_document(&index, &id)
                 })
             })
@@ -207,9 +201,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     client.bulk_delete(&index, ids)
                 })
             })
@@ -220,9 +213,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     client.get_document(&index, &id)
                 })
             })
@@ -233,9 +225,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     let es_query = query_to_es_query(&query)?;
                     trace!("Executing search query: {:?}", es_query);
                     
@@ -259,9 +250,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     client.get_mapping(&index)
                 })
             })
@@ -272,9 +262,8 @@ impl Guest for ElasticSearchComponent {
         LOGGING_STATE.with_borrow_mut(|state| state.init());
 
         with_config_key(Self::ENDPOINT_VAR, Err, |endpoint| {
-            with_config_key(Self::USERNAME_VAR, Err, |username| {
-                with_config_key(Self::PASSWORD_VAR, Err, |password| {
-                    let client = ElasticSearchApi::new(endpoint, username, password);
+            with_config_key(Self::API_KEY_VAR, Err, |api_key| {
+                let client = ElasticSearchApi::new(endpoint, api_key);
                     let mapping = schema_to_mapping(&schema);
                     client.update_mapping(&index, mapping)
                 })

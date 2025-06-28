@@ -120,7 +120,7 @@ impl SearchStreamState for TypesenseStream {
 struct TypesenseComponent;
 
 impl TypesenseComponent {
-    const HOST_VAR: &'static str = "TYPESENSE_HOST";
+    const HOST_VAR: &'static str = "TYPESENSE_ENDPOINT";
     const API_KEY_VAR: &'static str = "TYPESENSE_API_KEY";
 }
 

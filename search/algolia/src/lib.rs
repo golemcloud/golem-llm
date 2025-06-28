@@ -97,7 +97,7 @@ impl SearchStreamState for AlgoliaStream {
 struct AlgoliaComponent;
 
 impl AlgoliaComponent {
-    const APP_ID_VAR: &'static str = "ALGOLIA_APP_ID";
+    const APP_ID_VAR: &'static str = "ALGOLIA_APPLICATION_ID";
     const API_KEY_VAR: &'static str = "ALGOLIA_API_KEY";
 }
 
