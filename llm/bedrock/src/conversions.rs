@@ -2,6 +2,7 @@ use crate::client::{
     ContentBlock, ConverseRequest, ConverseResponse, ImageFormat, ImageSource as ClientImageSource,
     InferenceConfig, Message as ClientMessage, Role as ClientRole, StopReason, SystemContentBlock,
     Tool, ToolChoice, ToolConfig, ToolSpec, ToolResultContentBlock, ToolResultStatus,
+    ImageBlock, ToolUseBlock, ToolResultBlock, ToolInputSchema, ToolChoiceTool,
 };
 use base64::{engine::general_purpose, Engine as _};
 use golem_llm::golem::llm::llm::{
@@ -9,7 +10,8 @@ use golem_llm::golem::llm::llm::{
     ImageReference, ImageSource, Message, ResponseMetadata, Role, ToolCall,
     ToolDefinition, ToolResult, Usage,
 };
-use std::collections::HashMap;
+use reqwest::{Client, Url};
+use std::{collections::HashMap, fs, path::Path};
 
 pub fn messages_to_request(
     messages: Vec<Message>,
@@ -69,10 +71,14 @@ pub fn messages_to_request(
         
         let tool_choice = config.tool_choice.map(convert_tool_choice);
         
-        Some(ToolConfig {
-            tools,
-            tool_choice,
-        })
+        if tools.is_empty() {
+            None
+        } else {
+            Some(ToolConfig {
+                tools,
+                tool_choice,
+            })
+        }
     };
 
     Ok(ConverseRequest {
@@ -91,11 +97,19 @@ pub fn messages_to_request(
 }
 
 fn convert_tool_choice(tool_name: String) -> ToolChoice {
+    use serde_json::Value;
+    
     match tool_name.as_str() {
-        "auto" => ToolChoice::Auto,
-        "any" => ToolChoice::Any,
+        "auto" => ToolChoice::Auto {
+            auto: Value::Object(serde_json::Map::new()),
+        },
+        "any" => ToolChoice::Any {
+            any: Value::Object(serde_json::Map::new()),
+        },
         name => ToolChoice::Tool {
-            name: name.to_string(),
+            tool: ToolChoiceTool {
+                name: name.to_string(),
+            },
         },
     }
 }
@@ -107,10 +121,10 @@ pub fn process_response(response: ConverseResponse) -> ChatEvent {
     for content in response.output.message.content {
         match content {
             ContentBlock::Text { text } => contents.push(ContentPart::Text(text)),
-            ContentBlock::Image { format, source } => {
-                match general_purpose::STANDARD.decode(&source.bytes) {
+            ContentBlock::Image { image } => {
+                match general_purpose::STANDARD.decode(&image.source.bytes) {
                     Ok(decoded_data) => {
-                        let mime_type = match format {
+                        let mime_type = match image.format {
                             ImageFormat::Jpeg => "image/jpeg",
                             ImageFormat::Png => "image/png",
                             ImageFormat::Gif => "image/gif",
@@ -133,14 +147,10 @@ pub fn process_response(response: ConverseResponse) -> ChatEvent {
                     }
                 }
             }
-            ContentBlock::ToolUse {
-                tool_use_id,
-                name,
-                input,
-            } => tool_calls.push(ToolCall {
-                id: tool_use_id,
-                name,
-                arguments_json: serde_json::to_string(&input).unwrap(),
+            ContentBlock::ToolUse { tool_use } => tool_calls.push(ToolCall {
+                id: tool_use.tool_use_id,
+                name: tool_use.name,
+                arguments_json: serde_json::to_string(&tool_use.input).unwrap(),
             }),
             ContentBlock::ToolResult { .. } => {}
         }
@@ -149,7 +159,7 @@ pub fn process_response(response: ConverseResponse) -> ChatEvent {
     if contents.is_empty() && !tool_calls.is_empty() {
         ChatEvent::ToolRequest(tool_calls)
     } else {
-        let request_id = response.response_metadata.request_id.clone();
+        let request_id = "bedrock-response".to_string();
         
         let metadata = ResponseMetadata {
             finish_reason: Some(stop_reason_to_finish_reason(response.stop_reason)),
@@ -176,9 +186,11 @@ pub fn tool_results_to_messages(
     for (tool_call, tool_result) in tool_results {
         messages.push(ClientMessage {
             content: vec![ContentBlock::ToolUse {
-                tool_use_id: tool_call.id.clone(),
-                name: tool_call.name,
-                input: serde_json::from_str(&tool_call.arguments_json).unwrap(),
+                tool_use: ToolUseBlock {
+                    tool_use_id: tool_call.id.clone(),
+                    name: tool_call.name,
+                    input: serde_json::from_str(&tool_call.arguments_json).unwrap(),
+                },
             }],
             role: ClientRole::Assistant,
         });
@@ -200,9 +212,11 @@ pub fn tool_results_to_messages(
 
         messages.push(ClientMessage {
             content: vec![ContentBlock::ToolResult {
-                tool_use_id: tool_call.id,
-                content,
-                status,
+                tool_result: ToolResultBlock {
+                    tool_use_id: tool_call.id,
+                    content,
+                    status,
+                },
             }],
             role: ClientRole::User,
         });
@@ -239,13 +253,45 @@ fn message_to_content(message: &Message) -> Result<Vec<ContentBlock>, Error> {
                 text: text.clone(),
             }),
             ContentPart::Image(image_reference) => match image_reference {
-                ImageReference::Url(_image_url) => {
-                    return Err(Error {
-                        code: ErrorCode::InvalidRequest,
-                        message: "Bedrock API does not support image URLs, only base64 encoded images".to_string(),
-                        provider_error_json: None,
+                ImageReference::Url(image_url) => {
+                    let url = &image_url.url;
+                    let mut format = ImageFormat::Png;
+                    let bytes = if Url::parse(url).is_ok() {
+                        let client = Client::new();
+                        let response = client.get(url).send().map_err(|e| Error {
+                            code: ErrorCode::InvalidRequest,
+                            message: format!("Failed to fetch image from URL: {}", e),
+                            provider_error_json: None,
+                        });
+                        response.map(|r| {
+                            format = match r.headers().get("Content-Type").unwrap().to_str().unwrap() {
+                                "image/jpeg" => ImageFormat::Jpeg,
+                                "image/png" => ImageFormat::Png,
+                                "image/gif" => ImageFormat::Gif,
+                                "image/webp" => ImageFormat::Webp,
+                                _ => ImageFormat::Jpeg,
+                            };
+                            r.bytes().unwrap().to_vec()
+                        })
+                    } else {
+                        let path = Path::new(url);
+                        fs::read(path).map_err(|e| Error {
+                            code: ErrorCode::InvalidRequest,
+                            message: format!("Failed to read image from path: {}", e),
+                            provider_error_json: None,
+                        })
+                    };
+                
+                    let base64_data = general_purpose::STANDARD.encode(&bytes.unwrap());
+                    result.push(ContentBlock::Image {
+                        image: ImageBlock {
+                            format: ImageFormat::Png,
+                            source: ClientImageSource {
+                                bytes: base64_data,
+                            },
+                        },
                     });
-                }
+                },
                 ImageReference::Inline(image_source) => {
                     let base64_data = general_purpose::STANDARD.encode(&image_source.data);
                     let format = match image_source.mime_type.as_str() {
@@ -257,9 +303,11 @@ fn message_to_content(message: &Message) -> Result<Vec<ContentBlock>, Error> {
                     };
 
                     result.push(ContentBlock::Image {
-                        format,
-                        source: ClientImageSource {
-                            bytes: base64_data,
+                        image: ImageBlock {
+                            format,
+                            source: ClientImageSource {
+                                bytes: base64_data,
+                            },
                         },
                     });
                 }
@@ -286,18 +334,34 @@ fn message_to_system_content(message: &Message) -> Vec<SystemContentBlock> {
 }
 
 fn tool_definition_to_tool(tool: &ToolDefinition) -> Result<Tool, Error> {
-    match serde_json::from_str(&tool.parameters_schema) {
-        Ok(json_schema) => Ok(Tool {
-            tool_spec: ToolSpec {
-                name: tool.name.clone(),
-                description: tool.description.clone().unwrap_or_default(),
-                input_schema: json_schema,
+    use serde_json::Value;
+    
+    let schema_value = if tool.parameters_schema.trim().is_empty() {
+        serde_json::json!({
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+        })
+    } else {
+        match serde_json::from_str::<Value>(&tool.parameters_schema) {
+            Ok(value) => value,
+            Err(error) => {
+                return Err(Error {
+                    code: ErrorCode::InternalError,
+                    message: format!("Failed to parse tool parameters for {}: {error}", tool.name),
+                    provider_error_json: None,
+                });
+            }
+        }
+    };
+    
+    Ok(Tool {
+        tool_spec: ToolSpec {
+            name: tool.name.clone(),
+            description: tool.description.clone().unwrap_or_default(),
+            input_schema: ToolInputSchema {
+                json: schema_value,
             },
-        }),
-        Err(error) => Err(Error {
-            code: ErrorCode::InternalError,
-            message: format!("Failed to parse tool parameters for {}: {error}", tool.name),
-            provider_error_json: None,
-        }),
-    }
+        },
+    })
 }

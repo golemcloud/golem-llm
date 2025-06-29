@@ -126,7 +126,7 @@ impl BedrockClient {
         })?;
 
         trace!("Initializing SSE stream");
-
+        trace!("Response: {:?}", response.headers().clone());
         EventSource::new(response)
             .map_err(|err| from_event_source_error("Failed to create SSE stream", err))
     }
@@ -288,32 +288,43 @@ pub enum Role {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[serde(untagged)]
 pub enum ContentBlock {
-    #[serde(rename = "text")]
     Text { text: String },
-    #[serde(rename = "image")]
     Image {
-        #[serde(rename = "format")]
-        format: ImageFormat,
-        #[serde(rename = "source")]
-        source: ImageSource,
+        image: ImageBlock,
     },
-    #[serde(rename = "toolUse")]
     ToolUse {
-        #[serde(rename = "toolUseId")]
-        tool_use_id: String,
-        name: String,
-        input: Value,
+        #[serde(rename = "toolUse")]
+        tool_use: ToolUseBlock,
     },
-    #[serde(rename = "toolResult")]
     ToolResult {
-        #[serde(rename = "toolUseId")]
-        tool_use_id: String,
-        content: Vec<ToolResultContentBlock>,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        status: Option<ToolResultStatus>,
+        #[serde(rename = "toolResult")]
+        tool_result: ToolResultBlock,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImageBlock {
+    pub format: ImageFormat,
+    pub source: ImageSource,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolUseBlock {
+    #[serde(rename = "toolUseId")]
+    pub tool_use_id: String,
+    pub name: String,
+    pub input: Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolResultBlock {
+    #[serde(rename = "toolUseId")]
+    pub tool_use_id: String,
+    pub content: Vec<ToolResultContentBlock>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<ToolResultStatus>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -329,7 +340,6 @@ pub enum ImageFormat {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "bytes")]
 pub struct ImageSource {
     pub bytes: String,
 }
@@ -395,18 +405,25 @@ pub struct ToolSpec {
     pub name: String,
     pub description: String,
     #[serde(rename = "inputSchema")]
-    pub input_schema: Value,
+    pub input_schema: ToolInputSchema,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+pub struct ToolInputSchema {
+    pub json: Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum ToolChoice {
-    #[serde(rename = "auto")]
-    Auto,
-    #[serde(rename = "any")]
-    Any,
-    #[serde(rename = "tool")]
-    Tool { name: String },
+    Auto { auto: serde_json::Value },
+    Any { any: serde_json::Value },
+    Tool { tool: ToolChoiceTool },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolChoiceTool {
+    pub name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -420,20 +437,15 @@ pub struct GuardrailConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConverseResponse {
-    #[serde(rename = "responseMetadata")]
-    pub response_metadata: ResponseMetadata,
     pub output: Output,
     #[serde(rename = "stopReason")]
     pub stop_reason: StopReason,
     pub usage: Usage,
     pub metrics: Metrics,
+    #[serde(rename = "additionalModelResponseFields", skip_serializing_if = "Option::is_none")]
+    pub additional_model_response_fields: Option<Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResponseMetadata {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Output {

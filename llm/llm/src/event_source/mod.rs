@@ -140,7 +140,7 @@ fn check_response(response: Response) -> Result<Response, Error> {
             matches!(
                 (mime_type.type_(), mime_type.subtype()),
                 (mime::TEXT, mime::EVENT_STREAM)
-            ) || mime_type.subtype().as_str().contains("ndjson")
+            ) || mime_type.subtype().as_str().contains("ndjson") || content_type.to_str().unwrap_or("").contains("vnd.amazon.eventstream")
         })
         .unwrap_or(false)
     {
