@@ -2,6 +2,7 @@
 // modified to use the wasi-http based reqwest, and wasi pollables
 
 pub mod error;
+mod aws_eventstream;
 mod event_stream;
 mod message_event;
 mod ndjson_stream;
@@ -11,6 +12,7 @@ mod utf8_stream;
 
 use crate::event_source::error::Error;
 use crate::event_source::event_stream::EventStream;
+use aws_eventstream::AwsEventStream;
 use golem_rust::wasm_rpc::Pollable;
 pub use message_event::MessageEvent;
 use ndjson_stream::NdJsonStream;
@@ -50,15 +52,17 @@ impl EventSource {
                     >(response.get_raw_input_stream())
                 };
 
-                let stream = if response
+                let content_type = response
                     .headers()
                     .get(&reqwest::header::CONTENT_TYPE)
                     .unwrap()
                     .to_str()
-                    .unwrap()
-                    .contains("ndjson")
-                {
+                    .unwrap();
+
+                let stream = if content_type.contains("ndjson") {
                     StreamType::NdJsonStream(NdJsonStream::new(handle))
+                } else if content_type.contains("vnd.amazon.eventstream") {
+                    StreamType::AwsEventStream(AwsEventStream::new(handle))
                 } else {
                     StreamType::EventStream(EventStream::new(handle))
                 };
@@ -90,6 +94,7 @@ impl EventSource {
         match &self.stream {
             StreamType::EventStream(stream) => stream.subscribe(),
             StreamType::NdJsonStream(stream) => stream.subscribe(),
+            StreamType::AwsEventStream(stream) => stream.subscribe(),
         }
     }
 
@@ -106,6 +111,12 @@ impl EventSource {
                 Poll::Pending => Poll::Pending,
             },
             StreamType::NdJsonStream(stream) => match stream.poll_next() {
+                Poll::Ready(Some(Ok(event))) => Poll::Ready(Some(Ok(Event::Message(event)))),
+                Poll::Ready(Some(Err(err))) => Poll::Ready(Some(Err(err.into()))),
+                Poll::Ready(None) => Poll::Ready(None),
+                Poll::Pending => Poll::Pending,
+            },
+            StreamType::AwsEventStream(stream) => match stream.poll_next() {
                 Poll::Ready(Some(Ok(event))) => Poll::Ready(Some(Ok(Event::Message(event)))),
                 Poll::Ready(Some(Err(err))) => Poll::Ready(Some(Err(err.into()))),
                 Poll::Ready(None) => Poll::Ready(None),

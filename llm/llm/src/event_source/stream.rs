@@ -2,8 +2,8 @@ use core::fmt;
 use std::{string::FromUtf8Error, task::Poll};
 
 use super::{
-    event_stream::EventStream, ndjson_stream::NdJsonStream, utf8_stream::Utf8StreamError,
-    MessageEvent,
+    aws_eventstream::AwsEventStream, event_stream::EventStream, ndjson_stream::NdJsonStream, 
+    utf8_stream::Utf8StreamError, MessageEvent,
 };
 use golem_rust::{
     bindings::wasi::io::streams::{InputStream, StreamError as WasiStreamError},
@@ -14,6 +14,7 @@ use nom::error::Error as NomError;
 pub enum StreamType {
     EventStream(EventStream),
     NdJsonStream(NdJsonStream),
+    AwsEventStream(AwsEventStream),
 }
 
 pub trait LlmStream {
