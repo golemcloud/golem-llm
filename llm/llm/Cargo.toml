@@ -12,6 +12,9 @@ path = "src/lib.rs"
 crate-type = ["rlib"]
 
 [dependencies]
+aws-smithy-eventstream = "0.60.9"
+aws-smithy-types = "1.3.2"
+base64 = "0.22.1"
 golem-rust = { workspace = true }
 log = { workspace = true }
 mime = "0.3.17"

@@ -15,6 +15,7 @@ grok = []
 openai = []
 openrouter = []
 ollama = []
+bedrock = []
 
 [dependencies]
 # To use common shared libs, use the following:
@@ -37,8 +38,8 @@ path = "wit-generated"
 
 [package.metadata.component.target.dependencies]
 "golem:llm" = { path = "wit-generated/deps/golem-llm" }
-"wasi:clocks" = { path = "wit-generated/deps/clocks" }
 "wasi:io" = { path = "wit-generated/deps/io" }
+"wasi:clocks" = { path = "wit-generated/deps/clocks" }
 "golem:rpc" = { path = "wit-generated/deps/golem-rpc" }
 "test:helper-client" = { path = "wit-generated/deps/test_helper-client" }
 "test:llm-exports" = { path = "wit-generated/deps/test_llm-exports" }

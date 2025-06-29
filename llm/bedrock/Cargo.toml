@@ -1,0 +1,47 @@
+[package]
+name = "golem-llm-bedrock"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://golem.cloud"
+repository = "https://github.com/golemcloud/golem-llm"
+description = "WebAssembly component for working with AWS Bedrock APIs, with special support for Golem Cloud"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[features]
+default = ["durability"]
+durability = ["golem-rust/durability", "golem-llm/durability"]
+
+[dependencies]
+golem-llm = { workspace = true }
+
+golem-rust = { workspace = true }
+log = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+wit-bindgen-rt = { workspace = true }
+base64 = { workspace = true }
+hmac = "0.12"
+sha2 = "0.10"
+time = { version = "0.3", features = ["formatting"] }
+percent-encoding = "2.3"
+
+[package.metadata.component]
+package = "golem:llm-bedrock"
+
+[package.metadata.component.bindings]
+generate_unused_types = true
+
+[package.metadata.component.bindings.with]
+"golem:llm/llm@1.0.0" = "golem_llm::golem::llm::llm"
+
+[package.metadata.component.target]
+path = "wit"
+
+[package.metadata.component.target.dependencies]
+"golem:llm" = { path = "wit/deps/golem-llm" }
+"wasi:io" = { path = "wit/deps/wasi:io" }

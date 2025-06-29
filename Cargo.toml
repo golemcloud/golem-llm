@@ -4,6 +4,7 @@ resolver = "2"
 members = [
     "llm/llm",
     "llm/anthropic",
+    "llm/bedrock",
     "llm/grok",
     "llm/ollama",
     "llm/openai",
